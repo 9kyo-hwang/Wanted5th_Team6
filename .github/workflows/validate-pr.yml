@@ -1,0 +1,42 @@
+
+name: Validate PR Branches
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, edited]
+    branches:
+      - main
+      - develop
+
+permissions:
+  contents: read
+
+jobs:
+  validate-branch:
+    name: validate-branch
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check PR direction
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+        shell: bash
+        run: |
+          if [[ "$BASE" == "main" && "$HEAD" == "develop" ]]; then
+            echo "Valid PR: develop -> main"
+            exit 0
+          fi
+
+          if [[ "$BASE" == "develop" ]]; then
+            case "$HEAD" in
+              feature/*|fix/*|chore/*|docs/*)
+                echo "Valid development PR"
+                exit 0
+                ;;
+            esac
+          fi
+
+          echo "::error::Invalid PR direction: $HEAD -> $BASE"
+          echo "::error::Allowed: feature/* -> develop, develop -> main"
+          exit 1

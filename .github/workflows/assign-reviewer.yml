@@ -1,0 +1,63 @@
+
+name: Assign PR Reviewer
+
+on:
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  assign-reviewer:
+    # 사실 develop 브랜치 타겟인지만 검사해도 되지 않을까 싶음
+    if: >-
+      github.event.pull_request.base.ref == 'develop' &&
+      (
+        startsWith(github.event.pull_request.head.ref, 'feature/') ||
+        startsWith(github.event.pull_request.head.ref, 'fix/') ||
+        startsWith(github.event.pull_request.head.ref, 'chore/') ||
+        startsWith(github.event.pull_request.head.ref, 'docs/')
+      )
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Select and request reviewer
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        shell: bash
+        run: |
+          # Replace with actual GitHub usernames
+          MEMBERS=(
+            "dhkswo99-create"
+            "leechaem0215"
+            "miiiiiiiiiin"
+            "tpwls0170"
+            "9kyo-hwang"
+          )
+
+          CANDIDATES=()
+
+          for MEMBER in "${MEMBERS[@]}"; do
+            if [[ "$MEMBER" != "$AUTHOR" ]]; then
+              CANDIDATES+=("$MEMBER")
+            fi
+          done
+
+          if [[ ${#CANDIDATES[@]} -eq 0 ]]; then
+            echo "::error::No eligible reviewer"
+            exit 1
+          fi
+
+          REVIEWER=$(printf '%s\n' "${CANDIDATES[@]}" | shuf -n 1)
+
+          gh api \
+            --method POST \
+            "repos/$GH_REPO/pulls/$PR_NUMBER/requested_reviewers" \
+            -f "reviewers[]=$REVIEWER"
+
+          echo "Requested reviewer: $REVIEWER"
