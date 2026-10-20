@@ -61,3 +61,19 @@ jobs:
             -f "reviewers[]=$REVIEWER"
 
           echo "Requested reviewer: $REVIEWER"
+        
+      - name: Assign PR author
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        shell: bash
+        run: |
+          gh api \
+            --method POST \
+            "repos/$GH_REPO/issues/$PR_NUMBER/assignees" \
+            -f "assignees[]=$AUTHOR"
+
+          echo "Assigned PR author: $AUTHOR"
+
