@@ -6,6 +6,8 @@
 #include "GameFramework/Actor.h"
 #include "GTWBossHitObject.generated.h"
 
+DECLARE_DELEGATE(FOnHitObjectContactEndedSignature);
+
 UENUM()
 enum class EBossHitObjectState : uint8
 {
@@ -31,10 +33,10 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 
 public:
-	// @TEMP: 임시로 BP에서 함수 호출 가능하도록. Event BeginPlay(이벤트 바인딩) -> Activate(타겟 세팅)
-	UFUNCTION(BlueprintCallable, Category="Boss|Hit Object")
 	bool Activate(AActor* InTarget);	// 날아가 맞출 대상(보스)을 인자로 받음
 	void Cancel();						// 타이머, 충돌, Tick 종료 후 제거
+
+	FOnHitObjectContactEndedSignature OnContactEnded;
 
 private:
 	// Player가 오브젝트와 충돌했을 때 발동할 OnComponentBeginOverlap Delegate Callback

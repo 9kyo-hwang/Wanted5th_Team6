@@ -128,7 +128,8 @@ void AGTWBossHitObject::OnPlayerContact(UPrimitiveComponent* OverlappedComponent
 		ContactSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);	// 플레이어 탐지했으니 역할 끝
 		SetActorTickEnabled(true);	// 이때부터 Tick이 발동하여 이동 시작
 
-		// @TODO: Spawner에게 재생성 통지
+		// Spawner에게 재생성 통지
+		OnContactEnded.ExecuteIfBound();
 	}
 }
 
@@ -142,8 +143,9 @@ void AGTWBossHitObject::OnContactExpired()
 	CurrentState = EBossHitObjectState::Finished;
 	ContactSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	
-	// @TODO: Spawner에게 재생성 통지
-	
+	// Spawner에게 재생성 통지
+	OnContactEnded.ExecuteIfBound();
+
 	Destroy();
 }
 
