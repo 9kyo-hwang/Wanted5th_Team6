@@ -7,15 +7,30 @@
 #include <Misc/FileHelper.h>
 #include <Misc/Paths.h>
 #include <Engine/StaticMesh.h>
+#include "Camera/CameraComponent.h"
 #include <Components/StaticMeshComponent.h>
 
 // Sets default values
 ASokobanBoard::ASokobanBoard()
-	: Rows(0), Colums(0)
+	: GoalCount(0), Rows(0), Colums(0)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	MapRows.Empty();
+
+	RootComponent = CreateDefaultSubobject<USceneComponent>(
+		TEXT("SceneRoot"));
+
+	SokobanBoardCamera = CreateDefaultSubobject<UCameraComponent>(
+		TEXT("SokobanCamera"));
+
+	SokobanBoardCamera->SetupAttachment(RootComponent);
+
+	// 직교 카메라 설정
+	SokobanBoardCamera->ProjectionMode =
+		ECameraProjectionMode::Perspective;
+
+	SokobanBoardCamera->OrthoWidth = 3000.f;
 }
 
 bool ASokobanBoard::TryPushBox(AGTWSokobanBox* Box, const FIntPoint& Direction)
@@ -83,6 +98,8 @@ void ASokobanBoard::BeginPlay()
 	if (LoadMapFileData())
 	{
 		InitializeMap();
+		//SetActorHiddenInGame(true);
+		GetMapCenterLocation();
 	}
 }
 
@@ -91,6 +108,22 @@ void ASokobanBoard::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	// Todo : 나중에 게임클리어 시간 기록하려면 Tick필요함
+
+	if (GoalCount >= 3)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("sokoban Clear!!!"));
+	}
+}
+
+FVector ASokobanBoard::GetMapCenterLocation() const
+{
+	const float CenterX = (Colums - 1) * TileSize * 0.5f;
+	const float CenterY = (Rows - 1) * TileSize * 0.5f;
+
+	const FVector LocalCenter(CenterX, CenterY, 0.f);
+
+	return RootComponent->GetComponentTransform()
+		.TransformPosition(LocalCenter);
 }
 
 bool ASokobanBoard::LoadMapFileData()
@@ -156,60 +189,18 @@ void ASokobanBoard::InitializeMap()
 				break;
 			case 'R':
 			{
-				const UStaticMeshComponent* ResumeGoalComponent =
-					AActor::GetActorClassDefaultComponent<UStaticMeshComponent>(ResumeGoalTileClass.Get());
-
-				if (ResumeGoalComponent != nullptr)
-				{
-					GoalStaticMesh = ResumeGoalComponent->GetStaticMesh();
-
-					UMaterialInterface* GoalMaterial =
-						ResumeGoalComponent->GetMaterial(0);
-
-					if (GoalStaticMesh != nullptr)
-					{
-						CreateTileMesh(GoalStaticMesh, TileLocation, GoalMaterial);
-					}
-				}
+				SpawnGoalTile(ResumeGoalTileClass, TileLocation);
 				break;
 			}
 
 			case 'G':
 			{
-				const UStaticMeshComponent* IntroductionGoalComponent =
-					AActor::GetActorClassDefaultComponent<UStaticMeshComponent>(IntroductionGoalTileClass.Get());
-
-				if (IntroductionGoalComponent != nullptr)
-				{
-					GoalStaticMesh = IntroductionGoalComponent->GetStaticMesh();
-
-					UMaterialInterface* GoalMaterial =
-						IntroductionGoalComponent->GetMaterial(0);
-
-					if (GoalStaticMesh != nullptr)
-					{
-						CreateTileMesh(GoalStaticMesh, TileLocation, GoalMaterial);
-					}
-				}
+				SpawnGoalTile(IntroductionGoalTileClass, TileLocation);
 				break;
 			}
 			case 'B':
 			{
-				const UStaticMeshComponent* PortfoliGoalComponent =
-					AActor::GetActorClassDefaultComponent<UStaticMeshComponent>(PortfoliGoalTileClass.Get());
-
-				if (PortfoliGoalComponent != nullptr)
-				{
-					GoalStaticMesh = PortfoliGoalComponent->GetStaticMesh();
-
-					UMaterialInterface* GoalMaterial =
-						PortfoliGoalComponent->GetMaterial(0);
-
-					if (GoalStaticMesh != nullptr)
-					{
-						CreateTileMesh(GoalStaticMesh, TileLocation, GoalMaterial);
-					}
-				}
+				SpawnGoalTile(PortfoliGoalTileClass, TileLocation);
 				break;
 			}
 			case 'r':
@@ -234,12 +225,36 @@ void ASokobanBoard::InitializeMap()
 				CreateTileMesh(FloorStaticMesh, TileLocation);
 				break;
 			case 'P':
+				// Board 기준 위치 → 월드 위치
+				PlayerStartLocation =
+					RootComponent->GetComponentTransform()
+					.TransformPosition(TileLocation);
 				CreateTileMesh(FloorStaticMesh, TileLocation);
 				break;
 			}
-
 		}
 	}
+
+	const float CenterX = (Colums - 1) * TileSize * 0.5f;
+	const float CenterY = (Rows - 1) * TileSize * 0.5f;
+
+	SokobanBoardCamera->SetRelativeLocation(
+		FVector(CenterX, CenterY, 2000.f)
+	);
+
+	SokobanBoardCamera->SetRelativeRotation(
+		FRotator(-90.f, 180.f, 0.f)
+	);
+
+	UE_LOG(LogTemp, Warning,
+		TEXT("Board Location: %s"),
+		*GetActorLocation().ToString());
+
+	UE_LOG(LogTemp, Warning,TEXT("Map Center: %s"),*GetMapCenterLocation().ToString());
+
+	UE_LOG(LogTemp, Warning,
+		TEXT("Camera Location: %s"),
+		*SokobanBoardCamera->GetComponentLocation().ToString());
 }
 
 void ASokobanBoard::CreateTileMesh(UStaticMesh * MeshAsset, const FVector & Location, UMaterialInterface * Material)
@@ -325,6 +340,24 @@ AGTWSokobanBox* ASokobanBoard::SpawnBox(TSubclassOf<AGTWSokobanBox> BoxClass, co
 	}
 
 	return Box;
+}
+
+AActor* ASokobanBoard::SpawnGoalTile(TSubclassOf<AActor> BoxClass, const FVector& TileLocation)
+{
+	const FVector WorldLocation =
+		RootComponent->GetComponentTransform()
+		.TransformPosition(TileLocation);
+
+	FActorSpawnParameters SpawnParams;
+	SpawnParams.Owner = this;
+
+	AActor* GoalTile = GetWorld()->SpawnActor<AActor>(
+		BoxClass.Get(),
+		WorldLocation,
+		GetActorRotation(),
+		SpawnParams);
+
+	return GoalTile;
 }
 
 FIntPoint ASokobanBoard::WorldToGrid(const FVector& WorldLocation) const

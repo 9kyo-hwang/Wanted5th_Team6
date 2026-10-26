@@ -9,6 +9,7 @@
 class UStaticMesh;
 class UStaticMeshComponent;
 class AGTWSokobanBox;
+class UCameraComponent;
 
 UCLASS()
 class GTW_API ASokobanBoard : public AActor
@@ -24,6 +25,14 @@ public:
 	);
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	UFUNCTION(BlueprintPure, Category = "Sokoban|Camera")
+	FVector GetMapCenterLocation() const;
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sokoban|GoalCount")
+	int32 GoalCount;
+	UFUNCTION(BlueprintPure, Category = "Sokoban|PlayerStartPosition")
+	FVector GetPlayerStartLocation() const { return PlayerStartLocation; }
 
 protected:
 	// Called when the game starts or when spawned
@@ -68,6 +77,7 @@ private:
 		UMaterialInterface* Material = nullptr);
 
 	AGTWSokobanBox* SpawnBox(TSubclassOf<AGTWSokobanBox> BoxClass, const FVector& TileLocation);
+	AActor* SpawnGoalTile(TSubclassOf<AActor> BoxClass, const FVector& TileLocation);
 
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<AGTWSokobanBox>> SpawnedBoxes;
@@ -76,6 +86,10 @@ private:
 
 	// 변수
 private:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sokoban|Camera",
+		meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<UCameraComponent> SokobanBoardCamera;
+
 	int32 Rows; // 행
 	int32 Colums; // 열
 
@@ -87,5 +101,5 @@ private:
 
 	// 2차원배열로 실제 사용중인 mapdata 
 	TArray<FString> MapRows;
-
+	FVector PlayerStartLocation = FVector::ZeroVector;
 };
