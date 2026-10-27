@@ -12,7 +12,6 @@
 UGTWSkateMovementComponent::UGTWSkateMovementComponent()
 	: Super()
 {
-	GravityScaleForAcceleration = 0.05f;
 	NormalCount = 0;
 }
 
@@ -43,6 +42,8 @@ FRotator UGTWSkateMovementComponent::ComputeOrientToMovementRotation(const FRota
 	}
 
 	// Rotate toward direction of velocity.
+	// 기존 가속으로 진행하던 적용하던 회전을 속도를 기반으로 회전하도록 변경함.
+	// -> 회전이 진행되는 시점을 가속 적용 순간에서 속도 변환 시점으로 변환한 것.
 	return Velocity.GetSafeNormal().Rotation();
 }
 
@@ -142,7 +143,3 @@ FVector UGTWSkateMovementComponent::GetMeshRightVector() const
 	return GTWPlayerCharacter->GetMesh()->GetRightVector();
 }
 
-bool UGTWSkateMovementComponent::IsCustomMovementMode(ECustomMovement IsCustomMovementMode) const
-{
-	return MovementMode == MOVE_Custom && CustomMovementMode == IsCustomMovementMode;
-}

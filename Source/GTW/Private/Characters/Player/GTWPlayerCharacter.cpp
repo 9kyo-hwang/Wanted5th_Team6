@@ -34,6 +34,7 @@ void AGTWPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInput
 
 } 
 
+// -> 충돌 시에 자기 자신 빼는 거
 FCollisionQueryParams AGTWPlayerCharacter::GetIgnoreCharacterParams() const
 {
 	FCollisionQueryParams Params;

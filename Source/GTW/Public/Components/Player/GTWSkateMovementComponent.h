@@ -4,16 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/CharacterMovementComponent.h"
-#include <CharacterMovementComponentAsync.h>
 #include "GTWSkateMovementComponent.generated.h"
 
-
-
-UENUM(BlueprintType)
-enum ECustomMovement
-{
-	CMOVE_Slide UMETA(DisplayName = "Slide"),
-};
 
 
 
@@ -32,7 +24,7 @@ public:
 
 	// 상속
 public:
-	// TODO: 기존 로직에서 반환 전에 경사 계산 추가하기.  
+	// 기존 로직에서 반환 전에 경사 계산 추가하기.  
 	virtual FRotator ComputeOrientToMovementRotation(
 		const FRotator& CurrentRotation,
 		float DeltaTime,
@@ -65,18 +57,10 @@ public:
 
 
 
-public:
-	// 커스텀 무브 확인 함수
-	UFUNCTION(BlueprintPure)
-	bool IsCustomMovementMode(ECustomMovement IsCustomMovementMode) const;
-
 protected:
 	// 오너
 	class AGTWPlayerCharacter* GTWPlayerCharacter;
 
-	// 중력 가속 스케일 계수
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gravity)
-	float GravityScaleForAcceleration;
 
 	UPROPERTY(Category = Floor, VisibleInstanceOnly, BlueprintReadOnly)
 	FFindFloorResult OldFloor;
@@ -86,7 +70,6 @@ protected:
 
 	UPROPERTY()
 	FVector OldImpactNormal;
-
 
 	UPROPERTY()
 	int32 NormalCount;
