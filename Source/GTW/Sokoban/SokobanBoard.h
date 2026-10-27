@@ -76,19 +76,14 @@ protected:
 	// 함수
 private:
 	bool LoadMapFileData();
-
 	// 맵 데이터를 2차원  배열로 변환
 	void InitializeMap();
 	void CreateTileMesh(UStaticMesh* MeshAsset, const FVector& Location,
 		UMaterialInterface* Material = nullptr);
-
 	AGTWSokobanBox* SpawnBox(TSubclassOf<AGTWSokobanBox> BoxClass, const FVector& TileLocation);
 	AActor* SpawnGoalTile(TSubclassOf<AActor> BoxClass, const FVector& TileLocation);
-
-	UPROPERTY(Transient)
-	TArray<TObjectPtr<AGTWSokobanBox>> SpawnedBoxes;
-
 	FIntPoint WorldToGrid(const FVector& WorldLocation) const;
+	void ResetGame();
 	void GameClear();
 
 	// 변수
@@ -96,6 +91,8 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sokoban|Camera",
 		meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> SokobanBoardCamera;
+	UPROPERTY(Transient)
+	TArray<TObjectPtr<AGTWSokobanBox>> SpawnedBoxes;
 
 	int32 Rows; // 행
 	int32 Colums; // 열
@@ -109,7 +106,8 @@ private:
 	// 2차원배열로 실제 사용중인 mapdata 
 	TArray<FString> MapRows;
 	FVector PlayerStartLocation = FVector::ZeroVector;
+	TArray<FVector> BoxStartLocatin;
 	float ElapsedTime = 0.f;
-	int32 MaxGoalCount = 1;
+	int32 MaxGoalCount = 3;
 	bool bIsSokobanClear = false;
 };

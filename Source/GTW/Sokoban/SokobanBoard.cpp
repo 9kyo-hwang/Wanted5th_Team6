@@ -10,6 +10,8 @@
 #include "Camera/CameraComponent.h"
 #include <Components/StaticMeshComponent.h>
 
+#include "TimerManager.h"
+
 // Sets default values
 ASokobanBoard::ASokobanBoard()
 	: GoalCount(0), Rows(0), Colums(0)
@@ -130,6 +132,11 @@ void ASokobanBoard::AddGoalCount()
 	{
 		GameClear();
 	}
+
+
+	GetWorldTimerManager().SetTimerForNextTick(
+		this, &ASokobanBoard::ResetGame
+	);
 }
 
 bool ASokobanBoard::LoadMapFileData()
@@ -212,18 +219,21 @@ void ASokobanBoard::InitializeMap()
 			case 'r':
 			{
 				SpawnBox(RedBoxClass, TileLocation);
+				BoxStartLocatin.Add(TileLocation);
 				CreateTileMesh(FloorStaticMesh, TileLocation);
 				break;
 			}
 			case 'g':
 			{
 				SpawnBox(GreenBoxClass, TileLocation);
+				BoxStartLocatin.Add(TileLocation);
 				CreateTileMesh(FloorStaticMesh, TileLocation);
 				break;
 			}
 			case 'b':
 			{
 				SpawnBox(BlueBoxClass, TileLocation);
+				BoxStartLocatin.Add(TileLocation);
 				CreateTileMesh(FloorStaticMesh, TileLocation);
 				break;
 			}
@@ -368,13 +378,30 @@ FIntPoint ASokobanBoard::WorldToGrid(const FVector& WorldLocation) const
 	);
 }
 
+void ASokobanBoard::ResetGame()
+{
+	for (AGTWSokobanBox* Box : SpawnedBoxes)
+	{
+		if (IsValid(Box))
+		{
+			Box->Destroy();
+		}
+	}
+
+	SpawnedBoxes.Empty();
+	GoalCount = 0;
+	ElapsedTime = 0.0f;
+	bIsSokobanClear = false;
+
+	SpawnBox(RedBoxClass, BoxStartLocatin[0]);
+	SpawnBox(GreenBoxClass, BoxStartLocatin[1]);
+	SpawnBox(BlueBoxClass, BoxStartLocatin[2]);
+}
+
 void ASokobanBoard::GameClear()
 {
 	bIsSokobanClear = true;
 	bIsSokobanField = false;
 	int32 SokobanClearTime = ElapsedTime;
 	UE_LOG(LogTemp, Error, TEXT("SokobanGame Clear! elaspTime : %d"), SokobanClearTime);
-
-	// Todo : UI연동
-	
 }
