@@ -13,5 +13,10 @@ UCLASS()
 class GTW_API UBTT_SpawnBall : public UBTTaskNode
 {
 	GENERATED_BODY()
-	
+public:
+	UBTT_SpawnBall();
+
+private:
+	virtual EBTNodeResult::Type ExecuteTask(
+		UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 };

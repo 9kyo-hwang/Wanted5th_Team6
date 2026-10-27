@@ -1,20 +1,20 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "ABAIController.generated.h"
+#include "GTWBossAIController.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class GTW_API AABAIController : public AAIController
+class GTW_API AGTWBossAIController : public AAIController
 {
 	GENERATED_BODY()
 public:
-	AABAIController();
+	AGTWBossAIController();
 
 	// BT 시작
 	void RunAI();

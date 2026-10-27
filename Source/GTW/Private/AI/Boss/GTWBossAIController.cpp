@@ -1,11 +1,11 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
+#include "AI/Boss/GTWBossAIController.h"
 #include <BehaviorTree/BlackboardData.h>
 #include <BehaviorTree/BlackboardComponent.h>
 #include <BehaviorTree/BehaviorTree.h>
-#include "AI/ABAIController.h"
 
-AABAIController::AABAIController()
+AGTWBossAIController::AGTWBossAIController()
 {
 	// 에셋 가져오기
 	static ConstructorHelpers::FObjectFinder<UBlackboardData> BBAssetRef(
@@ -23,7 +23,7 @@ AABAIController::AABAIController()
 
 }
 
-void AABAIController::RunAI()
+void AGTWBossAIController::RunAI()
 {
 	// 블랙보드 컴포넌트 가져오기(AI컨트롤러 내부에 있음)
 	// L-value로 변경하여 가져온다. 
@@ -39,7 +39,7 @@ void AABAIController::RunAI()
 
 }
 
-void AABAIController::StopAI()
+void AGTWBossAIController::StopAI()
 {
 	// BT 중지
 	UBehaviorTreeComponent* BTComponent = Cast<UBehaviorTreeComponent>(BrainComponent);
@@ -47,7 +47,7 @@ void AABAIController::StopAI()
 		BTComponent->StopTree();
 }
 
-void AABAIController::OnPossess(APawn* InPawn)
+void AGTWBossAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
 	RunAI();
