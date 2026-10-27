@@ -1,6 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "AI/Boss/GTWBossAIController.h"
+#include "Controllers/GTWBossAIController.h"
 #include <Animation/AnimInstance.h>
 #include "Characters/GTWBoss.h"
 

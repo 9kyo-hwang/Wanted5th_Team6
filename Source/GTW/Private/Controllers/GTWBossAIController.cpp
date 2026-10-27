@@ -1,6 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "AI/Boss/GTWBossAIController.h"
+#include "Controllers/GTWBossAIController.h"
 #include <BehaviorTree/BlackboardData.h>
 #include <BehaviorTree/BlackboardComponent.h>
 #include <BehaviorTree/BehaviorTree.h>
