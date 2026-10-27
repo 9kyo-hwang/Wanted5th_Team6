@@ -27,13 +27,19 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	UFUNCTION(BlueprintPure, Category = "Sokoban|Camera")
 	FVector GetMapCenterLocation() const;
-
+	UFUNCTION(BlueprintPure, Category = "Sokoban|PlayerStartPosition")
+	FVector GetPlayerStartLocation() const { return PlayerStartLocation; }
+	UFUNCTION(BlueprintCallable)
+	bool GetSokobanClear() const { return bIsSokobanClear; }
+	UFUNCTION(BlueprintCallable)
+	float GetSokobanElapsedTime() const { return ElapsedTime; }
+	UFUNCTION(BlueprintCallable, Category = "Sokoban|GoalCount")
+	void AddGoalCount();
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sokoban|GoalCount")
 	int32 GoalCount;
-	UFUNCTION(BlueprintPure, Category = "Sokoban|PlayerStartPosition")
-	FVector GetPlayerStartLocation() const { return PlayerStartLocation; }
-
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsSokobanField = false;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -83,6 +89,7 @@ private:
 	TArray<TObjectPtr<AGTWSokobanBox>> SpawnedBoxes;
 
 	FIntPoint WorldToGrid(const FVector& WorldLocation) const;
+	void GameClear();
 
 	// 변수
 private:
@@ -102,4 +109,7 @@ private:
 	// 2차원배열로 실제 사용중인 mapdata 
 	TArray<FString> MapRows;
 	FVector PlayerStartLocation = FVector::ZeroVector;
+	float ElapsedTime = 0.f;
+	int32 MaxGoalCount = 1;
+	bool bIsSokobanClear = false;
 };

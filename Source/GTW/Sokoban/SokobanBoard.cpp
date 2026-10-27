@@ -29,8 +29,6 @@ ASokobanBoard::ASokobanBoard()
 	// 직교 카메라 설정
 	SokobanBoardCamera->ProjectionMode =
 		ECameraProjectionMode::Perspective;
-
-	SokobanBoardCamera->OrthoWidth = 3000.f;
 }
 
 bool ASokobanBoard::TryPushBox(AGTWSokobanBox* Box, const FIntPoint& Direction)
@@ -107,11 +105,10 @@ void ASokobanBoard::BeginPlay()
 void ASokobanBoard::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	// Todo : 나중에 게임클리어 시간 기록하려면 Tick필요함
-
-	if (GoalCount >= 3)
+	
+	if (bIsSokobanClear == false && bIsSokobanField)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("sokoban Clear!!!"));
+		ElapsedTime += DeltaTime;
 	}
 }
 
@@ -124,6 +121,15 @@ FVector ASokobanBoard::GetMapCenterLocation() const
 
 	return RootComponent->GetComponentTransform()
 		.TransformPosition(LocalCenter);
+}
+
+void ASokobanBoard::AddGoalCount()
+{
+	GoalCount++;
+	if (GoalCount >= MaxGoalCount)
+	{
+		GameClear();
+	}
 }
 
 bool ASokobanBoard::LoadMapFileData()
@@ -180,7 +186,7 @@ void ASokobanBoard::InitializeMap()
 				i * TileSize,
 				0.f
 			);
-
+			const 
 			UStaticMesh* GoalStaticMesh = nullptr;
 			switch (MapRows[i][j])
 			{
@@ -239,22 +245,12 @@ void ASokobanBoard::InitializeMap()
 	const float CenterY = (Rows - 1) * TileSize * 0.5f;
 
 	SokobanBoardCamera->SetRelativeLocation(
-		FVector(CenterX, CenterY, 2000.f)
+		FVector(CenterX, CenterY, 1800.f)
 	);
 
 	SokobanBoardCamera->SetRelativeRotation(
-		FRotator(-90.f, 180.f, 0.f)
+		FRotator(-90.f, -90.f, 0.f)
 	);
-
-	UE_LOG(LogTemp, Warning,
-		TEXT("Board Location: %s"),
-		*GetActorLocation().ToString());
-
-	UE_LOG(LogTemp, Warning,TEXT("Map Center: %s"),*GetMapCenterLocation().ToString());
-
-	UE_LOG(LogTemp, Warning,
-		TEXT("Camera Location: %s"),
-		*SokobanBoardCamera->GetComponentLocation().ToString());
 }
 
 void ASokobanBoard::CreateTileMesh(UStaticMesh * MeshAsset, const FVector & Location, UMaterialInterface * Material)
@@ -370,4 +366,15 @@ FIntPoint ASokobanBoard::WorldToGrid(const FVector& WorldLocation) const
 		FMath::RoundToInt(LocalLocation.X / TileSize),
 		FMath::RoundToInt(LocalLocation.Y / TileSize)
 	);
+}
+
+void ASokobanBoard::GameClear()
+{
+	bIsSokobanClear = true;
+	bIsSokobanField = false;
+	int32 SokobanClearTime = ElapsedTime;
+	UE_LOG(LogTemp, Error, TEXT("SokobanGame Clear! elaspTime : %d"), SokobanClearTime);
+
+	// Todo : UI연동
+	
 }
