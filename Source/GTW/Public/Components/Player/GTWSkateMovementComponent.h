@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include <CharacterMovementComponentAsync.h>
 #include "GTWSkateMovementComponent.generated.h"
 
 
@@ -40,11 +41,24 @@ public:
 
 	virtual void PhysicsRotation(float DeltaTime) override;
 
+	virtual void StartFalling(int32 Iterations, float remainingTime, float timeTick, const FVector& Delta, const FVector& subLoc) override;
+
+	virtual bool ShouldRemainVertical() const
+	{
+		// Always remain vertical when walking or falling.
+		return IsMovingOnGround();
+	}
+
+
 public:
 	// 바닥 법선 벡터 구하기
-	FVector GetImpactNormal() const
+	FVector GetNewImpactNormal() const
 	{
 		return CurrentFloor.HitResult.ImpactNormal;
+	}
+	FVector GetOldImpactNormal() const
+	{
+		return OldFloor.HitResult.ImpactNormal;
 	}
 
 	FVector GetMeshRightVector() const;
@@ -63,5 +77,19 @@ protected:
 	// 중력 가속 스케일 계수
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Gravity)
 	float GravityScaleForAcceleration;
+
+	UPROPERTY(Category = Floor, VisibleInstanceOnly, BlueprintReadOnly)
+	FFindFloorResult OldFloor;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Floor)
+	FVector NewImpactNormal;
+
+	UPROPERTY()
+	FVector OldImpactNormal;
+
+
+	UPROPERTY()
+	int32 NormalCount;
+
 };
 	

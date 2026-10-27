@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
-#include "../../Public/Characters/GTWPlayerCharacter.h"
-#include "../../Public/Components/GTWSkateMovementComponent.h"
+#include "../../../Public/Characters/Player/GTWPlayerCharacter.h"
+#include "../../../Public/Components/Player/GTWSkateMovementComponent.h"
 
 // Sets default values
 AGTWPlayerCharacter::AGTWPlayerCharacter()
