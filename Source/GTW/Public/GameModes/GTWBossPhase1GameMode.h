@@ -4,16 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/GameModeBase.h"
+#include <GameModes/GTWBossGameModeTypes.h>
 #include "GTWBossPhase1GameMode.generated.h"
 
-UENUM(BlueprintType)
-enum class EBossGameModeState : uint8
-{
-	Ready	UMETA(DisplayName = "READY"),
-	Play	UMETA(DisplayName = "PLAY"),
-	Clear	UMETA(DisplayName = "CLEAR"),
-	Fail	UMETA(DisplayName = "FAIL")
-};
 
 /**
  * 보스 1페이즈 레벨에서 사용되는 게임 모드

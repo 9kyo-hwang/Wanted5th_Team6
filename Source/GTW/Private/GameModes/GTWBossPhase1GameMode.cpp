@@ -3,19 +3,31 @@
 
 #include "GameModes/GTWBossPhase1GameMode.h"
 
-#include <GameFramework/Character.h>
+#include <GameFramework/Character.h>  // TEMP. 추후 보스 클래스 생기면 그걸로 체인지
+
+namespace
+{
+	static void Print(const FString& Message, FColor Color = FColor::MakeRandomColor(), int32 InKey = -1)
+	{
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(InKey, 7.f, Color, Message);
+			UE_LOG(LogTemp, Warning, TEXT("%s"), *Message);
+		}
+	}
+}
 
 void AGTWBossPhase1GameMode::InitGameplay(ACharacter* InBoss, const TArray<AActor*>& InHitObjectSpawners)
 {
 	if (CurrentState != EBossGameModeState::Ready)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[InitGameplay] 상태가 Ready가 아님!"));
+		Print(TEXT("[InitGameplay] 상태가 Ready가 아님!"));
 		return;
 	}
 
 	if (!IsValid(InBoss) || InHitObjectSpawners.IsEmpty())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[InitGameplay] 보스가 유효하지 않거나 스포너가 없음!"));
+		Print(TEXT("[InitGameplay] 보스가 유효하지 않거나 스포너가 없음!"));
 		return;
 	}
 
@@ -23,7 +35,7 @@ void AGTWBossPhase1GameMode::InitGameplay(ACharacter* InBoss, const TArray<AActo
 	{
 		if (!IsValid(Spawner))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[InitGameplay] 스포너가 유효하지 않음!"));
+			Print(TEXT("[InitGameplay] 스포너가 유효하지 않음!"));
 			return;
 		}
 	}
@@ -59,13 +71,13 @@ void AGTWBossPhase1GameMode::StartGameplay()
 
 	if (!GetWorld() || !GetWorld()->HasBegunPlay())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[StartGameplay] World가 BeginPlay를 하지 않았음!"));
+		Print(TEXT("[StartGameplay] World가 BeginPlay를 하지 않았음!"));
 		return;
 	}
 
 	if (!IsValid(Boss.Get()) || HitObjectSpawners.IsEmpty())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("[StartGameplay] 보스랑 스포너가 제대로 세팅되지 않았음"));
+		Print(TEXT("[StartGameplay] 보스랑 스포너가 제대로 세팅되지 않았음"));
 		return;
 	}
 
@@ -73,7 +85,7 @@ void AGTWBossPhase1GameMode::StartGameplay()
 	{
 		if (!IsValid(Spawner))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("[StartGameplay] 이상한 스포너 객체가 껴있음!"));
+			Print(TEXT("[StartGameplay] 이상한 스포너 객체가 껴있음!"));
 			return;
 		}
 	}
