@@ -35,6 +35,7 @@ protected:
 	TObjectPtr<class UAnimMontage> BallAttack;
 
 private:
+	// 어택 몽타주 실행
 	void PlayAttackAnim(UAnimMontage* AttackMontage);
 
 

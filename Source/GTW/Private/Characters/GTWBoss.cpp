@@ -1,8 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
+#include "Characters/GTWBoss.h"
 #include "Controllers/GTWBossAIController.h"
 #include <Animation/AnimInstance.h>
-#include "Characters/GTWBoss.h"
 
 // Sets default values
 AGTWBoss::AGTWBoss()
@@ -12,7 +12,9 @@ AGTWBoss::AGTWBoss()
 		TEXT("/Game/Characters/Boss/Mesh/SKM_Boss.SKM_Boss")
 	);
 	if (BossMesh.Succeeded())
+	{
 		GetMesh()->SetSkeletalMesh(BossMesh.Object);
+	}
 
 
 	// 매시 컴포넌트 앞쪽 보게 설정
@@ -27,28 +29,36 @@ AGTWBoss::AGTWBoss()
 	);
 
 	if (BossAnim.Succeeded())
+	{
 		GetMesh()->SetAnimInstanceClass(BossAnim.Class);
+	}
 
 	// 검기 몽타주 연결
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> SwordAttackRef(
 		TEXT("/Game/Characters/Boss/Animation/AM_SwordAttack.AM_SwordAttack")
 	);
 	if (SwordAttackRef.Succeeded())
+	{
 		SwordAttack = SwordAttackRef.Object;
+	}
 
 	// 번개 몽타주 연결
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> LightningAttackRef(
 		TEXT("/Game/Characters/Boss/Animation/AM_LightAttack.AM_LightAttack")
 	);
 	if (LightningAttackRef.Succeeded())
+	{ 
 		LightningAttack = LightningAttackRef.Object;
+	}
 
 	// 공 몽타주 연결
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> BallAttackRef(
 		TEXT("/Game/Characters/Boss/Animation/AM_BallAttack.AM_BallAttack")
 	);
 	if (BallAttackRef.Succeeded())
+	{
 		BallAttack = BallAttackRef.Object;
+	}
 
 	// AIController 연결
 	AIControllerClass = AGTWBossAIController::StaticClass();
@@ -82,13 +92,13 @@ void AGTWBoss::PlayLightning()
 void AGTWBoss::PlayAttackAnim(UAnimMontage* AttackMontage)
 {
 	// 캐릭터 애니메이션 실행
-	UAnimInstance* instance = GetMesh()->GetAnimInstance();
-	if (instance)
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (AnimInstance)
 	{
 		// 실행 중인 모든 몽타주 중지(블렌드 아웃 숫자 지정)
-		instance->StopAllMontages(0.5f);
+		AnimInstance->StopAllMontages(0.5f);
 		// 몽타주 실행(1.0f: 재생 속도)
-		instance->Montage_Play(AttackMontage, 1.0f);
+		AnimInstance->Montage_Play(AttackMontage, 1.0f);
 	}
 }
 

@@ -23,12 +23,4 @@ protected:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 protected:
-	// Owner를 저장하고 재활용
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Boss)
-	//TObjectPtr<class ACharacter> Owner;
-	
-
-	// 공격 확인용 변수
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Boss)
-	uint32 bIsAttack: 1;
 };

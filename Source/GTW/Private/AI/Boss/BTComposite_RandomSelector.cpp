@@ -1,16 +1,13 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AI/Boss/BTC_RandomSelector.h"
+#include "AI/Boss/BTComposite_RandomSelector.h"
 
-#define DEBUG_MODE 1
-
-int32 UBTC_RandomSelector::GetNextChildHandler(
+int32 UBTComposite_RandomSelector::GetNextChildHandler(
 	FBehaviorTreeSearchData& SearchData, int32 PrevChild, 
 	EBTNodeResult::Type LastResult) const
 {
 	// 현재 실행된 자식이 없을때만 랜덤 실행.
-#if DEBUG_MODE
 	if (PrevChild == BTSpecialChild::NotInitialized)
 	{
 		int Range = FMath::RandRange(0, 99);
@@ -24,11 +21,7 @@ int32 UBTC_RandomSelector::GetNextChildHandler(
 		else
 			return 2;
 	}
-#else
-	if (PrevChild == BTSpecialChild::NotInitialized)
-		return 1;
-#endif
 
-	// 현재 실행된 자식이 있으면 부모노드로 ㄱㄱ(시퀀스로간다는뜻)
+	// 현재 실행된 자식이 있으면 부모노드로 이동(시퀀스로)
 	return BTSpecialChild::ReturnToParent;
 }

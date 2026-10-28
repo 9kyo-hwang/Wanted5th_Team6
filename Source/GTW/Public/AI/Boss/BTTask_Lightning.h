@@ -4,20 +4,21 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
-#include "BTT_SwordWave.generated.h"
+#include "BTTask_Lightning.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class GTW_API UBTT_SwordWave : public UBTTaskNode
+class GTW_API UBTTask_Lightning : public UBTTaskNode
 {
 	GENERATED_BODY()
 public:
-	UBTT_SwordWave();
+	UBTTask_Lightning();
 
 private:
 	virtual EBTNodeResult::Type ExecuteTask(
 		UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+
 
 };

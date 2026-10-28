@@ -4,17 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/BTTaskNode.h"
-#include "BTT_SpawnBall.generated.h"
+#include "BTTask_SpawnBall.generated.h"
 
-/**
- * 
- */
 UCLASS()
-class GTW_API UBTT_SpawnBall : public UBTTaskNode
+class GTW_API UBTTask_SpawnBall : public UBTTaskNode
 {
 	GENERATED_BODY()
 public:
-	UBTT_SpawnBall();
+	UBTTask_SpawnBall();
 
 private:
 	virtual EBTNodeResult::Type ExecuteTask(

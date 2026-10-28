@@ -4,13 +4,13 @@
 
 #include "CoreMinimal.h"
 #include "BehaviorTree/Composites/BTComposite_Selector.h"
-#include "BTC_RandomSelector.generated.h"
+#include "BTComposite_RandomSelector.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class GTW_API UBTC_RandomSelector : public UBTComposite_Selector
+class GTW_API UBTComposite_RandomSelector : public UBTComposite_Selector
 {
 	GENERATED_BODY()
 protected:
