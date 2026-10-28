@@ -4,21 +4,22 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "SokobanBoard.generated.h"
+#include "GTWSokobanBoard.generated.h"
 
 class UStaticMesh;
 class UStaticMeshComponent;
 class AGTWSokobanBox;
 class UCameraComponent;
+class UUserWidget;
 
 UCLASS()
-class GTW_API ASokobanBoard : public AActor
+class GTW_API AGTWSokobanBoard : public AActor
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	ASokobanBoard();
+	AGTWSokobanBoard();
 	bool TryPushBox(
 		AGTWSokobanBox* Box,
 		const FIntPoint& Direction
@@ -33,13 +34,20 @@ public:
 	bool GetSokobanClear() const { return bIsSokobanClear; }
 	UFUNCTION(BlueprintCallable)
 	float GetSokobanElapsedTime() const { return ElapsedTime; }
+	UFUNCTION(BlueprintCallable)
+	void ResetGame();
 	UFUNCTION(BlueprintCallable, Category = "Sokoban|GoalCount")
 	void AddGoalCount();
+	UFUNCTION(BlueprintCallable)
+	void SokobanBoardField();
+
+	UFUNCTION(BlueprintCallable)
+	UUserWidget* GetElapsedWidget() const { return ElapsedWidget; }
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sokoban|GoalCount")
 	int32 GoalCount;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bIsSokobanField = false;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bIsSokobanFieldTelePort = false;
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -83,7 +91,10 @@ private:
 	AGTWSokobanBox* SpawnBox(TSubclassOf<AGTWSokobanBox> BoxClass, const FVector& TileLocation);
 	AActor* SpawnGoalTile(TSubclassOf<AActor> BoxClass, const FVector& TileLocation);
 	FIntPoint WorldToGrid(const FVector& WorldLocation) const;
-	void ResetGame();
+
+	void ShowElapsedWidget();
+	void ShowClearViewWidget();
+	void ActivateSokobanCamera();
 	void GameClear();
 
 	// 변수
@@ -93,6 +104,14 @@ private:
 	TObjectPtr<UCameraComponent> SokobanBoardCamera;
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<AGTWSokobanBox>> SpawnedBoxes;
+	UPROPERTY(EditDefaultsOnly, Category = "Sokoban|UI")
+	TSubclassOf<UUserWidget> ElapsedWidgetClass;
+	UPROPERTY()
+	TObjectPtr<UUserWidget> ElapsedWidget;
+	UPROPERTY(EditDefaultsOnly, Category = "Sokoban|UI")
+	TSubclassOf<UUserWidget> ClearViewWidgetClass;
+	UPROPERTY()
+	TObjectPtr<UUserWidget> ClearViewWidget;
 
 	int32 Rows; // 행
 	int32 Colums; // 열

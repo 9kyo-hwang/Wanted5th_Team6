@@ -2,7 +2,7 @@
 
 
 #include "GTWSokobanBox.h"
-#include "SokobanBoard.h"
+#include "GTWSokobanBoard.h"
 
 // Sets default values
 AGTWSokobanBox::AGTWSokobanBox()
@@ -110,7 +110,7 @@ void AGTWSokobanBox::RequestPush(AActor* PushingActor)
         PushDirection.Y = Distance.Y >= 0.f ? 1 : -1;
     }
 
-    ASokobanBoard* Board = Cast<ASokobanBoard>(GetOwner());
+    AGTWSokobanBoard* Board = Cast<AGTWSokobanBoard>(GetOwner());
 
     if (!Board)
     {

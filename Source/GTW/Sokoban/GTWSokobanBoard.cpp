@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "SokobanBoard.h"
+#include "GTWSokobanBoard.h"
 #include "GTWSokobanBox.h"
 
 #include <Misc/FileHelper.h>
@@ -9,11 +9,17 @@
 #include <Engine/StaticMesh.h>
 #include "Camera/CameraComponent.h"
 #include <Components/StaticMeshComponent.h>
+#include "Blueprint/UserWidget.h"
 
-#include "TimerManager.h"
+// 3인칭 프로젝트때문에 일단 가져온거 나중에 캐릭붙으면 삭제 및 정리
+#include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
+#include "GameFramework/Character.h"
+#include <Components/CapsuleComponent.h>
+#include "Camera/PlayerCameraManager.h"
 
 // Sets default values
-ASokobanBoard::ASokobanBoard()
+AGTWSokobanBoard::AGTWSokobanBoard()
 	: GoalCount(0), Rows(0), Colums(0)
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
@@ -33,7 +39,7 @@ ASokobanBoard::ASokobanBoard()
 		ECameraProjectionMode::Perspective;
 }
 
-bool ASokobanBoard::TryPushBox(AGTWSokobanBox* Box, const FIntPoint& Direction)
+bool AGTWSokobanBoard::TryPushBox(AGTWSokobanBox* Box, const FIntPoint& Direction)
 {
 	if (!IsValid(Box) || Box->IsMoving())
 	{
@@ -92,29 +98,28 @@ bool ASokobanBoard::TryPushBox(AGTWSokobanBox* Box, const FIntPoint& Direction)
 }
 
 // Called when the game starts or when spawned
-void ASokobanBoard::BeginPlay()
+void AGTWSokobanBoard::BeginPlay()
 {
 	Super::BeginPlay();
 	if (LoadMapFileData())
 	{
 		InitializeMap();
-		//SetActorHiddenInGame(true);
 		GetMapCenterLocation();
 	}
 }
 
 // Called every frame
-void ASokobanBoard::Tick(float DeltaTime)
+void AGTWSokobanBoard::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	if (bIsSokobanClear == false && bIsSokobanField)
+	if (bIsSokobanClear == false && bIsSokobanFieldTelePort)
 	{
 		ElapsedTime += DeltaTime;
 	}
 }
 
-FVector ASokobanBoard::GetMapCenterLocation() const
+FVector AGTWSokobanBoard::GetMapCenterLocation() const
 {
 	const float CenterX = (Colums - 1) * TileSize * 0.5f;
 	const float CenterY = (Rows - 1) * TileSize * 0.5f;
@@ -125,25 +130,19 @@ FVector ASokobanBoard::GetMapCenterLocation() const
 		.TransformPosition(LocalCenter);
 }
 
-void ASokobanBoard::AddGoalCount()
+void AGTWSokobanBoard::AddGoalCount()
 {
 	GoalCount++;
 	if (GoalCount >= MaxGoalCount)
 	{
 		GameClear();
 	}
-
-
-	GetWorldTimerManager().SetTimerForNextTick(
-		this, &ASokobanBoard::ResetGame
-	);
 }
 
-bool ASokobanBoard::LoadMapFileData()
+bool AGTWSokobanBoard::LoadMapFileData()
 {
 	FString FilePath = FPaths::Combine(
 		FPaths::ProjectContentDir(),
-		TEXT("Floor"),
 		TEXT("Sokoban"),
 		TEXT("MapData"),
 		TEXT("SokobanMap.txt")
@@ -180,7 +179,7 @@ bool ASokobanBoard::LoadMapFileData()
 	return false;
 }
 
-void ASokobanBoard::InitializeMap()
+void AGTWSokobanBoard::InitializeMap()
 {
 	for (int32 i = 0; i < Rows; ++i)
 	{
@@ -263,7 +262,7 @@ void ASokobanBoard::InitializeMap()
 	);
 }
 
-void ASokobanBoard::CreateTileMesh(UStaticMesh * MeshAsset, const FVector & Location, UMaterialInterface * Material)
+void AGTWSokobanBoard::CreateTileMesh(UStaticMesh * MeshAsset, const FVector & Location, UMaterialInterface * Material)
 {
 	if (!MeshAsset)
 	{
@@ -294,7 +293,7 @@ void ASokobanBoard::CreateTileMesh(UStaticMesh * MeshAsset, const FVector & Loca
 	MeshComponent->RegisterComponent();
 }
 
-AGTWSokobanBox* ASokobanBoard::SpawnBox(TSubclassOf<AGTWSokobanBox> BoxClass, const FVector & TileLocation)
+AGTWSokobanBox* AGTWSokobanBoard::SpawnBox(TSubclassOf<AGTWSokobanBox> BoxClass, const FVector & TileLocation)
 {
 	if (!BoxClass)
 	{
@@ -348,7 +347,7 @@ AGTWSokobanBox* ASokobanBoard::SpawnBox(TSubclassOf<AGTWSokobanBox> BoxClass, co
 	return Box;
 }
 
-AActor* ASokobanBoard::SpawnGoalTile(TSubclassOf<AActor> BoxClass, const FVector& TileLocation)
+AActor* AGTWSokobanBoard::SpawnGoalTile(TSubclassOf<AActor> BoxClass, const FVector& TileLocation)
 {
 	const FVector WorldLocation =
 		RootComponent->GetComponentTransform()
@@ -366,7 +365,7 @@ AActor* ASokobanBoard::SpawnGoalTile(TSubclassOf<AActor> BoxClass, const FVector
 	return GoalTile;
 }
 
-FIntPoint ASokobanBoard::WorldToGrid(const FVector& WorldLocation) const
+FIntPoint AGTWSokobanBoard::WorldToGrid(const FVector& WorldLocation) const
 {
 	const FVector LocalLocation =
 		RootComponent->GetComponentTransform()
@@ -378,7 +377,63 @@ FIntPoint ASokobanBoard::WorldToGrid(const FVector& WorldLocation) const
 	);
 }
 
-void ASokobanBoard::ResetGame()
+void AGTWSokobanBoard::SokobanBoardField()
+{
+	bIsSokobanFieldTelePort = true;
+	ShowElapsedWidget();
+	ActivateSokobanCamera();
+}
+
+void AGTWSokobanBoard::ShowElapsedWidget()
+{
+	APlayerController* Player =
+		UGameplayStatics::GetPlayerController(this, 0);
+
+	ElapsedWidget = CreateWidget<UUserWidget>(
+		Player,
+		ElapsedWidgetClass
+	);
+	
+	if (IsValid(ElapsedWidget))
+	{
+		ElapsedWidget->AddToViewport();
+		ElapsedWidget->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void AGTWSokobanBoard::ShowClearViewWidget()
+{
+	APlayerController* Player =
+		UGameplayStatics::GetPlayerController(this, 0);
+
+	ClearViewWidget = CreateWidget<UUserWidget>(
+		Player,
+		ClearViewWidgetClass
+	);
+
+	if (IsValid(ClearViewWidget))
+	{
+		ClearViewWidget->AddToViewport();
+		ClearViewWidget->SetVisibility(ESlateVisibility::Visible);
+	}
+}
+
+void AGTWSokobanBoard::ActivateSokobanCamera()
+{
+	APlayerController* Player =
+		UGameplayStatics::GetPlayerController(this, 0);
+
+	if (IsValid(Player) == false)
+	{
+		return;
+	}
+	
+	SokobanBoardCamera->SetActive(true);
+	Player->PlayerCameraManager->StartCameraFade(1, 0, 5.0f,FLinearColor::Black);
+	Player->SetViewTargetWithBlend(this);
+}
+
+void AGTWSokobanBoard::ResetGame()
 {
 	for (AGTWSokobanBox* Box : SpawnedBoxes)
 	{
@@ -396,12 +451,28 @@ void ASokobanBoard::ResetGame()
 	SpawnBox(RedBoxClass, BoxStartLocatin[0]);
 	SpawnBox(GreenBoxClass, BoxStartLocatin[1]);
 	SpawnBox(BlueBoxClass, BoxStartLocatin[2]);
+
+	APlayerController* Player =
+		UGameplayStatics::GetPlayerController(this, 0);
+
+	float CapsuleHalfHeight =
+		Player->GetCharacter()->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+
+	// 목적지 좌표 (원본 변수 변경 방지를 위해 복사)
+	FVector TargetLocation = PlayerStartLocation;
+
+	// 바닥 좌표를 캡슐 중심 좌표로 보정
+	TargetLocation.Z += CapsuleHalfHeight;
+
+	FRotator CharacterRotator = Player->TargetViewRotation;
+	Player->GetCharacter()->TeleportTo(TargetLocation, CharacterRotator);
 }
 
-void ASokobanBoard::GameClear()
+void AGTWSokobanBoard::GameClear()
 {
 	bIsSokobanClear = true;
-	bIsSokobanField = false;
+	bIsSokobanFieldTelePort = false;
 	int32 SokobanClearTime = ElapsedTime;
 	UE_LOG(LogTemp, Error, TEXT("SokobanGame Clear! elaspTime : %d"), SokobanClearTime);
+	ShowClearViewWidget();
 }

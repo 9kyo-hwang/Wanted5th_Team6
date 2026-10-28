@@ -7,7 +7,7 @@
 #include "GTWSokobanBox.generated.h"
 
 UENUM(BlueprintType)
-enum class BoxType : uint8
+enum class EBoxType : uint8
 {
 	Resume,
 	Introduction,
@@ -47,5 +47,5 @@ public:
 	bool bIsMoving = false;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,Category = "BoxTypeEnum")
-	BoxType EBoxType;	
+	EBoxType EBoxType;	
 };
