@@ -6,9 +6,6 @@
 #include "BehaviorTree/Composites/BTComposite_Selector.h"
 #include "BTComposite_RandomSelector.generated.h"
 
-/**
- * 
- */
 UCLASS()
 class GTW_API UBTComposite_RandomSelector : public UBTComposite_Selector
 {
