@@ -9,7 +9,7 @@ AGTWBoss::AGTWBoss()
 {
 	// 메시 컴포넌트 연결
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BossMesh(
-		TEXT("/Game/Characters/Boss/Mesh/SKM_Boss.SKM_Boss")
+		TEXT("/Game/Assets/Boss/Meshes/SKM_Boss.SKM_Boss")
 	);
 	if (BossMesh.Succeeded())
 	{
@@ -30,6 +30,7 @@ AGTWBoss::AGTWBoss()
 
 	if (BossAnim.Succeeded())
 	{
+		GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 		GetMesh()->SetAnimInstanceClass(BossAnim.Class);
 	}
 
