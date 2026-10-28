@@ -25,7 +25,7 @@ AGTWBoss::AGTWBoss()
 
 	// 애니메이션 에셋 연결
 	static ConstructorHelpers::FClassFinder<UAnimInstance> BossAnim(
-		TEXT("/Game/Characters/Boss/Animation/ABP_P2Boss.ABP_P2Boss_C")
+		TEXT("/Game/Characters/Boss/Blueprints/ABP_P2Boss.ABP_P2Boss_C")
 	);
 
 	if (BossAnim.Succeeded())
