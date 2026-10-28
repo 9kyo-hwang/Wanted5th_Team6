@@ -3,6 +3,8 @@
 
 #include "GameModes/GTWBossPhase1GameMode.h"
 
+#include <GameInstance/GTWGameInstance.h>
+
 #include <GameFramework/Character.h>  // TEMP. 추후 보스 클래스 생기면 그걸로 체인지
 
 namespace
@@ -49,7 +51,15 @@ void AGTWBossPhase1GameMode::InitGameplay(ACharacter* InBoss, const TArray<AActo
 		HitObjectSpawners.AddUnique(Spawner);
 	}
 
-	// @TODO: 4층 결과를 GameInstance로부터 가져와서 난이도 세팅
+	if (UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>())
+	{
+		double SokobanClearTimeSeconds, ShootingClearTimeSeconds;
+		GameInstance->TryGetMinigameClearTime(EMinigameType::Sokoban, SokobanClearTimeSeconds);
+		GameInstance->TryGetMinigameClearTime(EMinigameType::Shooting, ShootingClearTimeSeconds);
+
+		// @TODO: 난이도 세팅
+	}
+	
 	// @TODO: Ready 상태에서는 주로 연출이 재생되니, 플레이어 입력을 차단했다가 풀어주는 기능 필요
 }
 
@@ -120,7 +130,14 @@ void AGTWBossPhase1GameMode::ClearPhase()
 	CurrentState = EBossGameModeState::Clear;
 	StopGameplay();
 	
-	// @TODO: GameInstance에 접근해서 Phase 1 통과 기록
+	if (UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>())
+	{
+		GameInstance->SetBossPhase1Cleared();
+	}
+	else
+	{
+		Print(TEXT("[Phase1] GameInstance가 없음"));
+	}
 
 	K2_OnPhaseFinished(CurrentState);
 }
@@ -135,7 +152,14 @@ void AGTWBossPhase1GameMode::FailPhase()
 	CurrentState = EBossGameModeState::Fail;
 	StopGameplay();
 
-	// @TODO: GameInstance에 접근해서 보스전 클리어 기록 날리기(true -> false)
+	if (UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>())
+	{
+		GameInstance->ResetBossPhase1Cleared();
+	}
+	else
+	{
+		Print(TEXT("[Phase1] GameInstance가 없음"));
+	}
 
 	K2_OnPhaseFinished(CurrentState);
 }

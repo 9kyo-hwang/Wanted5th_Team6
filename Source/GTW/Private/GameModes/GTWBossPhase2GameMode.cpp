@@ -3,6 +3,8 @@
 
 #include "GameModes/GTWBossPhase2GameMode.h"
 
+#include <GameInstance/GTWGameInstance.h>
+
 #include <GameFramework/Character.h>	// TEMP. 추후 보스 클래스 생기면 그걸로 체인지
 
 namespace
@@ -87,7 +89,15 @@ void AGTWBossPhase2GameMode::ClearPhase()
 	CurrentState = EBossGameModeState::Clear;
 	StopGameplay();
 
-	// @TODO: GameInstance에 접근해서 게임 전체 클리어 호출(가칭 CompleteGame)
+	if (UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>())
+	{
+		// @TEMP: 현재 StartNewGame()을 호출하는 경로가 없음 -> 임시로 BP로 열어주자.
+		GameInstance->CompleteGame();
+	}
+	else
+	{
+		Print(TEXT("[Phase2] GameInstance를 찾을 수 없음"));
+	}
 
 	K2_OnPhaseFinished(CurrentState);
 }
@@ -102,7 +112,14 @@ void AGTWBossPhase2GameMode::FailPhase()
 	CurrentState = EBossGameModeState::Fail;
 	StopGameplay();
 
-	// @TODO: GameInstance에 접근해서 보스전 클리어 기록 날리기(true -> false)
+	if (UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>())
+	{
+		GameInstance->ResetBossPhase1Cleared();
+	}
+	else
+	{
+		Print(TEXT("[Phase1] GameInstance가 없음"));
+	}
 
 	K2_OnPhaseFinished(CurrentState);
 }

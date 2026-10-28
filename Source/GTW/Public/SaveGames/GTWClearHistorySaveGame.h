@@ -14,4 +14,7 @@ class GTW_API UGTWClearHistorySaveGame : public USaveGame
 {
 	GENERATED_BODY()
 	
+public:
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Clear History")
+	TArray<double> ClearTimes;	// 누적된 클리어 기록들
 };
