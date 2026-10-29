@@ -16,11 +16,15 @@ public:
 	AGTWBoss();
 
 	// 검기 실행 함수
+	UFUNCTION()
 	void PlaySwordWave();
 	// 공 실행 함수
 	void PlaySpawnBall();
 	// 번개 실행 함수
 	void PlayLightning();
+
+	// 스플라인 변경 함수
+	void ChangeSpline();
 protected:
 	// Called when the game starts or when spawned
 	//virtual void BeginPlay() override;
@@ -33,6 +37,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
 	TObjectPtr<class UAnimMontage> BallAttack;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Map)
+	TArray<TObjectPtr<class AActor>> BossSplines;
 
 private:
 	// 어택 몽타주 실행

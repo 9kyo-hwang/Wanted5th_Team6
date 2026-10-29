@@ -3,6 +3,7 @@
 #include "Characters/GTWBoss.h"
 #include "Controllers/GTWBossAIController.h"
 #include <Animation/AnimInstance.h>
+#include <Components/SplineComponent.h>
 
 // Sets default values
 AGTWBoss::AGTWBoss()
@@ -11,6 +12,7 @@ AGTWBoss::AGTWBoss()
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BossMesh(
 		TEXT("/Game/Assets/Boss/Meshes/SKM_Boss.SKM_Boss")
 	);
+
 	if (BossMesh.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(BossMesh.Object);
@@ -88,6 +90,12 @@ void AGTWBoss::PlayLightning()
 {
 	PlayAttackAnim(LightningAttack);
 
+}
+
+void AGTWBoss::ChangeSpline()
+{
+	// 현재 스플라인 배열에서 ++;
+	BossSplines
 }
 
 void AGTWBoss::PlayAttackAnim(UAnimMontage* AttackMontage)
