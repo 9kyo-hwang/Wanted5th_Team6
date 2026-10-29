@@ -155,6 +155,17 @@ double UGTWGameInstance::GetPlaytimeSeconds() const
     return FPlatformTime::Seconds() - GameStartTimeSeconds;
 }
 
+int32 UGTWGameInstance::NumClearTimes() const
+{
+    if (IsValid(ClearHistorySaveGame.Get()))
+    {
+        return ClearHistorySaveGame->ClearTimes.Num();
+    }
+
+    Print(TEXT("ClearHistorySaveGame 객체가 없네?"));
+    return 0;
+}
+
 // return: 저장 성공 시 true, 실패했거나 SaveGame이 Invalid 하면 false
 bool UGTWGameInstance::SaveClearHistory()
 {

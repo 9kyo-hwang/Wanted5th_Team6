@@ -34,6 +34,8 @@ public:
 	void StartNewGame();
 
 	// 게임 최종 클리어 시 SaveGame에 클리어타임 기록
+	// TEMP: 완료된 게임에서 재호출 시 저장이 안되는지 테스트하기 위해 UFUNCTION
+	UFUNCTION(BlueprintCallable, Category="Game|Progress")
 	void CompleteGame();
 
 public:
@@ -42,6 +44,9 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Game|Progress")
 	double GetPlaytimeSeconds() const;
+
+	UFUNCTION(BlueprintCallable, Category = "Game|Progress")
+	int32 NumClearTimes() const;
 
 	// TEMP. Editor에서 보기 위함
 	UFUNCTION(BlueprintCallable, Category = "Game|Progress")
