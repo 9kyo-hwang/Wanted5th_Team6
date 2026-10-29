@@ -42,16 +42,13 @@ public:
 		return IsMovingOnGround();
 	}
 
-	virtual void UpdateVelocityBeforeMovement(float DeltaSeconds) override;
-	
-
 public:
 	// 바닥 법선 벡터 구하기
-	FVector GetNewImpactNormal() const
+	FORCEINLINE FVector GetNewImpactNormal() const
 	{
 		return CurrentFloor.HitResult.ImpactNormal;
 	}
-	FVector GetOldImpactNormal() const
+	FORCEINLINE FVector GetOldImpactNormal() const
 	{
 		return OldFloor.HitResult.ImpactNormal;
 	}
@@ -65,7 +62,6 @@ protected:
 	// 오너
 	class AGTWPlayerCharacter* GTWPlayerCharacter;
 
-
 	UPROPERTY(Category = Floor, VisibleInstanceOnly, BlueprintReadOnly)
 	FFindFloorResult OldFloor;
 
@@ -77,9 +73,6 @@ protected:
 
 	UPROPERTY()
 	int32 NormalCount;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
-	float MaxSpeed;
 
 };
 	

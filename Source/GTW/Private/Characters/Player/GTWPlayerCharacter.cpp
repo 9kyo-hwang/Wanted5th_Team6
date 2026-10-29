@@ -6,13 +6,16 @@
 #include <Components/CapsuleComponent.h>
 
 // Sets default values
-AGTWPlayerCharacter::AGTWPlayerCharacter()
+AGTWPlayerCharacter::AGTWPlayerCharacter(
+	const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<
+		UGTWSkateMovementComponent>(
+			ACharacter::CharacterMovementComponentName))
 {
-	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	// 컴포넌트 획득
-	SkateCharacterMovementComponent = Cast<UGTWSkateMovementComponent>(GetCharacterMovement());
+	SkateCharacterMovementComponent =
+		Cast<UGTWSkateMovementComponent>(GetCharacterMovement());
 }
 
 void AGTWPlayerCharacter::MoveSlope(const FVector& Normal)
@@ -45,11 +48,11 @@ void AGTWPlayerCharacter::ActiveGravity(const bool bIsGround, const FVector& Nor
 	FVector GravityImpulseDirection;
 
 	// 자연스러운 중력 연출을 위한 조정값
-	float GravaityScale;
+	float GravityScale;
 
 	if (bIsGround)
 	{
-		GravaityScale = -0.15f;
+		GravityScale = -0.15f;
 
 		// 법선 벡터로부터 중력 방향을 계산하는 함수
 		GravityImpulseDirection = NormalToGravity(Normal);
@@ -57,16 +60,18 @@ void AGTWPlayerCharacter::ActiveGravity(const bool bIsGround, const FVector& Nor
 	else
 	{
 		// 공중에서는 기존 적용되는 중력이 있으므로 값을 줄임
-		GravaityScale = -0.07f;
+		GravityScale = -0.07f;
 
 		GravityImpulseDirection = FVector(0, 0, -1);
 	}
 
 	// 중력 방향에 중력값 * 스케일 값을 곱
-	GravityImpulse = GravityImpulseDirection * (GravityValue * GravaityScale);
+	GravityImpulse = GravityImpulseDirection * (GravityValue * GravityScale);
 	
 	// 캐릭터 무브먼트 컴포넌트에게 충격 전달
-	if (Normal.Z < 1 - KINDA_SMALL_NUMBER)
+	bool bHasNoTilt = Normal.Z < 1 - KINDA_SMALL_NUMBER;
+
+	if (bHasNoTilt)
 	{
 		SkateCharacterMovementComponent->AddImpulse(GravityImpulse, true);	
 	}
@@ -131,12 +136,6 @@ void AGTWPlayerCharacter::Tick(float DeltaTime)
 		*SkateCharacterMovementComponent->GetCurrentAcceleration().ToString());
 }
 
-// Called to bind functionality to input
-void AGTWPlayerCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-{
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
-
-} 
 
 
  

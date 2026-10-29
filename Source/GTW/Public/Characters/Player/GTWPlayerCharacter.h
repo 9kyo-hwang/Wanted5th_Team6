@@ -14,7 +14,7 @@ class GTW_API AGTWPlayerCharacter : public ACharacter
 
 public:
 	// Sets default values for this character's properties
-	AGTWPlayerCharacter();
+	AGTWPlayerCharacter(const FObjectInitializer& ObjectInitializer);
 
 public:
 	// 틱에 호출될 경사 이동 함수
@@ -26,22 +26,20 @@ public:
 	// 법선 벡터로부터 중력이 적용될 벡터를 계산하는 함수
 	FVector NormalToGravity(const FVector& Normal);
 
+
+
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
 	// 캐릭터 무브먼트 컴포넌트 
 	// 만약 베이스로 나뉘어야 한다면 이 부분은 자손클래스로 이전
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
-	class UGTWSkateMovementComponent* SkateCharacterMovementComponent;
+	TObjectPtr<class UGTWSkateMovementComponent> SkateCharacterMovementComponent;
 
 
 };

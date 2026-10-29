@@ -19,8 +19,6 @@ void UGTWSkateMovementComponent::InitializeComponent()
 {
 	Super::InitializeComponent();
 
-	GTWPlayerCharacter = Cast<AGTWPlayerCharacter>(GetOwner());	
-
 	// 초기화
 	NewImpactNormal = FVector(0.f, 0.f, 0.f);
 	OldImpactNormal = FVector(0.f, 0.f, 0.f);
@@ -131,11 +129,6 @@ void UGTWSkateMovementComponent::StartFalling(int32 Iterations, float remainingT
 	}
 	StartNewPhysics(remainingTime, Iterations);
 }
-
-void UGTWSkateMovementComponent::UpdateVelocityBeforeMovement(float DeltaSeconds)
-{
-}
-
 
 FVector UGTWSkateMovementComponent::GetMeshRightVector() const
 {
