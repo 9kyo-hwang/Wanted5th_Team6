@@ -16,6 +16,16 @@ public:
 	// Sets default values for this character's properties
 	AGTWPlayerCharacter();
 
+public:
+	// 틱에 호출될 경사 이동 함수
+	void MoveSlope(const FVector& Normal);
+
+	// 중력을 적용하는 함수
+	void ActiveGravity(const bool bIsGround, const FVector& Normal);
+
+	// 법선 벡터로부터 중력이 적용될 벡터를 계산하는 함수
+	FVector NormalToGravity(const FVector& Normal);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -26,9 +36,6 @@ public:
 
 	// Called to bind functionality to input
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
-
-	// 충돌 검사를 위해 라인 트레이싱을 할 때, 자기 캐릭터는 해당 검사에서 제외하는 함수
-	FCollisionQueryParams GetIgnoreCharacterParams() const;
 
 	// 캐릭터 무브먼트 컴포넌트 
 	// 만약 베이스로 나뉘어야 한다면 이 부분은 자손클래스로 이전

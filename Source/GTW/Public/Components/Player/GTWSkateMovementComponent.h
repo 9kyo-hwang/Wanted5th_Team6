@@ -22,6 +22,7 @@ public:
 	
 	virtual void InitializeComponent() override; 
 
+
 	// 상속
 public:
 	// 기존 로직에서 반환 전에 경사 계산 추가하기.  
@@ -41,6 +42,8 @@ public:
 		return IsMovingOnGround();
 	}
 
+	virtual void UpdateVelocityBeforeMovement(float DeltaSeconds) override;
+	
 
 public:
 	// 바닥 법선 벡터 구하기
@@ -53,6 +56,7 @@ public:
 		return OldFloor.HitResult.ImpactNormal;
 	}
 
+	// 캐릭터 정면 벡터 구하기
 	FVector GetMeshRightVector() const;
 
 
@@ -73,6 +77,9 @@ protected:
 
 	UPROPERTY()
 	int32 NormalCount;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Character Movement: Walking")
+	float MaxSpeed;
 
 };
 	

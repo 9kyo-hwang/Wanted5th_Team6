@@ -25,25 +25,18 @@ void UGTWSkateMovementComponent::InitializeComponent()
 	NewImpactNormal = FVector(0.f, 0.f, 0.f);
 	OldImpactNormal = FVector(0.f, 0.f, 0.f);
 	OldFloor = CurrentFloor;
-
+	  
 }
 
 FRotator UGTWSkateMovementComponent::ComputeOrientToMovementRotation(const FRotator& CurrentRotation, float DeltaTime, FRotator& DeltaRotation) const
 {
-	if (Acceleration.SizeSquared() < UE_KINDA_SMALL_NUMBER)
-	{
-		// AI path following request can orient us in that direction (it's effectively an acceleration)
-		if (bHasRequestedVelocity && RequestedVelocity.SizeSquared() > UE_KINDA_SMALL_NUMBER)
-		{
-			return RequestedVelocity.GetSafeNormal().Rotation();
-		}
-
-		return CurrentRotation; 
-	}
-
 	// Rotate toward direction of velocity.
 	// 기존 가속으로 진행하던 적용하던 회전을 속도를 기반으로 회전하도록 변경함.
 	// -> 회전이 진행되는 시점을 가속 적용 순간에서 속도 변환 시점으로 변환한 것.
+	if (Velocity.SizeSquared2D() < KINDA_SMALL_NUMBER)
+	{
+		return CurrentRotation;
+	}
 	return Velocity.GetSafeNormal().Rotation();
 }
 
@@ -131,10 +124,16 @@ void UGTWSkateMovementComponent::StartFalling(int32 Iterations, float remainingT
 			bForceNextFloorCheck = true;
 		}
 	}
-
-	Velocity.Z = -(Velocity.X * NewImpactNormal.X + Velocity.Y * NewImpactNormal.Y) / NewImpactNormal.Z;
-
+	// 경사 벗어났을 때 속도 역산
+	if (NewImpactNormal.Z != 0)
+	{
+		Velocity.Z = -(Velocity.X * NewImpactNormal.X + Velocity.Y * NewImpactNormal.Y) / NewImpactNormal.Z;
+	}
 	StartNewPhysics(remainingTime, Iterations);
+}
+
+void UGTWSkateMovementComponent::UpdateVelocityBeforeMovement(float DeltaSeconds)
+{
 }
 
 
@@ -142,4 +141,3 @@ FVector UGTWSkateMovementComponent::GetMeshRightVector() const
 {
 	return GTWPlayerCharacter->GetMesh()->GetRightVector();
 }
-
