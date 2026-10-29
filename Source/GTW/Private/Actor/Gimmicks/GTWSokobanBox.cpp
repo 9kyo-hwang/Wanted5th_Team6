@@ -1,8 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include <Sokoban/GTWSokobanBoard.h>
-#include <Sokoban/GTWSokobanBox.h>
+#include <Actor/Gimmicks/GTWSokobanBoard.h>
+#include <Actor/Gimmicks/GTWSokobanBox.h>
 
 // Sets default values
 AGTWSokobanBox::AGTWSokobanBox()

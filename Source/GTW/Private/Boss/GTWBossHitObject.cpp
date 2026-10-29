@@ -1,21 +1,20 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Boss/GTWBossHitObject.h"
-
+#include <Characters/Boss/GTWBossHitObject.h>
 #include <Components/SphereComponent.h>
 #include <GameFramework/Character.h>
 
 namespace
 {
-	static void PrintDebugMessage(const FString& Message, int32 InKey = -1, FColor Color = FColor::Blue)
-	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(InKey, 5.f, Color, Message);
-			UE_LOG(LogTemp, Log, TEXT("%s"), *Message);
-		}
-	}
+	//static void PrintDebugMessage(const FString& Message, int32 InKey = -1, FColor Color = FColor::Blue)
+	//{
+	//	if (GEngine)
+	//	{
+	//		GEngine->AddOnScreenDebugMessage(InKey, 5.f, Color, Message);
+	//		UE_LOG(LogTemp, Log, TEXT("%s"), *Message);
+	//	}
+	//}
 }
 
 // Sets default values
