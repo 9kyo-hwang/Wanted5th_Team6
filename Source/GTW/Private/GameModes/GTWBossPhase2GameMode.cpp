@@ -118,7 +118,7 @@ void AGTWBossPhase2GameMode::FailPhase()
 	}
 	else
 	{
-		Print(TEXT("[Phase1] GameInstance가 없음"));
+		Print(TEXT("[Phase2] GameInstance가 없음"));
 	}
 
 	K2_OnPhaseFinished(CurrentState);

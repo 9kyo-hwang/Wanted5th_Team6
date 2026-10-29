@@ -51,14 +51,7 @@ void AGTWBossPhase1GameMode::InitGameplay(ACharacter* InBoss, const TArray<AActo
 		HitObjectSpawners.AddUnique(Spawner);
 	}
 
-	if (UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>())
-	{
-		double SokobanClearTimeSeconds, ShootingClearTimeSeconds;
-		GameInstance->TryGetMinigameClearTime(EMinigameType::Sokoban, SokobanClearTimeSeconds);
-		GameInstance->TryGetMinigameClearTime(EMinigameType::Shooting, ShootingClearTimeSeconds);
-
-		// @TODO: 난이도 세팅
-	}
+	// @TODO: GameInstance->TryGetMinigameClearTime() 가지고 난이도 세팅
 	
 	// @TODO: Ready 상태에서는 주로 연출이 재생되니, 플레이어 입력을 차단했다가 풀어주는 기능 필요
 }
