@@ -23,8 +23,15 @@ public:
 	// 번개 실행 함수
 	void PlayLightning();
 
-	// 스플라인 변경 함수
-	void ChangeSpline();
+	// 스플라인 갱신 함수(오버랩 트리거 BP에 할당)
+	// 다음 스플라인 이동 시에만 호출. 
+	UFUNCTION(BlueprintCallable, Category = Spline)
+	void NextSpline();
+
+	// 스플라인 실행 함수
+	UFUNCTION(BlueprintCallable, Category = Spline)
+	void StartSpline();
+
 protected:
 	// Called when the game starts or when spawned
 	//virtual void BeginPlay() override;
@@ -38,12 +45,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
 	TObjectPtr<class UAnimMontage> BallAttack;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Map)
-	TArray<TObjectPtr<class AActor>> BossSplines;
+	// 스플라인 3개 설정
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Spline)
+	TArray<TObjectPtr<class AGTWStartMoveSplineActor>> BossSplines;
 
 private:
 	// 어택 몽타주 실행
 	void PlayAttackAnim(UAnimMontage* AttackMontage);
 
+private:
+	// 현재 스플라인 번호
+	int CurrentSplineNum = 0;
 
 };

@@ -2,6 +2,7 @@
 
 #include "Characters/GTWBoss.h"
 #include "Controllers/GTWBossAIController.h"
+#include "Actors/GTWStartMoveSplineActor.h"
 #include <Animation/AnimInstance.h>
 #include <Components/SplineComponent.h>
 
@@ -92,10 +93,42 @@ void AGTWBoss::PlayLightning()
 
 }
 
-void AGTWBoss::ChangeSpline()
+void AGTWBoss::StartSpline()
+{
+	// 보스 위치 변경
+	AGTWStartMoveSplineActor* SplineActor = BossSplines[CurrentSplineNum];
+	if (!IsValid(SplineActor))
+	{
+		return;
+	}
+
+	USplineComponent* Spline = SplineActor->FindComponentByClass<USplineComponent>();
+	if (IsValid(Spline))
+	{
+		// 현재 보스 위치를 스플라인의 시작 위치로 옮긴다. 
+		FVector Location = Spline->GetLocationAtDistanceAlongSpline(
+			0.0f,
+			ESplineCoordinateSpace::World
+		);
+
+		SetActorLocation(Location);
+	}
+
+	// 이동 시작. 
+	SplineActor->StartMovement();
+}
+
+void AGTWBoss::NextSpline()
 {
 	// 현재 스플라인 배열에서 ++;
-	BossSplines
+	CurrentSplineNum++;
+
+	if (!BossSplines.IsValidIndex(CurrentSplineNum))
+	{
+		return;
+	}
+
+	StartSpline();
 }
 
 void AGTWBoss::PlayAttackAnim(UAnimMontage* AttackMontage)
