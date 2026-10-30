@@ -2,7 +2,7 @@
 
 
 #include "AI/Boss/BTTask_SwordWave.h"
-#include <Characters/GTWBoss.h>
+#include <Characters/Boss/GTWBoss.h>
 #include <AIController.h>
 
 UBTTask_SwordWave::UBTTask_SwordWave()

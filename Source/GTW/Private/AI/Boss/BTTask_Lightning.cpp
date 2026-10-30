@@ -3,7 +3,7 @@
 
 #include "AI/Boss/BTTask_Lightning.h"
 #include <AIController.h>
-#include <Characters/GTWBoss.h>
+#include <Characters/Boss/GTWBoss.h>
 
 UBTTask_Lightning::UBTTask_Lightning()
 {

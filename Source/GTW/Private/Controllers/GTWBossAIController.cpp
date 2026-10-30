@@ -9,13 +9,13 @@ AGTWBossAIController::AGTWBossAIController()
 {
 	// 에셋 가져오기
 	static ConstructorHelpers::FObjectFinder<UBlackboardData> BBAssetRef(
-		TEXT("/Game/GTW/Boss/AI/BB_P2Boss.BB_P2Boss")
+		TEXT("/Game/GTW/AI/BB_P2Boss.BB_P2Boss")
 	);
 	if (BBAssetRef.Succeeded())
 		BBAsset = BBAssetRef.Object;
 
 	static ConstructorHelpers::FObjectFinder<UBehaviorTree> BTAssetRef(
-		TEXT("/Game/GTW/Boss/AI/BT_P2Boss.BT_P2Boss")
+		TEXT("/Game/GTW/AI/BT_P2Boss.BT_P2Boss")
 	);
 	if (BTAssetRef.Succeeded())
 		BTAsset = BTAssetRef.Object;

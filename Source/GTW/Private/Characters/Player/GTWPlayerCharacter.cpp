@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "../../../Public/Characters/Player/GTWPlayerCharacter.h"
-#include "../../../Public/Components/Player/GTWSkateMovementComponent.h"
+#include "Characters/Player/GTWPlayerCharacter.h"
+#include "Components/Player/GTWSkateMovementComponent.h"
 
 #include <Components/CapsuleComponent.h>
 
