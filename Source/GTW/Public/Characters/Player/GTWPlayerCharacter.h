@@ -41,5 +41,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
 	TObjectPtr<class UGTWSkateMovementComponent> SkateCharacterMovementComponent;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Gravity)
+	float NoTiltGravity;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Gravity)
+	float TiltGravity;
 };
