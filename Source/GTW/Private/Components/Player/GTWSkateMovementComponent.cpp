@@ -13,6 +13,7 @@ UGTWSkateMovementComponent::UGTWSkateMovementComponent()
 	: Super()
 {
 	NormalCount = 0;
+
 }
 
 void UGTWSkateMovementComponent::InitializeComponent()
@@ -20,10 +21,11 @@ void UGTWSkateMovementComponent::InitializeComponent()
 	Super::InitializeComponent();
 
 	// 초기화
+	GTWPlayerCharacter = Cast<AGTWPlayerCharacter>(GetCharacterOwner());
+
 	NewImpactNormal = FVector(0.f, 0.f, 0.f);
 	OldImpactNormal = FVector(0.f, 0.f, 0.f);
 	OldFloor = CurrentFloor;
-	  
 }
 
 FRotator UGTWSkateMovementComponent::ComputeOrientToMovementRotation(const FRotator& CurrentRotation, float DeltaTime, FRotator& DeltaRotation) const
