@@ -3,7 +3,7 @@
 
 #include "GameModes/GTWBossPhase1GameMode.h"
 
-#include <GameInstance/GTWGameInstance.h>
+#include <GTWGameInstance.h>
 #include <GTWDebugHelper.h>
 
 #include <GameFramework/Character.h>  // TEMP. 추후 보스 클래스 생기면 그걸로 체인지
