@@ -442,7 +442,6 @@ void AGTWSokobanBoard::ResetGame()
 
 	SpawnedBoxes.Empty();
 	GoalCount = 0;
-	ElapsedTime = 0.0f;
 	bIsSokobanClear = false;
 
 	SpawnBox(RedBoxClass, BoxStartLocatin[0]);
