@@ -4,32 +4,21 @@
 #include "GameModes/GTWBossPhase1GameMode.h"
 
 #include <GameInstance/GTWGameInstance.h>
+#include <GTWDebugHelper.h>
 
 #include <GameFramework/Character.h>  // TEMP. 추후 보스 클래스 생기면 그걸로 체인지
-
-namespace
-{
-	static void Print(const FString& Message, FColor Color = FColor::MakeRandomColor(), int32 InKey = -1)
-	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(InKey, 7.f, Color, Message);
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *Message);
-		}
-	}
-}
 
 void AGTWBossPhase1GameMode::InitGameplay(ACharacter* InBoss, const TArray<AActor*>& InHitObjectSpawners)
 {
 	if (CurrentState != EBossGameModeState::Ready)
 	{
-		Print(TEXT("[InitGameplay] 상태가 Ready가 아님!"));
+		Debug::Print(TEXT("[InitGameplay] 상태가 Ready가 아님!"));
 		return;
 	}
 
 	if (!IsValid(InBoss) || InHitObjectSpawners.IsEmpty())
 	{
-		Print(TEXT("[InitGameplay] 보스가 유효하지 않거나 스포너가 없음!"));
+		Debug::Print(TEXT("[InitGameplay] 보스가 유효하지 않거나 스포너가 없음!"));
 		return;
 	}
 
@@ -37,7 +26,7 @@ void AGTWBossPhase1GameMode::InitGameplay(ACharacter* InBoss, const TArray<AActo
 	{
 		if (!IsValid(Spawner))
 		{
-			Print(TEXT("[InitGameplay] 스포너가 유효하지 않음!"));
+			Debug::Print(TEXT("[InitGameplay] 스포너가 유효하지 않음!"));
 			return;
 		}
 	}
@@ -74,13 +63,13 @@ void AGTWBossPhase1GameMode::StartGameplay()
 
 	if (!GetWorld() || !GetWorld()->HasBegunPlay())
 	{
-		Print(TEXT("[StartGameplay] World가 BeginPlay를 하지 않았음!"));
+		Debug::Print(TEXT("[StartGameplay] World가 BeginPlay를 하지 않았음!"));
 		return;
 	}
 
 	if (!IsValid(Boss.Get()) || HitObjectSpawners.IsEmpty())
 	{
-		Print(TEXT("[StartGameplay] 보스랑 스포너가 제대로 세팅되지 않았음"));
+		Debug::Print(TEXT("[StartGameplay] 보스랑 스포너가 제대로 세팅되지 않았음"));
 		return;
 	}
 
@@ -88,7 +77,7 @@ void AGTWBossPhase1GameMode::StartGameplay()
 	{
 		if (!IsValid(Spawner))
 		{
-			Print(TEXT("[StartGameplay] 이상한 스포너 객체가 껴있음!"));
+			Debug::Print(TEXT("[StartGameplay] 이상한 스포너 객체가 껴있음!"));
 			return;
 		}
 	}
@@ -129,7 +118,7 @@ void AGTWBossPhase1GameMode::ClearPhase()
 	}
 	else
 	{
-		Print(TEXT("[Phase1] GameInstance가 없음"));
+		Debug::Print(TEXT("[Phase1] GameInstance가 없음"));
 	}
 
 	K2_OnPhaseFinished(CurrentState);
@@ -151,7 +140,7 @@ void AGTWBossPhase1GameMode::FailPhase()
 	}
 	else
 	{
-		Print(TEXT("[Phase1] GameInstance가 없음"));
+		Debug::Print(TEXT("[Phase1] GameInstance가 없음"));
 	}
 
 	K2_OnPhaseFinished(CurrentState);

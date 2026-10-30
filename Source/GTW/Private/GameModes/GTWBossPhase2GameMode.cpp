@@ -4,32 +4,21 @@
 #include "GameModes/GTWBossPhase2GameMode.h"
 
 #include <GameInstance/GTWGameInstance.h>
+#include <GTWDebugHelper.h>
 
 #include <GameFramework/Character.h>	// TEMP. 추후 보스 클래스 생기면 그걸로 체인지
-
-namespace
-{
-	static void Print(const FString& Message, FColor Color = FColor::MakeRandomColor(), int32 InKey = -1)
-	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(InKey, 7.f, Color, Message);
-			UE_LOG(LogTemp, Warning, TEXT("%s"), *Message);
-		}
-	}
-}
 
 void AGTWBossPhase2GameMode::InitGameplay(ACharacter* InBoss)
 {
 	if (CurrentState != EBossGameModeState::Ready)
 	{
-		Print(TEXT("[InitGameplay] Ready 상태가 아님"));
+		Debug::Print(TEXT("[InitGameplay] Ready 상태가 아님"));
 		return;
 	}
 
 	if (!IsValid(InBoss))
 	{
-		Print(TEXT("[InitGameplay] 유효하지 않은 보스"));
+		Debug::Print(TEXT("[InitGameplay] 유효하지 않은 보스"));
 		return;
 	}
 
@@ -54,13 +43,13 @@ void AGTWBossPhase2GameMode::StartGameplay()
 
 	if (!GetWorld() || !GetWorld()->HasBegunPlay())
 	{
-		Print(TEXT("[StartGameplay] World가 BeginPlay를 하지 않았음!"));
+		Debug::Print(TEXT("[StartGameplay] World가 BeginPlay를 하지 않았음!"));
 		return;
 	}
 
 	if (!IsValid(Boss.Get()))
 	{
-		Print(TEXT("[StartGameplay] 보스가 제대로 세팅되지 않았음"));
+		Debug::Print(TEXT("[StartGameplay] 보스가 제대로 세팅되지 않았음"));
 		return;
 	}
 
@@ -96,7 +85,7 @@ void AGTWBossPhase2GameMode::ClearPhase()
 	}
 	else
 	{
-		Print(TEXT("[Phase2] GameInstance를 찾을 수 없음"));
+		Debug::Print(TEXT("[Phase2] GameInstance를 찾을 수 없음"));
 	}
 
 	K2_OnPhaseFinished(CurrentState);
@@ -118,7 +107,7 @@ void AGTWBossPhase2GameMode::FailPhase()
 	}
 	else
 	{
-		Print(TEXT("[Phase2] GameInstance가 없음"));
+		Debug::Print(TEXT("[Phase2] GameInstance가 없음"));
 	}
 
 	K2_OnPhaseFinished(CurrentState);
