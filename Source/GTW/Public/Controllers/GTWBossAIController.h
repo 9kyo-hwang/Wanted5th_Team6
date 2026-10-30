@@ -20,6 +20,7 @@ public:
 	void RunAI();
 
 	// BT 멈추기
+	UFUNCTION(BlueprintCallable, Category = AI)
 	void StopAI();
 
 	// 컨트롤러가 폰에 빙의할 때 호출되는 함수

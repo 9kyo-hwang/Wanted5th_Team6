@@ -95,23 +95,10 @@ void AGTWBoss::PlayLightning()
 
 void AGTWBoss::StartSpline()
 {
-	// 보스 위치 변경
 	AGTWStartMoveSplineActor* SplineActor = BossSplines[CurrentSplineNum];
 	if (!IsValid(SplineActor))
 	{
 		return;
-	}
-
-	USplineComponent* Spline = SplineActor->FindComponentByClass<USplineComponent>();
-	if (IsValid(Spline))
-	{
-		// 현재 보스 위치를 스플라인의 시작 위치로 옮긴다. 
-		FVector Location = Spline->GetLocationAtDistanceAlongSpline(
-			0.0f,
-			ESplineCoordinateSpace::World
-		);
-
-		SetActorLocation(Location);
 	}
 
 	// 이동 시작. 
