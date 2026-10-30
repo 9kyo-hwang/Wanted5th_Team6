@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include <Characters/Boss/GTWBossHitObjectSpawner.h>
-#include <Characters/Boss/GTWBossHitObject.h>
+#include <Actor/Gimmicks/GTWBossHitObjectSpawner.h>
+#include <Actor/Gimmicks/GTWBossHitObject.h>
 #include <GTWDebugHelper.h>
 
 AGTWBossHitObjectSpawner::AGTWBossHitObjectSpawner()

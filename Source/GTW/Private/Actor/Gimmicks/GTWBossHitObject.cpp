@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include <Characters/Boss/GTWBossHitObject.h>
+#include <Actor/Gimmicks/GTWBossHitObject.h>
 #include <Components/SphereComponent.h>
 #include <GameFramework/Character.h>
 
