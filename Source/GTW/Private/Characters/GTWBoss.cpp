@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Characters/GTWBoss.h"
-#include "Controllers/GTWBossAIController.h"
+#include <Characters/GTWBoss.h>
+#include <Controllers/GTWBossAIController.h>
 #include <Animation/AnimInstance.h>
 
 // Sets default values
