@@ -3,18 +3,7 @@
 
 #include <Characters/Boss/GTWBossHitObjectSpawner.h>
 #include <Characters/Boss/GTWBossHitObject.h>
-
-namespace
-{
-	static void PrintDebugMessage(const FString& Message, int32 InKey = -1, FColor Color = FColor::Blue)
-	{
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(InKey, 5.f, Color, Message);
-			UE_LOG(LogTemp, Log, TEXT("%s"), *Message);
-		}
-	}
-}
+#include <GTWDebugHelper.h>
 
 AGTWBossHitObjectSpawner::AGTWBossHitObjectSpawner()
 	: RespawnTime(30.f)
@@ -87,7 +76,7 @@ void AGTWBossHitObjectSpawner::SpawnHitObject()
 
 	if (!TargetActorRef.IsValid())
 	{
-		PrintDebugMessage(TEXT("Target Actor is NOT Valid"));
+		Debug::Print(TEXT("Target Actor is NOT Valid"));
 		StopSpawning();
 		return;
 	}
@@ -97,7 +86,7 @@ void AGTWBossHitObjectSpawner::SpawnHitObject()
 	// 즉 다시 소환해야 하는 상태가 되는 것
 	if (IsValid(HitObjectInstance.Get()))
 	{
-		PrintDebugMessage(TEXT("HitObject is ALREADY Instanced"));
+		Debug::Print(TEXT("HitObject is ALREADY Instanced"));
 		StopSpawning();
 		return;
 	}
@@ -112,14 +101,14 @@ void AGTWBossHitObjectSpawner::SpawnHitObject()
 
 		if (!HitObjectInstance->Activate(TargetActorRef.Get()))
 		{
-			PrintDebugMessage(TEXT("[FAILED] HitObject Activate"));
+			Debug::Print(TEXT("[FAILED] HitObject Activate"));
 			StopSpawning();
 		}
 
 		return;
 	}
 
-	PrintDebugMessage(TEXT("[FAILED] HitObject Spawn"));
+	Debug::Print(TEXT("[FAILED] HitObject Spawn"));
 
 	// SpawnActor 자체가 안되니 정리해버리자.
 	StopSpawning();
@@ -131,7 +120,7 @@ void AGTWBossHitObjectSpawner::HandleContactEnded()
 {
 	if (!bIsSpawning)
 	{
-		PrintDebugMessage(TEXT("[HandleContactEnded] 재생성 해야하는 데 생성 Stop 됨(bIsSpawning == false)"));
+		Debug::Print(TEXT("[HandleContactEnded] 재생성 해야하는 데 생성 Stop 됨(bIsSpawning == false)"));
 		return;
 	}
 

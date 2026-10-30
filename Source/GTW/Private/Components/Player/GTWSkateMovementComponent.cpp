@@ -1,8 +1,8 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "../../../Public/Components/Player/GTWSkateMovementComponent.h"
-#include "../../../Public/Characters/Player/GTWPlayerCharacter.h"
+#include <Components/Player/GTWSkateMovementComponent.h>
+#include <Characters/Player/GTWPlayerCharacter.h>
 
 #include <Engine/HitResult.h>
 #include <GameFramework/Character.h>
@@ -13,6 +13,7 @@ UGTWSkateMovementComponent::UGTWSkateMovementComponent()
 	: Super()
 {
 	NormalCount = 0;
+
 }
 
 void UGTWSkateMovementComponent::InitializeComponent()
@@ -20,10 +21,11 @@ void UGTWSkateMovementComponent::InitializeComponent()
 	Super::InitializeComponent();
 
 	// 초기화
+	GTWPlayerCharacter = Cast<AGTWPlayerCharacter>(GetCharacterOwner());
+
 	NewImpactNormal = FVector(0.f, 0.f, 0.f);
 	OldImpactNormal = FVector(0.f, 0.f, 0.f);
 	OldFloor = CurrentFloor;
-	  
 }
 
 FRotator UGTWSkateMovementComponent::ComputeOrientToMovementRotation(const FRotator& CurrentRotation, float DeltaTime, FRotator& DeltaRotation) const
