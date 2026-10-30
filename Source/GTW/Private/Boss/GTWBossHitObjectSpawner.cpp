@@ -1,8 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Boss/GTWBossHitObjectSpawner.h"
-#include <Boss/GTWBossHitObject.h>
+#include <Characters/Boss/GTWBossHitObjectSpawner.h>
+#include <Characters/Boss/GTWBossHitObject.h>
 
 namespace
 {
