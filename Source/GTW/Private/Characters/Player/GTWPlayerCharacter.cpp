@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "../../../Public/Characters/Player/GTWPlayerCharacter.h"
-#include "../../../Public/Components/Player/GTWSkateMovementComponent.h"
+#include <Characters/Player/GTWPlayerCharacter.h>
+#include <Components/Player/GTWSkateMovementComponent.h>
 
 #include <Components/CapsuleComponent.h>
 
@@ -47,64 +47,43 @@ void AGTWPlayerCharacter::ActiveGravity(const bool bIsGround, const FVector& Nor
 	// 중력 충격의 방향을 결정할 변수
 	FVector GravityImpulseDirection;
 
-	// 자연스러운 중력 연출을 위한 조정값
-	float GravityScale;
 
 	if (bIsGround)
 	{
-		GravityScale = -0.15f;
+		NoTiltGravity = -450.f;
 
 		// 법선 벡터로부터 중력 방향을 계산하는 함수
-		GravityImpulseDirection = NormalToGravity(Normal);
+		// Walking 모드에서는 XY만 고려.
+		GravityImpulseDirection = Normal;
+		GravityImpulseDirection.Z = GravityImpulseDirection.Z - 1;
+
+		GravityImpulse = GravityImpulseDirection * (GravityValue * NoTiltGravity);
 	}
 	else
 	{
-		// 공중에서는 기존 적용되는 중력이 있으므로 값을 줄임
-		GravityScale = -0.07f;
+		// 공중에서는 기존 적용되는 중력이 있으므로 값을 줄임   
+		TiltGravity = -250.f;
 
 		GravityImpulseDirection = FVector(0, 0, -1);
+
+		// 중력 방향에 중력값 * 스케일 값을 곱
+		GravityImpulse = GravityImpulseDirection * (GravityValue * TiltGravity);
 	}
 
-	// 중력 방향에 중력값 * 스케일 값을 곱
-	GravityImpulse = GravityImpulseDirection * (GravityValue * GravityScale);
-	
 	// 캐릭터 무브먼트 컴포넌트에게 충격 전달
 	bool bHasNoTilt = Normal.Z < 1 - KINDA_SMALL_NUMBER;
 
 	if (bHasNoTilt)
 	{
-		SkateCharacterMovementComponent->AddImpulse(GravityImpulse, true);	
+		SkateCharacterMovementComponent->AddForce(GravityImpulse);
 	}
-}
-
-FVector AGTWPlayerCharacter::NormalToGravity(const FVector& Normal)
-{
-	FVector GravityDirection;
-
-	if (Normal.Z < KINDA_SMALL_NUMBER)
-	{
-		// 천장이나 직각으로 붙어있을 때 중력 아래로 
-		return GravityDirection = FVector(0, 0, -1);		
-	}
-
-	// 법선 벡터에서 XY를 유지한 채 법선벡터와 수직인 벡터 찾기
-	GravityDirection.X = Normal.X;
-	GravityDirection.Y = Normal.Y;
-	//GravityDirection.Z = Normal.Z;
-
-	// 값이 이게 아닌데... 동작이 잘돼요... ????????
-	GravityDirection.Z = -1 *  Normal.Z / (Normal.X * Normal.X + Normal.Y * Normal.Y);
-
-	GravityDirection.Normalize();
-
-	return GravityDirection;
 }
 
 // Called when the game starts or when spawned
 void AGTWPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 }
 
 // Called every frame
@@ -138,4 +117,3 @@ void AGTWPlayerCharacter::Tick(float DeltaTime)
 
 
 
- 
