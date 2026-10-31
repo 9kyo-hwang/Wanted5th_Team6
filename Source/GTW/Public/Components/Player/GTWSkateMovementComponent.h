@@ -7,6 +7,7 @@
 #include "GTWSkateMovementComponent.generated.h"
 
 
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnSpeedChangedDelegate, int /*CurrentSpeed*/);
 
 
 /**
@@ -22,9 +23,11 @@ public:
 	
 	virtual void InitializeComponent() override; 
 
+	// 오너가 접근해서 GTWVelocity를 가져갈 함수.
+	void SetGTWVelocity();
 
 	// 상속
-public:
+private:
 	// 기존 로직에서 반환 전에 경사 계산 추가하기.  
 	virtual FRotator ComputeOrientToMovementRotation(
 		const FRotator& CurrentRotation,
@@ -42,6 +45,8 @@ public:
 		return IsMovingOnGround();
 	}
 
+
+	/// 게터
 public:
 	// 바닥 법선 벡터 구하기
 	FORCEINLINE FVector GetNewImpactNormal() const
@@ -56,11 +61,15 @@ public:
 	// 캐릭터 정면 벡터 구하기
 	FVector GetMeshRightVector() const;
 
-
+	// 델리게이트
+public:
+	// 속도 변환 시 갱신
+	FOnSpeedChangedDelegate OnSpeedChanged;
 
 protected:
 	// 오너
-	class AGTWPlayerCharacter* GTWPlayerCharacter;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
+	TObjectPtr<class AGTWPlayerCharacter> GTWPlayerCharacter;
 
 	UPROPERTY(Category = Floor, VisibleInstanceOnly, BlueprintReadOnly)
 	FFindFloorResult OldFloor;
@@ -73,6 +82,9 @@ protected:
 
 	UPROPERTY()
 	int32 NormalCount;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement)
+	FVector GTWVelocity;
 
 };
 	

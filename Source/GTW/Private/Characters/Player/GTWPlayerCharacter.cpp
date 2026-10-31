@@ -2,6 +2,7 @@
 
 #include <Characters/Player/GTWPlayerCharacter.h>
 #include <Components/Player/GTWSkateMovementComponent.h>
+#include <UI/GTWSpeedWidget.h>
 
 #include <Components/CapsuleComponent.h>
 
@@ -73,6 +74,22 @@ void AGTWPlayerCharacter::ActiveGravity(const bool bIsGround, const FVector& Nor
 	{
 		SkateCharacterMovementComponent->AddForce(GravityForceValue);
 	}
+}
+
+void AGTWPlayerCharacter::SetSpeedWidget(UGTWSpeedWidget* InSpeedWidget)
+{
+	// 값 확인
+	if (nullptr == InSpeedWidget)
+	{
+		return;
+	}
+
+	// 설정할 초기값
+	int InitSpeed = 0;
+
+	InSpeedWidget->UpdateSpeed(InitSpeed);
+
+	SkateCharacterMovementComponent->OnSpeedChanged.AddUObject(InSpeedWidget, &UGTWSpeedWidget::UpdateSpeed);
 }
 
 // Called when the game starts or when spawned

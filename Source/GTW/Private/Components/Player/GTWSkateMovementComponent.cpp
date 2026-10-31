@@ -26,7 +26,20 @@ void UGTWSkateMovementComponent::InitializeComponent()
 	NewImpactNormal = FVector(0.f, 0.f, 0.f);
 	OldImpactNormal = FVector(0.f, 0.f, 0.f);
 	OldFloor = CurrentFloor;
+	GTWVelocity = FVector(0.f, 0.f, 0.f);
 }
+
+void UGTWSkateMovementComponent::SetGTWVelocity()
+{
+	GTWVelocity = Velocity;
+
+	GTWVelocity.Z = -(GTWVelocity.X * NewImpactNormal.X + GTWVelocity.Y * NewImpactNormal.Y) / NewImpactNormal.Z;
+
+	int GTWSpeed = GTWVelocity.Length();
+
+	OnSpeedChanged.Broadcast(GTWSpeed);
+}
+
 
 FRotator UGTWSkateMovementComponent::ComputeOrientToMovementRotation(const FRotator& CurrentRotation, float DeltaTime, FRotator& DeltaRotation) const
 {
@@ -107,8 +120,6 @@ void UGTWSkateMovementComponent::StartFalling(int32 Iterations, float remainingT
 		? 0.f
 		: remainingTime + timeTick * (1.f - FMath::Min(1.f, ActualDist / DesiredDist));
 
-	NewImpactNormal.Normalize();
-
 	if (IsMovingOnGround())
 	{
 		// This is to catch cases where the first frame of PIE is executed, and the
@@ -124,6 +135,9 @@ void UGTWSkateMovementComponent::StartFalling(int32 Iterations, float remainingT
 			bForceNextFloorCheck = true;
 		}
 	}
+
+	NewImpactNormal.Normalize();
+
 	// 경사 벗어났을 때 속도 역산
 	if (NewImpactNormal.Z != 0)
 	{
@@ -131,6 +145,7 @@ void UGTWSkateMovementComponent::StartFalling(int32 Iterations, float remainingT
 	}
 	StartNewPhysics(remainingTime, Iterations);
 }
+
 
 FVector UGTWSkateMovementComponent::GetMeshRightVector() const
 {
