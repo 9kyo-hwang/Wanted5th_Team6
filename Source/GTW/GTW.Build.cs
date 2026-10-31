@@ -13,18 +13,6 @@ public class GTW : ModuleRules
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
-        string MapFile = Path.GetFullPath(
-           Path.Combine(
-               ModuleDirectory,
-               "../../Config/SokobanMap.txt"
-           )
-       );
-
-        RuntimeDependencies.Add(
-    MapFile,
-    StagedFileType.NonUFS
-);
-
         // Uncomment if you are using Slate UI
         // PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 

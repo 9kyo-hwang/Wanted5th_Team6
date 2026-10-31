@@ -142,8 +142,8 @@ void AGTWSokobanBoard::AddGoalCount()
 bool AGTWSokobanBoard::LoadMapFileData()
 {
 	FString FilePath = FPaths::Combine(
-		FPaths::ProjectConfigDir(),
-		TEXT("SokobanMap.txt"));
+		FPaths::ProjectContentDir(),
+		TEXT("GTW/GameData/SokobanMap.txt"));
 
 	if (FFileHelper::LoadFileToString(MapDataText, *FilePath))
 	{
