@@ -19,6 +19,7 @@ public:
 
 	// 속도 변화에 반응할 이벤트
 	void UpdateSpeed(int Speed);
+	void UpdateSpeedGauge(int Speed);
 
 protected:
 	virtual void NativeConstruct() override;

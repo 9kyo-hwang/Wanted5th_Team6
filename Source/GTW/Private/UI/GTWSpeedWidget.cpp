@@ -44,9 +44,9 @@ void UGTWSpeedWidget::UpdateSpeed(int Speed)
     if (DigitFlag > 0)
     {
         FSlateColor Color = FSlateColor(
-            FLinearColor(1.f, 1.f, 1.f, 1.f)
+            FLinearColor(1.0f , 1.0f, 1.0f, 1.0f)
         );
-        for (int ix = DigitFlag - 1; ix >= 0;--ix)
+        for (int ix = 2; ix >= 3 - DigitFlag;--ix)
         {
             SpeedText[ix].Get()->SetColorAndOpacity(Color);
         }
@@ -54,7 +54,7 @@ void UGTWSpeedWidget::UpdateSpeed(int Speed)
     else
     {
         FSlateColor Color = FSlateColor(
-            FLinearColor(1.f, 1.f, 1.f, 0.7f)
+            FLinearColor(1.0f, 1.0f, 1.0f, 0.7f)
         );
         for (int ix = 2; ix >= 0;--ix)
         {
@@ -62,7 +62,49 @@ void UGTWSpeedWidget::UpdateSpeed(int Speed)
         }
     }
 
+    UpdateSpeedGauge(Speed);
 }
+
+void UGTWSpeedWidget::UpdateSpeedGauge(int Speed)
+{
+    int ActiveGaugeSlots = Speed / 15;
+
+    FSlateColor ActiveColor = FSlateColor(
+        FLinearColor(1.0f, 1.0f, 1.0f, 1.0f)
+    );
+    FSlateColor InActiveColor = FSlateColor(
+        FLinearColor(1.0f, 1.0f, 1.0f, 0.5f)
+    );
+
+    //UE_LOG(LogTemp, Log, TEXT("Speed:%d, Slots:%d"), Speed, ActiveGaugeSlots);
+
+    for (int ix = 0; ix < 10; ++ix)
+    {
+        if (ix > 5)
+        {
+            ActiveColor = FSlateColor(
+                FLinearColor(1.0f, 0.5f, 0.0f, 1.0f)
+            );
+        }
+        if (ix > 7)
+        {
+            ActiveColor = FSlateColor(
+                FLinearColor(1.0f, 0.0f, 0.0f, 1.0f)
+            );
+        }
+
+        if (ix < ActiveGaugeSlots)
+        {
+            UE_LOG(LogTemp, Log, TEXT("ActiveDoin"));
+            SpeedGauges[ix]->SetBrushTintColor(ActiveColor);
+        }
+        else
+        {
+            SpeedGauges[ix]->SetBrushTintColor(InActiveColor);
+        }
+    }
+}
+
 
 void UGTWSpeedWidget::NativeConstruct()
 {

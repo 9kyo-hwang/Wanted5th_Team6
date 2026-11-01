@@ -98,8 +98,8 @@ void AGTWPlayerCharacter::BeginPlay()
 	Super::BeginPlay();
 
 	// 중력 기본 값 설정
-	TiltGravity = -250.f;
-	NoTiltGravity = -450.f;
+	TiltGravity = -250.0f;
+	NoTiltGravity = -450.0f;
 }
 
 // Called every frame
