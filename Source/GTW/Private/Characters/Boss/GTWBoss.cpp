@@ -28,7 +28,7 @@ AGTWBoss::AGTWBoss()
 
 	// 애니메이션 에셋 연결
 	static ConstructorHelpers::FClassFinder<UAnimInstance> BossAnim(
-		TEXT("/Game/GTW/Cheracters/Boss/ABP_P2Boss.ABP_P2Boss_C")
+		TEXT("/Game/GTW/Characters/Boss/ABP_P2Boss.ABP_P2Boss_C")
 	);
 
 	if (BossAnim.Succeeded())
@@ -39,7 +39,7 @@ AGTWBoss::AGTWBoss()
 
 	// 검기 몽타주 연결
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> SwordAttackRef(
-		TEXT("/Game/GTW/Cheracters/Boss/Animation/AM_SwordAttack.AM_SwordAttack")
+		TEXT("/Game/GTW/Characters/Boss/Animation/AM_SwordAttack.AM_SwordAttack")
 	);
 	if (SwordAttackRef.Succeeded())
 	{
@@ -48,7 +48,7 @@ AGTWBoss::AGTWBoss()
 
 	// 번개 몽타주 연결
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> LightningAttackRef(
-		TEXT("/Game/GTW/Cheracters/Boss/Animation/AM_LightAttack.AM_LightAttack")
+		TEXT("/Game/GTW/Characters/Boss/Animation/AM_LightAttack.AM_LightAttack")
 	);
 	if (LightningAttackRef.Succeeded())
 	{ 
@@ -57,7 +57,7 @@ AGTWBoss::AGTWBoss()
 
 	// 공 몽타주 연결
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> BallAttackRef(
-		TEXT("/Game/GTW/Cheracters/Boss/Animation/AM_BallAttack.AM_BallAttack")
+		TEXT("/Game/GTW/Characters/Boss/Animation/AM_BallAttack.AM_BallAttack")
 	);
 	if (BallAttackRef.Succeeded())
 	{

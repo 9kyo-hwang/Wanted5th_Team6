@@ -49,7 +49,7 @@ AGTWBossPhase2GameMode::AGTWBossPhase2GameMode()
 {
 	// 디폴트 캐릭터 설정.
 	static ConstructorHelpers::FClassFinder<AGTWPlayerCharacter> Player(
-		TEXT("/Game/GTW/Cheracters/Player/BP_6FPlayer.BP_6FPlayer_C")
+		TEXT("/Game/GTW/Characters/Player/BP_6FPlayer.BP_6FPlayer_C")
 	);
 	if (Player.Succeeded())
 	{
@@ -58,7 +58,7 @@ AGTWBossPhase2GameMode::AGTWBossPhase2GameMode()
 
 	// 플레이어 컨트롤러 클래스 설정.
 	static ConstructorHelpers::FClassFinder<AController> PlayerController(
-		TEXT("/Game/GTW/Cheracters/Player/BP_GTWPlayerContorller.BP_GTWPlayerContorller_C")
+		TEXT("/Game/GTW/Characters/Player/BP_GTWPlayerContorller.BP_GTWPlayerContorller_C")
 	);
 	if (PlayerController.Succeeded())
 	{
