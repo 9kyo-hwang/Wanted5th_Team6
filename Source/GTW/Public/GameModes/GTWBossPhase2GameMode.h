@@ -22,6 +22,7 @@ public:
 	virtual void StartPlay() override;
 
 public:
+	// 현재 레벨 블루프린트에서 호출하도록 구현함. 
 	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
 	void InitGameplay(class AGTWBoss* InBoss);
 

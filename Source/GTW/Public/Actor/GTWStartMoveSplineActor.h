@@ -20,4 +20,5 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = Movement)
 	void K2_OnStartMovement();
 
+
 };
