@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Characters/Boss/GTWBoss.h"
-#include "Controllers/GTWBossAIController.h"
+#include "Controllers/GTWBoss2PAIController.h"
 #include "Actor/GTWStartMoveSplineActor.h"
 #include <Animation/AnimInstance.h>
 #include <Components/SplineComponent.h>
@@ -64,9 +64,9 @@ AGTWBoss::AGTWBoss()
 		BallAttack = BallAttackRef.Object;
 	}
 
-	// AIController 연결
-	AIControllerClass = AGTWBossAIController::StaticClass();
-	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	//// AIController 연결
+	//AIControllerClass = AGTWBoss2PAIController::StaticClass();
+	//AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
 void AGTWBoss::PlaySwordWave()
@@ -102,7 +102,7 @@ void AGTWBoss::StartSpline()
 	}
 
 	// 이동 시작. 
-	SplineActor->StartMovement();
+	SplineActor->K2_OnStartMovement();
 }
 
 void AGTWBoss::NextSpline()

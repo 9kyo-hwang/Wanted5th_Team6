@@ -17,11 +17,13 @@ class GTW_API AGTWBossPhase2GameMode : public AGameModeBase
 	GENERATED_BODY()
 	
 public:
+	AGTWBossPhase2GameMode();
+
 	virtual void StartPlay() override;
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
-	void InitGameplay(class ACharacter* InBoss);
+	void InitGameplay(class AGTWBoss* InBoss);
 
 	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
 	void StartGameplay();

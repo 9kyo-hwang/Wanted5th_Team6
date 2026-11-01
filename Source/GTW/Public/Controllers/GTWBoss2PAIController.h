@@ -4,17 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
-#include "GTWBossAIController.generated.h"
+#include "GTWBoss2PAIController.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class GTW_API AGTWBossAIController : public AAIController
+class GTW_API AGTWBoss2PAIController : public AAIController
 {
 	GENERATED_BODY()
 public:
-	AGTWBossAIController();
+	AGTWBoss2PAIController();
 
 	// BT 시작
 	void RunAI();
