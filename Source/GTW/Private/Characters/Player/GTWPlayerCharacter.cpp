@@ -2,6 +2,7 @@
 
 #include <Characters/Player/GTWPlayerCharacter.h>
 #include <Components/Player/GTWSkateMovementComponent.h>
+#include <UI/GTWSpeedWidget.h>
 
 #include <Components/CapsuleComponent.h>
 
@@ -42,32 +43,28 @@ void AGTWPlayerCharacter::ActiveGravity(const bool bIsGround, const FVector& Nor
 	float GravityValue = SkateCharacterMovementComponent->GetGravityZ();
 
 	// 중력 충격을 담을 변수
-	FVector GravityImpulse;
+	FVector GravityForceValue;
 
 	// 중력 충격의 방향을 결정할 변수
-	FVector GravityImpulseDirection;
+	FVector GravityForceDirection;
 
 
 	if (bIsGround)
 	{
-		NoTiltGravity = -450.f;
-
-		// 법선 벡터로부터 중력 방향을 계산하는 함수
 		// Walking 모드에서는 XY만 고려.
-		GravityImpulseDirection = Normal;
-		GravityImpulseDirection.Z = GravityImpulseDirection.Z - 1;
+		// 중력이 아래로 향하는 방향이나, 수직항력에 의해서 변하는
+		// 알짜힘(모든 힘)의 방향을 구하는 과정
+		GravityForceDirection = Normal;
+		GravityForceDirection.Z = GravityForceDirection.Z - 1;
 
-		GravityImpulse = GravityImpulseDirection * (GravityValue * NoTiltGravity);
+		GravityForceValue = GravityForceDirection * (GravityValue * NoTiltGravity);
 	}
 	else
 	{
-		// 공중에서는 기존 적용되는 중력이 있으므로 값을 줄임   
-		TiltGravity = -250.f;
-
-		GravityImpulseDirection = FVector(0, 0, -1);
+		GravityForceDirection = FVector(0, 0, -1);
 
 		// 중력 방향에 중력값 * 스케일 값을 곱
-		GravityImpulse = GravityImpulseDirection * (GravityValue * TiltGravity);
+		GravityForceValue = GravityForceDirection * (GravityValue * TiltGravity);
 	}
 
 	// 캐릭터 무브먼트 컴포넌트에게 충격 전달
@@ -75,8 +72,24 @@ void AGTWPlayerCharacter::ActiveGravity(const bool bIsGround, const FVector& Nor
 
 	if (bHasNoTilt)
 	{
-		SkateCharacterMovementComponent->AddForce(GravityImpulse);
+		SkateCharacterMovementComponent->AddForce(GravityForceValue);
 	}
+}
+
+void AGTWPlayerCharacter::SetSpeedWidget(UGTWSpeedWidget* InSpeedWidget)
+{
+	// 값 확인
+	if (nullptr == InSpeedWidget)
+	{
+		return;
+	}
+
+	// 설정할 초기값
+	int InitSpeed = 0;
+
+	InSpeedWidget->UpdateSpeed(InitSpeed);
+
+	SkateCharacterMovementComponent->OnSpeedChanged.AddUObject(InSpeedWidget, &UGTWSpeedWidget::UpdateSpeed);
 }
 
 // Called when the game starts or when spawned
@@ -84,6 +97,9 @@ void AGTWPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// 중력 기본 값 설정
+	TiltGravity = -250.0f;
+	NoTiltGravity = -450.0f;
 }
 
 // Called every frame
@@ -105,14 +121,6 @@ void AGTWPlayerCharacter::Tick(float DeltaTime)
 
 	// 중력 적용
 	ActiveGravity(bIsGround, NormalVector);
-
-	UE_LOG(LogTemp, Warning,
-		TEXT("Mode=%d Ground=%d Normal=%s Velocity=%s Accel=%s"),
-		static_cast<int32>(SkateCharacterMovementComponent->MovementMode),
-		bIsGround,
-		*NormalVector.ToString(),
-		*SkateCharacterMovementComponent->Velocity.ToString(),
-		*SkateCharacterMovementComponent->GetCurrentAcceleration().ToString());
 }
 
 

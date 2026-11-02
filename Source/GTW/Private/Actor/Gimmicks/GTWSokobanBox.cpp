@@ -32,13 +32,13 @@ void AGTWSokobanBox::Tick(float DeltaTime)
 
     const float Alpha = FMath::Clamp(
         ElapsedTime / MoveDuration,
-        0.f,
-        1.f
+        0.0f,
+        1.0f
     );
 
     // 서서히 출발하고 도착할 때 감속
     const float SmoothAlpha =
-        FMath::InterpEaseInOut(0.f, 1.f, Alpha, 2.f);
+        FMath::InterpEaseInOut(0.0f, 1.0f, Alpha, 2.f);
 
     const FVector NewLocation = FMath::Lerp(
         StartLocation,
@@ -48,7 +48,7 @@ void AGTWSokobanBox::Tick(float DeltaTime)
 
     SetActorLocation(NewLocation);
 
-    if (Alpha >= 1.f)
+    if (Alpha >= 1.0f)
     {
         SetActorLocation(TargetLocation);
         bIsMoving = false;
@@ -57,7 +57,7 @@ void AGTWSokobanBox::Tick(float DeltaTime)
 
 bool AGTWSokobanBox::StartMove(const FVector& Destination)
 {
-    if (bIsMoving || MoveDuration <= 0.f)
+    if (bIsMoving || MoveDuration <= 0.0f)
     {
         return false;
     }
@@ -68,7 +68,7 @@ bool AGTWSokobanBox::StartMove(const FVector& Destination)
     // 상자 높이는 기존 Z 값으로 유지
     TargetLocation.Z = StartLocation.Z;
 
-    ElapsedTime = 0.f;
+    ElapsedTime = 0.0f;
     bIsMoving = true;
 
     return true;
@@ -102,12 +102,12 @@ void AGTWSokobanBox::RequestPush(AActor* PushingActor)
     if (AbsX > AbsY)
     {
         // X축 방향
-        PushDirection.X = Distance.X >= 0.f ? 1 : -1;
+        PushDirection.X = Distance.X >= 0.0f ? 1 : -1;
     }
     else
     {
         // Y축 방향
-        PushDirection.Y = Distance.Y >= 0.f ? 1 : -1;
+        PushDirection.Y = Distance.Y >= 0.0f ? 1 : -1;
     }
 
     AGTWSokobanBoard* Board = Cast<AGTWSokobanBoard>(GetOwner());

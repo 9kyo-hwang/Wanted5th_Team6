@@ -84,7 +84,7 @@ bool AGTWSokobanBoard::TryPushBox(AGTWSokobanBox* Box, const FIntPoint& Directio
 	const FVector LocalTarget(
 		Next.X * TileSize,
 		Next.Y * TileSize,
-		0.f
+		0.0f
 	);
 
 	FVector WorldTarget =
@@ -124,7 +124,7 @@ FVector AGTWSokobanBoard::GetMapCenterLocation() const
 	const float CenterX = (Colums - 1) * TileSize * 0.5f;
 	const float CenterY = (Rows - 1) * TileSize * 0.5f;
 
-	const FVector LocalCenter(CenterX, CenterY, 0.f);
+	const FVector LocalCenter(CenterX, CenterY, 0.0f);
 
 	return RootComponent->GetComponentTransform()
 		.TransformPosition(LocalCenter);
@@ -142,8 +142,8 @@ void AGTWSokobanBoard::AddGoalCount()
 bool AGTWSokobanBoard::LoadMapFileData()
 {
 	FString FilePath = FPaths::Combine(
-		FPaths::ProjectConfigDir(),
-		TEXT("SokobanMap.txt"));
+		FPaths::ProjectContentDir(),
+		TEXT("GTW/GameData/SokobanMap.txt"));
 
 	if (FFileHelper::LoadFileToString(MapDataText, *FilePath))
 	{
@@ -187,7 +187,7 @@ void AGTWSokobanBoard::InitializeMap()
 			const FVector TileLocation(
 				j * TileSize,
 				i * TileSize,
-				0.f
+				0.0f
 			);
 			const 
 			UStaticMesh* GoalStaticMesh = nullptr;
@@ -251,11 +251,11 @@ void AGTWSokobanBoard::InitializeMap()
 	const float CenterY = (Rows - 1) * TileSize * 0.5f;
 
 	SokobanBoardCamera->SetRelativeLocation(
-		FVector(CenterX, CenterY, 1800.f)
+		FVector(CenterX, CenterY, 1800.0f)
 	);
 
 	SokobanBoardCamera->SetRelativeRotation(
-		FRotator(-90.f, -90.f, 0.f)
+		FRotator(-90.0f, -90.0f, 0.0f)
 	);
 }
 
@@ -442,7 +442,6 @@ void AGTWSokobanBoard::ResetGame()
 
 	SpawnedBoxes.Empty();
 	GoalCount = 0;
-	ElapsedTime = 0.0f;
 	bIsSokobanClear = false;
 
 	SpawnBox(RedBoxClass, BoxStartLocatin[0]);
