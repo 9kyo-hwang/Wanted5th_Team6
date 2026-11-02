@@ -19,17 +19,6 @@ AGTWBoss::AGTWBoss()
 		GetMesh()->SetSkeletalMesh(BossMesh.Object);
 	}
 
-	// 메시 컴포넌트 연결
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BossMesh(
-		TEXT("/Game/Assets/Boss/Meshes/SKM_Boss.SKM_Boss")
-	);
-
-	if (BossMesh.Succeeded())
-	{
-		GetMesh()->SetSkeletalMesh(BossMesh.Object);
-	}
-
-
 	// 매시 컴포넌트 앞쪽 보게 설정
 	GetMesh()->SetRelativeLocationAndRotation(
 		FVector(0.0f, 0.0f, -88.0f),

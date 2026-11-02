@@ -12,13 +12,17 @@ AGTWBoss2PAIController::AGTWBoss2PAIController()
 		TEXT("/Game/GTW/AI/BB_P2Boss.BB_P2Boss")
 	);
 	if (BBAssetRef.Succeeded())
+	{
 		BBAsset = BBAssetRef.Object;
+	}
 
 	static ConstructorHelpers::FObjectFinder<UBehaviorTree> BTAssetRef(
 		TEXT("/Game/GTW/AI/BT_P2Boss.BT_P2Boss")
 	);
 	if (BTAssetRef.Succeeded())
+	{
 		BTAsset = BTAssetRef.Object;
+	}
 
 
 }
@@ -44,7 +48,9 @@ void AGTWBoss2PAIController::StopAI()
 	// BT 중지
 	UBehaviorTreeComponent* BTComponent = Cast<UBehaviorTreeComponent>(BrainComponent);
 	if (BTComponent)
+	{
 		BTComponent->StopTree();
+	}
 }
 
 void AGTWBoss2PAIController::OnPossess(APawn* InPawn)
