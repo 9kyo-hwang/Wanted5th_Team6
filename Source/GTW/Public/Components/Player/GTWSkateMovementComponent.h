@@ -86,5 +86,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement)
 	FVector GTWVelocity;
 
+	//UPROPERTY()
+	//float OverrideMaxWalkSpeed;
 };
 	

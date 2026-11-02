@@ -27,6 +27,10 @@ void UGTWSkateMovementComponent::InitializeComponent()
 	OldImpactNormal = FVector(0.0f, 0.0f, 0.0f);
 	OldFloor = CurrentFloor;
 	GTWVelocity = FVector(0.0f, 0.0f, 0.0f);
+	//if (OverrideMaxWalkSpeed != 0)
+	//{
+	//	MaxWalkSpeed = OverrideMaxWalkSpeed;
+	//}
 }
 
 void UGTWSkateMovementComponent::SetGTWVelocity()

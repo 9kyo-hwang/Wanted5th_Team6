@@ -41,26 +41,22 @@ void UGTWSpeedWidget::UpdateSpeed(int Speed)
     SpeedText[1].Get()->SetText(FText::FromString(FString::FromInt(TensDigit)));
     SpeedText[2].Get()->SetText(FText::FromString(FString::FromInt(OnesDigit)));
 
-    if (DigitFlag > 0)
+    
+    FSlateColor ActiveTxtColor = FSlateColor(
+        FLinearColor(1.0f , 1.0f, 1.0f, 1.0f)
+    );
+    for (int ix = 2; ix >= 3 - DigitFlag;--ix)
     {
-        FSlateColor Color = FSlateColor(
-            FLinearColor(1.0f , 1.0f, 1.0f, 1.0f)
-        );
-        for (int ix = 2; ix >= 3 - DigitFlag;--ix)
-        {
-            SpeedText[ix].Get()->SetColorAndOpacity(Color);
-        }
+        SpeedText[ix].Get()->SetColorAndOpacity(ActiveTxtColor);
     }
-    else
+    FSlateColor InActiveTxtColor = FSlateColor(
+        FLinearColor(1.0f, 1.0f, 1.0f, 0.7f)
+    );
+    for (int ix = 2 - DigitFlag; ix >= 0;--ix)
     {
-        FSlateColor Color = FSlateColor(
-            FLinearColor(1.0f, 1.0f, 1.0f, 0.7f)
-        );
-        for (int ix = 2; ix >= 0;--ix)
-        {
-            SpeedText[ix].Get()->SetColorAndOpacity(Color);
-        }
+        SpeedText[ix].Get()->SetColorAndOpacity(InActiveTxtColor);
     }
+    
 
     UpdateSpeedGauge(Speed);
 }
