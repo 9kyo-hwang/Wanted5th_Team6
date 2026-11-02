@@ -121,14 +121,6 @@ void AGTWPlayerCharacter::Tick(float DeltaTime)
 
 	// 중력 적용
 	ActiveGravity(bIsGround, NormalVector);
-
-	UE_LOG(LogTemp, Warning,
-		TEXT("Mode=%d Ground=%d Normal=%s Velocity=%s Accel=%s"),
-		static_cast<int32>(SkateCharacterMovementComponent->MovementMode),
-		bIsGround,
-		*NormalVector.ToString(),
-		*SkateCharacterMovementComponent->Velocity.ToString(),
-		*SkateCharacterMovementComponent->GetCurrentAcceleration().ToString());
 }
 
 

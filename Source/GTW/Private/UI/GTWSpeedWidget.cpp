@@ -72,7 +72,6 @@ void UGTWSpeedWidget::UpdateSpeedGauge(int Speed)
         FLinearColor(1.0f, 1.0f, 1.0f, 0.5f)
     );
 
-    //UE_LOG(LogTemp, Log, TEXT("Speed:%d, Slots:%d"), Speed, ActiveGaugeSlots);
 
     for (int ix = 0; ix < 10; ++ix)
     {
@@ -91,7 +90,6 @@ void UGTWSpeedWidget::UpdateSpeedGauge(int Speed)
 
         if (ix < ActiveGaugeSlots)
         {
-            UE_LOG(LogTemp, Log, TEXT("ActiveDoin"));
             SpeedGauges[ix]->SetBrushTintColor(ActiveColor);
         }
         else
