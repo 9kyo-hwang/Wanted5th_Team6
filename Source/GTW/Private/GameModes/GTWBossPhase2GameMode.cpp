@@ -9,6 +9,7 @@
 #include <Characters/Boss/GTWBoss.h>
 #include <Controllers/GTWBoss2PAIController.h>
 #include <Characters/Player/GTWPlayerCharacter.h>
+#include <Controllers/GTWPlayerController.h>
 
 void AGTWBossPhase2GameMode::InitGameplay(AGTWBoss* InBoss)
 {
@@ -56,14 +57,7 @@ AGTWBossPhase2GameMode::AGTWBossPhase2GameMode()
 		DefaultPawnClass = Player.Class;
 	}
 
-	// 플레이어 컨트롤러 클래스 설정.
-	static ConstructorHelpers::FClassFinder<AController> PlayerController(
-		TEXT("/Game/GTW/Characters/Player/BP_GTWPlayerContorller.BP_GTWPlayerContorller_C")
-	);
-	if (PlayerController.Succeeded())
-	{
-		PlayerControllerClass = PlayerController.Class;
-	}
+	PlayerControllerClass = AGTWPlayerController::StaticClass();
 }
 
 void AGTWBossPhase2GameMode::StartPlay()
