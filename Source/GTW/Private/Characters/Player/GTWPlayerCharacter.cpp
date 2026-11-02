@@ -2,6 +2,7 @@
 
 #include <Characters/Player/GTWPlayerCharacter.h>
 #include <Components/Player/GTWSkateMovementComponent.h>
+#include <UI/GTWSpeedWidget.h>
 
 #include <Components/CapsuleComponent.h>
 
@@ -75,14 +76,30 @@ void AGTWPlayerCharacter::ActiveGravity(const bool bIsGround, const FVector& Nor
 	}
 }
 
+void AGTWPlayerCharacter::SetSpeedWidget(UGTWSpeedWidget* InSpeedWidget)
+{
+	// 값 확인
+	if (nullptr == InSpeedWidget)
+	{
+		return;
+	}
+
+	// 설정할 초기값
+	int InitSpeed = 0;
+
+	InSpeedWidget->UpdateSpeed(InitSpeed);
+
+	SkateCharacterMovementComponent->OnSpeedChanged.AddUObject(InSpeedWidget, &UGTWSpeedWidget::UpdateSpeed);
+}
+
 // Called when the game starts or when spawned
 void AGTWPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 
 	// 중력 기본 값 설정
-	TiltGravity = -250.f;
-	NoTiltGravity = -450.f;
+	TiltGravity = -250.0f;
+	NoTiltGravity = -450.0f;
 }
 
 // Called every frame
@@ -104,14 +121,6 @@ void AGTWPlayerCharacter::Tick(float DeltaTime)
 
 	// 중력 적용
 	ActiveGravity(bIsGround, NormalVector);
-
-	UE_LOG(LogTemp, Warning,
-		TEXT("Mode=%d Ground=%d Normal=%s Velocity=%s Accel=%s"),
-		static_cast<int32>(SkateCharacterMovementComponent->MovementMode),
-		bIsGround,
-		*NormalVector.ToString(),
-		*SkateCharacterMovementComponent->Velocity.ToString(),
-		*SkateCharacterMovementComponent->GetCurrentAcceleration().ToString());
 }
 
 

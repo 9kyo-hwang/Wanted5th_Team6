@@ -6,7 +6,7 @@
 #include <GTWDebugHelper.h>
 
 AGTWBossHitObjectSpawner::AGTWBossHitObjectSpawner()
-	: RespawnTime(30.f)
+	: RespawnTime(30.0f)
 	, bIsSpawning(false)
 {
 	// 에디터에서 Class 타입을 BP로 지정해주자.
@@ -30,7 +30,7 @@ bool AGTWBossHitObjectSpawner::StartSpawning(AActor* InTarget)
 		return true;
 	}
 
-	if (!IsValid(HitObjectClass) || !IsValid(InTarget) || RespawnTime <= 0.f)
+	if (!IsValid(HitObjectClass) || !IsValid(InTarget) || RespawnTime <= 0.0f)
 	{
 		return false;
 	}

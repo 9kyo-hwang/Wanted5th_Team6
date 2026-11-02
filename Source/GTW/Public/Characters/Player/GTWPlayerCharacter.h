@@ -4,11 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+
+#include <Interfaces/GTWWidgetInterface.h>
+
 #include "GTWPlayerCharacter.generated.h"
 
 
 UCLASS()
 class GTW_API AGTWPlayerCharacter : public ACharacter
+									,public IGTWWidgetInterface
 {
 	GENERATED_BODY()
 
@@ -26,7 +30,10 @@ public:
 	// 법선 벡터로부터 중력이 적용될 벡터를 계산하는 함수
 	FVector NormalToGravity(const FVector& Normal);
 
-
+	// 상속
+protected:
+	// 위젯과 상호작용할 인터페이스
+	virtual void SetSpeedWidget(class UGTWSpeedWidget* InSpeedWidget) override;
 
 protected:
 	virtual void BeginPlay() override;
@@ -46,4 +53,5 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Gravity)
 	float TiltGravity;
+
 };

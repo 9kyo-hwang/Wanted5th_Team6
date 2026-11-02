@@ -126,7 +126,7 @@ private:
 	TArray<FString> MapRows;
 	FVector PlayerStartLocation = FVector::ZeroVector;
 	TArray<FVector> BoxStartLocatin;
-	float ElapsedTime = 0.f;
+	float ElapsedTime = 0.0f;
 	int32 MaxGoalCount = 3;
 	bool bIsSokobanClear = false;
 };
