@@ -49,7 +49,7 @@ private:
 	TObjectPtr<class UStaticMeshComponent> WarningMarker;	// 예고 지점 표시할 표식.
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UStaticMeshComponent> LightningVisual;	// 예고 지점 표시할 표식.
+	TObjectPtr<class UStaticMeshComponent> LightningVisual;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
 	float WarningDuration;
