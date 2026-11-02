@@ -4,6 +4,7 @@
 #include <GTWGameInstance.h>
 
 #include <SaveGames/GTWClearHistorySaveGame.h>
+#include <GTWDebugHelper.h>
 
 #include <Kismet/GameplayStatics.h>
 
@@ -11,15 +12,6 @@ namespace
 {
     const FString ClearHistorySlotName = TEXT("ClearHistory");
     constexpr int32 ClearHistoryUserIndex = 0;
-
-    static void Print(const FString& Message, FColor Color = FColor::MakeRandomColor(), int32 InKey = -1)
-    {
-        if (GEngine)
-        {
-            GEngine->AddOnScreenDebugMessage(InKey, 7.f, Color, Message);
-            UE_LOG(LogTemp, Warning, TEXT("%s"), *Message);
-        }
-    }
 }
 
 // 엔진 켤 때 한 번 호출됨
@@ -39,7 +31,7 @@ void UGTWGameInstance::Init()
         }
         else
         {
-            Print(TEXT("[GameInstance::Init] 기존 클리어 로드 실패"));
+            Debug::Print(TEXT("[GameInstance::Init] 기존 클리어 로드 실패"));
             return;
         }
     }
@@ -51,7 +43,7 @@ void UGTWGameInstance::Init()
         }
         else
         {
-            Print(TEXT("[GameInstance::Init] SaveGame 객체 생성 실패"));
+            Debug::Print(TEXT("[GameInstance::Init] SaveGame 객체 생성 실패"));
             return;
         }
     }
@@ -71,13 +63,13 @@ void UGTWGameInstance::CompleteGame()
 {
     if (GameStartTimeSeconds < 0.0)
     {
-        Print(TEXT("[GameInstance::CompleteGame] 아직 게임을 시작하지 않았음"));
+        Debug::Print(TEXT("[GameInstance::CompleteGame] 아직 게임을 시작하지 않았음"));
         return;
     }
 
     if (GameClearTimeSeconds >= 0.0)
     {
-        Print(TEXT("[GameInstance::CompleteGame] 이미 이번 게임에 대해서는 처리가 완료됨"));
+        Debug::Print(TEXT("[GameInstance::CompleteGame] 이미 이번 게임에 대해서는 처리가 완료됨"));
         return;
     }
 
@@ -85,14 +77,14 @@ void UGTWGameInstance::CompleteGame()
 
     if (!IsValid(ClearHistorySaveGame.Get()))
     {
-        Print(TEXT("[GameInstance::CompleteGame] 클리어 시간은 확정됐으나 SaveGame 객체가 없어 저장 불가"));
+        Debug::Print(TEXT("[GameInstance::CompleteGame] 클리어 시간은 확정됐으나 SaveGame 객체가 없어 저장 불가"));
         return;
     }
 
     ClearHistorySaveGame->ClearTimes.Add(GameClearTimeSeconds);
     if (!SaveClearHistory())
     {
-        Print(TEXT("[GameInstance::CompleteGame] 클리어 기록 저장 실패"));
+        Debug::Print(TEXT("[GameInstance::CompleteGame] 클리어 기록 저장 실패"));
     }
 }
 
