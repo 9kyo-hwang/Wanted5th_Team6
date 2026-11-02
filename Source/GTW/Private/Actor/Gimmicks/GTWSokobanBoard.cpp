@@ -142,8 +142,8 @@ void AGTWSokobanBoard::AddGoalCount()
 bool AGTWSokobanBoard::LoadMapFileData()
 {
 	FString FilePath = FPaths::Combine(
-		FPaths::ProjectConfigDir(),
-		TEXT("SokobanMap.txt"));
+		FPaths::ProjectContentDir(),
+		TEXT("GTW/GameData/SokobanMap.txt"));
 
 	if (FFileHelper::LoadFileToString(MapDataText, *FilePath))
 	{
@@ -442,7 +442,6 @@ void AGTWSokobanBoard::ResetGame()
 
 	SpawnedBoxes.Empty();
 	GoalCount = 0;
-	ElapsedTime = 0.0f;
 	bIsSokobanClear = false;
 
 	SpawnBox(RedBoxClass, BoxStartLocatin[0]);
