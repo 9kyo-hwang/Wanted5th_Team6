@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -18,9 +18,18 @@ public:
 	AGTWShootingGameMode();
 
 public:
-
+	UFUNCTION()
+	void Reset();
+	UFUNCTION()
+	void GameOver();
 private:
 private:
+	UPROPERTY(BlueprintReadWrite, Category = ActorStartLocation)
+	FVector StartPlayerLocation;
+	UPROPERTY(BlueprintReadWrite, Category = ActorStartLocation)
+	FVector StartBossLocation;
+	UPROPERTY(BlueprintReadWrite, Category = ActorStartLocation)
+	FVector StartForwardMovingLocation;
 
 protected:
 protected:
