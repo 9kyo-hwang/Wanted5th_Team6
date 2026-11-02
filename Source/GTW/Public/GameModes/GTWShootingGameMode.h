@@ -17,19 +17,19 @@ class GTW_API AGTWShootingGameMode : public AGameModeBase
 public:
 	AGTWShootingGameMode();
 
+	//UFUNCTION()
+	//void Reset();
+	//UFUNCTION()
+	//void GameOver();
 public:
-	UFUNCTION()
-	void Reset();
-	UFUNCTION()
-	void GameOver();
-private:
-private:
-	UPROPERTY(BlueprintReadWrite, Category = ActorStartLocation)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ActorStartLocation)
 	FVector StartPlayerLocation;
-	UPROPERTY(BlueprintReadWrite, Category = ActorStartLocation)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ActorStartLocation)
 	FVector StartBossLocation;
-	UPROPERTY(BlueprintReadWrite, Category = ActorStartLocation)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ActorStartLocation)
 	FVector StartForwardMovingLocation;
+private:
+private:
 
 protected:
 protected:
