@@ -23,10 +23,31 @@ void UGTWSkateMovementComponent::InitializeComponent()
 	// 초기화
 	GTWPlayerCharacter = Cast<AGTWPlayerCharacter>(GetCharacterOwner());
 
-	NewImpactNormal = FVector(0.f, 0.f, 0.f);
-	OldImpactNormal = FVector(0.f, 0.f, 0.f);
+	NewImpactNormal = FVector(0.0f, 0.0f, 0.0f);
+	OldImpactNormal = FVector(0.0f, 0.0f, 0.0f);
 	OldFloor = CurrentFloor;
+	GTWVelocity = FVector(0.0f, 0.0f, 0.0f);
+
 }
+
+void UGTWSkateMovementComponent::SetGTWVelocity()
+{
+	GTWVelocity = Velocity;
+	if (IsMovingOnGround())
+	{
+		GTWVelocity.Z = -(GTWVelocity.X * NewImpactNormal.X + GTWVelocity.Y * NewImpactNormal.Y) / NewImpactNormal.Z;
+	}
+	else
+	{
+		GTWVelocity.Z = Velocity.Z;
+	}
+
+	// m/s -> km/h
+	int GTWSpeed = GTWVelocity.Length() / 100000 * 3600;
+
+	OnSpeedChanged.Broadcast(GTWSpeed);
+}
+
 
 FRotator UGTWSkateMovementComponent::ComputeOrientToMovementRotation(const FRotator& CurrentRotation, float DeltaTime, FRotator& DeltaRotation) const
 {
@@ -76,6 +97,8 @@ void UGTWSkateMovementComponent::PhysicsRotation(float DeltaTime)
 	// 입력 혹은 속도에 의한 회전 적용
 	Super::PhysicsRotation(DeltaTime);
 
+	SetGTWVelocity();
+
 	// OldFloor 업데이트
 	OldFloor = CurrentFloor;
 
@@ -104,17 +127,15 @@ void UGTWSkateMovementComponent::StartFalling(int32 Iterations, float remainingT
 	const float DesiredDist = Delta.Size();
 	const float ActualDist = ProjectToGravityFloor(UpdatedComponent->GetComponentLocation() - subLoc).Size();
 	remainingTime = (DesiredDist < UE_KINDA_SMALL_NUMBER)
-		? 0.f
-		: remainingTime + timeTick * (1.f - FMath::Min(1.f, ActualDist / DesiredDist));
-
-	NewImpactNormal.Normalize();
+		? 0.0f
+		: remainingTime + timeTick * (1.0f - FMath::Min(1.0f, ActualDist / DesiredDist));
 
 	if (IsMovingOnGround())
 	{
 		// This is to catch cases where the first frame of PIE is executed, and the
 		// level is not yet visible. In those cases, the player will fall out of the
 		// world... So, don't set MOVE_Falling straight away.
-		if (!GIsEditor || (GetWorld()->HasBegunPlay() && (GetWorld()->GetTimeSeconds() >= 1.f)))
+		if (!GIsEditor || (GetWorld()->HasBegunPlay() && (GetWorld()->GetTimeSeconds() >= 1.0f)))
 		{
 			SetMovementMode(MOVE_Falling); //default behavior if script didn't change physics
 		}
@@ -124,6 +145,9 @@ void UGTWSkateMovementComponent::StartFalling(int32 Iterations, float remainingT
 			bForceNextFloorCheck = true;
 		}
 	}
+
+	NewImpactNormal.Normalize();
+
 	// 경사 벗어났을 때 속도 역산
 	if (NewImpactNormal.Z != 0)
 	{
@@ -131,6 +155,7 @@ void UGTWSkateMovementComponent::StartFalling(int32 Iterations, float remainingT
 	}
 	StartNewPhysics(remainingTime, Iterations);
 }
+
 
 FVector UGTWSkateMovementComponent::GetMeshRightVector() const
 {

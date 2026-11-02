@@ -7,8 +7,8 @@
 
 // Sets default values
 AGTWBossHitObject::AGTWBossHitObject()
-	: ContactLifetime(10.f)
-	, FlightSpeed(1000.f)
+	: ContactLifetime(10.0f)
+	, FlightSpeed(1000.0f)
 	, TargetHeightOffset(88.f)
 	, CurrentState(EBossHitObjectState::Inactive)
 {
@@ -59,7 +59,7 @@ bool AGTWBossHitObject::Activate(AActor* InTarget)
 		return false;
 	}
 
-	if (!IsValid(InTarget) || FlightSpeed <= 0.f || ContactLifetime <= 0.f)
+	if (!IsValid(InTarget) || FlightSpeed <= 0.0f || ContactLifetime <= 0.0f)
 	{
 		return false;
 	}
