@@ -4,6 +4,3 @@
 #include "Actor/GTWStartMoveSplineActor.h"
 
 // Sets default values
-AGTWStartMoveSplineActor::AGTWStartMoveSplineActor()
-{
-}
