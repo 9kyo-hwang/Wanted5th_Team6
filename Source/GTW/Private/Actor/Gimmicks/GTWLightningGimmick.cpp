@@ -13,7 +13,7 @@ AGTWLightningGimmick::AGTWLightningGimmick()
 	: WarningDuration(1.f)	// BP에서 조정
 	, VisualDuration(1.f)
 	, StunTime(1.f)
-	, StrikeRadius(10.f)
+	, StrikeRadius(100.f)
 	, CurrentState(ELightningState::Ready)
 {
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
@@ -53,8 +53,6 @@ void AGTWLightningGimmick::Strike()
 	WarningMarker->SetVisibility(false);
 	LightningVisual->SetVisibility(true);
 
-	GetWorldTimerManager().SetTimer(VisualTimerHandle, this, &ThisClass::Finish, VisualDuration);
-
 	if (AActor* Target = nullptr; FindStrikeTarget(Target))
 	{
 		if (IGTWHitReactionReceiver* Receiver = Cast<IGTWHitReactionReceiver>(Target))
@@ -63,6 +61,11 @@ void AGTWLightningGimmick::Strike()
 			Receiver->HitStunObject(StunTime);
 		}
 	}
+
+	OnPlayLightningEffects();
+
+	// @TODO: 나중에 VFX 에셋 준비되면 Visual 메시랑 타이머 다 제거
+	GetWorldTimerManager().SetTimer(VisualTimerHandle, this, &ThisClass::Finish, VisualDuration);
 }
 
 // 번개 치는 범위 내에 플레이어가 있는지 검사 후 반환
@@ -87,6 +90,20 @@ bool AGTWLightningGimmick::FindStrikeTarget(AActor*& OutTarget)
 		false,								/*TraceComplex*/
 		this								/*IgnoreActor*/
 	);
+
+#if defined(ENABLE_DRAW_DEBUG)
+	DrawDebugSphere(
+		World,
+		GetActorLocation(),
+		StrikeRadius,
+		16,
+		FColor::Red,
+		false,
+		2.f,
+		0,
+		2.f
+	);
+#endif
 
 	if (!World->OverlapMultiByObjectType(
 		Overlaps,

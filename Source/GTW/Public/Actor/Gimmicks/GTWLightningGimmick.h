@@ -33,6 +33,11 @@ public:
 	void Strike();
 	void Finish();
 
+protected:
+	// VFX, SFX 실행을 위한 BP 이벤트
+	UFUNCTION(BlueprintImplementableEvent, Category="Boss|Gimmick|Lightning")
+	void OnPlayLightningEffects();
+
 private:
 	bool FindStrikeTarget(AActor*& OutTarget);
 
