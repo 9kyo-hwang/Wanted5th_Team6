@@ -43,7 +43,7 @@ public:
 	FVector StartLocation;
 	FVector TargetLocation;
 
-	float ElapsedTime = 0.f;
+	float ElapsedTime = 0.0f;
 	bool bIsMoving = false;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly,Category = "BoxTypeEnum")

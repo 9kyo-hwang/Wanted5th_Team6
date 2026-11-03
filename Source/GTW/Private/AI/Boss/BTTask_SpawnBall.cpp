@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "AI/Boss/BTTask_SpawnBall.h"
-#include "Characters/GTWBoss.h"
+#include <Characters/Boss/GTWBoss.h>
 #include <BehaviorTree/BehaviorTreeComponent.h>
 #include <AIController.h>
 
