@@ -13,6 +13,7 @@ AGTWLightningSpawner::AGTWLightningSpawner()
 	LightningClass = AGTWLightningGimmick::StaticClass();
 }
 
+// Return: 실제로 생성된 번개 개수
 int32 AGTWLightningSpawner::SpawnLightning(int32 SpawnCount)
 {
 	UWorld* World = GetWorld();
