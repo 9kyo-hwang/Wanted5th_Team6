@@ -40,8 +40,13 @@ protected:
 	// 중력을 적용하는 함수
 	void ActiveGravity(const bool bIsGround, const FVector& Normal);
 
+	// 랙돌
+protected:
 	// 랙돌 시작 함수
 	void BeginRagdoll(float RagdollTime);
+
+	// 랙돌 종료 예약 함수
+	void ReservationEndRagdoll(float RagdollTime);
 
 	// 랙돌 종료 함수 랙돌 시작 시 타이머로 함수 실행 등록
 	void EndRagdoll();
@@ -56,10 +61,8 @@ protected:
 	virtual void HitStunObject(float StunTime) override;
 
 	// Interact 객체와 상호작용할 인터페이스
-	virtual void InteractJumpTile(float JumpPower) override;
-	virtual void InteractRepulsion(FVector PulseDirection, float RepulsionPower) override;
-	virtual void InteractMoveThrower() override;
-	virtual void InteractRotationBarrel() override;
+	virtual void ApplyJumpImpulse(float JumpPower) override;
+	virtual void ApplyRepulsion(FVector RepulseDirection, float RepulsionPower) override;
 
 private:
 	// 넉백 무적 시간 ON
@@ -124,4 +127,8 @@ protected:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Ragdoll)
 	float HighKnockbackForceThreshold;
+
+	// 랙돌 재진입 방지 
+	UPROPERTY()
+	bool bIsRagdoll;
 };
