@@ -189,7 +189,6 @@ void AGTWPlayerCharacter::BeginRagdoll(float RagdollTime)
 		SkateCharacterMovementComponent->Velocity.Rotation());
 
 	// 이동 + 입력 금지
-	SkateCharacterMovementComponent->StopMovementImmediately();
 	CharacterController->SetIgnoreMoveInput(true);
 }
 
