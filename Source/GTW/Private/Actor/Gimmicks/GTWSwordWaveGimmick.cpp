@@ -65,34 +65,12 @@ void AGTWSwordWaveGimmick::OnEndWarning()
 
 void AGTWSwordWaveGimmick::OnPlayerEnter(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-#if 1
-	APawn* OverlappingPawn = Cast<APawn>(OtherActor);
-	if (!OverlappingPawn)
-	{
-		return;
-	}
-
-	APlayerController* PlayerController = Cast<APlayerController>(OverlappingPawn->GetController());
-	if (!PlayerController)
-	{
-		return;
-	}
-
 	Debug::Print(TEXT("[SwordWave] 플레이어가 검기에 닿았음"));
-
-	if (IGTWHitReactionReceiver* Player = Cast<IGTWHitReactionReceiver>(OverlappingPawn))
-	{
-		// 넉백을 호출하지만, 실제로는 넉백 없이 랙돌만 발생시키는 목적
-		Player->HitKnockbackObject(FVector::RightVector, 0.f);
-		Debug::Print(TEXT("[SwordWave] 플레이어 Ragdoll!"));
-	}
-#else
 	if (IGTWHitReactionReceiver* Player = Cast<IGTWHitReactionReceiver>(OtherActor))
 	{
 		// 넉백을 호출하지만, 실제로는 넉백 없이 랙돌만 발생시키는 목적
 		Player->HitKnockbackObject(FVector::RightVector, 0.f);
 	}
-#endif
 }
 
 void AGTWSwordWaveGimmick::EndPlay(const EEndPlayReason::Type EndPlayReason)
