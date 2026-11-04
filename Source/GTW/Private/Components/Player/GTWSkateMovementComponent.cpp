@@ -13,7 +13,10 @@ UGTWSkateMovementComponent::UGTWSkateMovementComponent()
 	: Super()
 {
 	NormalCount = 0;
-
+	DefaultSpeed = 1800.0f;
+	DownHillSpeed = 2500.0f;
+	MaxWalkSpeed = DefaultSpeed;
+	bIsMovingDownSlope = false;
 }
 
 void UGTWSkateMovementComponent::InitializeComponent()
@@ -98,6 +101,30 @@ void UGTWSkateMovementComponent::PhysicsRotation(float DeltaTime)
 	Super::PhysicsRotation(DeltaTime);
 
 	SetGTWVelocity();
+	
+	// 다음 경사가 완만한가?
+	bool bIsNextSlopeDownhill = NewImpactNormal.Z > OldImpactNormal.Z;
+
+	// 최대 속도가 기본 속도인데 다음 경사가 더 완만하다면 
+	// !bIsMovingDownSlope == 최대속도가 기본속도
+	if (!bIsMovingDownSlope
+		&& bIsNextSlopeDownhill)
+	{
+		bIsMovingDownSlope = true;
+
+		MaxWalkSpeed = DownHillSpeed;
+	}
+
+	bool bCurrentSpeedIsSlow = Velocity.Length() < DefaultSpeed - 50.0;
+
+	if (bIsMovingDownSlope 
+		&& bCurrentSpeedIsSlow)
+	{
+		bIsMovingDownSlope = false;
+
+		MaxWalkSpeed = DefaultSpeed;
+	}
+
 
 	// OldFloor 업데이트
 	OldFloor = CurrentFloor;
@@ -105,13 +132,14 @@ void UGTWSkateMovementComponent::PhysicsRotation(float DeltaTime)
 	// 내적이 작다면 바닥의 옆면을 인식한 것으로 판단하여 업데이트를 하지 않음.
 	if (FVector::DotProduct(NewImpactNormal, OldImpactNormal) < 0.05) 
 	{
+		NewImpactNormal = OldImpactNormal;
+
 		if (NormalCount > 100)
 		{
 			NormalCount = 0;
+
+			NewImpactNormal = OldImpactNormal = GetNewImpactNormal();
 		}
-
-		NewImpactNormal = OldImpactNormal;
-
 		// 언덕을 넘어가는 등 상황이 발생 했을 때, 법선 벡터가 오래도록 업데이트 되지 않는 것을 방지.
 		++NormalCount;
 	}
@@ -148,11 +176,17 @@ void UGTWSkateMovementComponent::StartFalling(int32 Iterations, float remainingT
 
 	NewImpactNormal.Normalize();
 
+
 	// 경사 벗어났을 때 속도 역산
 	if (NewImpactNormal.Z != 0)
 	{
 		Velocity.Z = -(Velocity.X * NewImpactNormal.X + Velocity.Y * NewImpactNormal.Y) / NewImpactNormal.Z;
 	}
+	
+	// 최대 속도 초기화.
+	MaxWalkSpeed = DefaultSpeed;
+	bIsMovingDownSlope = false;
+
 	StartNewPhysics(remainingTime, Iterations);
 }
 
