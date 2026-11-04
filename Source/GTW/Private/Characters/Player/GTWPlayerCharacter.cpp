@@ -158,19 +158,19 @@ void AGTWPlayerCharacter::BeginRagdoll(float RagdollTime)
 		return;
 	}
 
-	USkeletalMeshComponent* Mesh = GetMesh();
-	if (nullptr == Mesh)
+	USkeletalMeshComponent* CharacterMesh = GetMesh();
+	if (nullptr == CharacterMesh)
 	{
 		return;
 	}
 
-	UCapsuleComponent* CapsuleComponent = GetCapsuleComponent();
-	if (nullptr == CapsuleComponent)
+	UCapsuleComponent* CharacterCapsuleComponent = GetCapsuleComponent();
+	if (nullptr == CharacterCapsuleComponent)
 	{
 		return;
 	}
-	AController* Controller = GetController();
-	if (nullptr == Controller)
+	AController* CharacterController = GetController();
+	if (nullptr == CharacterController)
 	{
 		return;
 	}
@@ -180,17 +180,17 @@ void AGTWPlayerCharacter::BeginRagdoll(float RagdollTime)
 	bIsRagdoll = true;
 
 	// 랙돌 실행
-	Mesh->SetCollisionProfileName(TEXT("Ragdoll"));
-	Mesh->SetAllBodiesBelowSimulatePhysics(TEXT("pelvis"), true, false);
-	Mesh->SetAllBodiesBelowPhysicsBlendWeight(TEXT("pelvis"), 1.0f, false, false);
+	CharacterMesh->SetCollisionProfileName(TEXT("Ragdoll"));
+	CharacterMesh->SetAllBodiesBelowSimulatePhysics(TEXT("pelvis"), true, false);
+	CharacterMesh->SetAllBodiesBelowPhysicsBlendWeight(TEXT("pelvis"), 1.0f, false, false);
 
 	// 회전 설정
-	CapsuleComponent->SetWorldRotation(
+	CharacterCapsuleComponent->SetWorldRotation(
 		SkateCharacterMovementComponent->Velocity.Rotation());
 
 	// 이동 + 입력 금지
 	SkateCharacterMovementComponent->StopMovementImmediately();
-	Controller->SetIgnoreMoveInput(true);	
+	CharacterController->SetIgnoreMoveInput(true);
 }
 
 void AGTWPlayerCharacter::ReservationEndRagdoll(float RagdollTime)
@@ -215,21 +215,21 @@ void AGTWPlayerCharacter::EndRagdoll()
 	bIsRagdoll = false;
 	
 	// 랙돌 종료
-	USkeletalMeshComponent* Mesh = GetMesh();
-	if (nullptr == Mesh)
+	USkeletalMeshComponent* CharacterMesh = GetMesh();
+	if (nullptr == CharacterMesh)
 	{
 		return;
 	}
-	Mesh->SetAllBodiesSimulatePhysics(false);
+	CharacterMesh->SetAllBodiesSimulatePhysics(false);
 	SkateCharacterMovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
 
 	// 입력 복원
-	AController* Controller = GetController();
-	if (nullptr == Controller)
+	AController* CharacterController = GetController();
+	if (nullptr == CharacterController)
 	{
 		return;
 	}
-	Controller->SetIgnoreMoveInput(false);
+	CharacterController->SetIgnoreMoveInput(false);
 
 }
 

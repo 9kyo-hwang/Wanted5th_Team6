@@ -82,7 +82,7 @@ void AGTWRepulsionActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 
 	if (OverlappingPawn)
 	{
-		OverlappingPawn->InteractRepulsion(PulseDirecion, RepulsionPower);
+		OverlappingPawn->ApplyRepulsion(PulseDirecion, RepulsionPower);
 	}
 	// 반발체
 	FVector MeshScale = RepulsionMesh->GetRelativeScale3D();
