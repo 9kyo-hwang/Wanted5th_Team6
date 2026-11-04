@@ -1,6 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Characters/Boss/GTWBoss.h"
+#include "Components/CapsuleComponent.h"
 #include "Controllers/GTWBoss2PAIController.h"
 #include "Actor/GTWStartMoveSplineActor.h"
 #include <Animation/AnimInstance.h>
@@ -62,10 +63,8 @@ AGTWBoss::AGTWBoss()
 	{
 		BallAttack = BallAttackRef.Object;
 	}
-
-	//// AIController 연결
-	//AIControllerClass = AGTWBoss2PAIController::StaticClass();
-	//AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+	// 캡슐 컴포넌트의 오브젝트 타입을 Boss(ECC_GameTraceChannel1)로 설정. 
+	GetCapsuleComponent()->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1);
 }
 
 void AGTWBoss::PlaySwordWave()
