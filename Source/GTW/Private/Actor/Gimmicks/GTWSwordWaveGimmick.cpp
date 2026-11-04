@@ -46,7 +46,6 @@ void AGTWSwordWaveGimmick::BeginPlay()
 	
 	WarningSign->SetVisibility(true);
 	WaveVisual->SetVisibility(false);
-	WaveCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 
 	WaveCollision->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnPlayerEnter);
 	GetWorldTimerManager().SetTimer(WarningTimerHandle, this, &ThisClass::OnEndWarning, WarningDuration);
@@ -57,6 +56,7 @@ void AGTWSwordWaveGimmick::OnEndWarning()
 	WarningSign->SetVisibility(false);
 	WaveVisual->SetVisibility(true);
 
+	WaveCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	ProjectileMovement->Velocity = GetActorForwardVector() * MovementSpeed;
 	ProjectileMovement->Activate();
 
