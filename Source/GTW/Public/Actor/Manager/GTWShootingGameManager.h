@@ -19,7 +19,10 @@ public:
 
 	UFUNCTION(BlueprintPure, Category = "Gameplay|Timer")
 	float GetElapsedTime() const { return ElapsedTime; }
-
+	UFUNCTION(BlueprintPure)
+	bool GetGameplayTimerRunning() const { return bIsGameplayTimerRunning; }
+	UFUNCTION(BlueprintCallable)
+	void ShootingGameStart();
 	UFUNCTION(BlueprintCallable)
 	void Reset();
 	UFUNCTION(BlueprintCallable)
@@ -35,6 +38,14 @@ public:
 	FVector StartBossLocation;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ActorStartLocation)
 	FVector StartForwardMovingLocation;
+	UPROPERTY(EditInstanceOnly, Category = "Shooting|Actor")
+	TObjectPtr<AActor> StartLocationActor;
+	UPROPERTY(EditInstanceOnly, Category = "Shooting|Actor")
+	TObjectPtr<AActor> ShootingBossActor;
+	UPROPERTY(EditInstanceOnly, Category = "Shooting|Actor")
+	TObjectPtr<AActor> ForwardMovingTriggerActor;
+	UPROPERTY(EditInstanceOnly, Category = "Shooting|Actor")
+	TObjectPtr<AActor> ShootingBoxTriggerActor;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Shooting|UI")
 	TSubclassOf<UUserWidget> ElapsedWidgetClass;

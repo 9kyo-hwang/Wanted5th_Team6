@@ -5,20 +5,35 @@
 #include <Kismet/GameplayStatics.h>
 #include <Blueprint/UserWidget.h>
 #include <GameFramework/PlayerController.h>
+#include <GameFramework/Character.h>
 
 // Sets default values
 AGTWShootingGameManager::AGTWShootingGameManager()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	Player = UGameplayStatics::GetPlayerController(this, 0);
 }
 
 // Called when the game starts or when spawned
 void AGTWShootingGameManager::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	Player = UGameplayStatics::GetPlayerController(this, 0);
+
+	if (IsValid(StartLocationActor))
+	{
+		StartPlayerLocation = StartLocationActor->GetActorLocation();
+	}
+
+	if (IsValid(ShootingBossActor))
+	{
+		StartBossLocation = ShootingBossActor->GetActorLocation();
+	}
+
+	if (IsValid(ForwardMovingTriggerActor))
+	{
+		StartForwardMovingLocation = ForwardMovingTriggerActor->GetActorLocation();
+	}
 }
 
 void AGTWShootingGameManager::ShowElapsedWidget()
@@ -60,15 +75,33 @@ void AGTWShootingGameManager::Tick(float DeltaTime)
 	}
 }
 
+void AGTWShootingGameManager::ShootingGameStart()
+{
+	bIsGameplayTimerRunning = true;
+	ShowElapsedWidget();
+	Player->GetCharacter()->TeleportTo(StartPlayerLocation, Player->TargetViewRotation);
+}
+
 void AGTWShootingGameManager::Reset()
 {
-	ShowElapsedWidget();
+	Player->GetCharacter()->TeleportTo(StartPlayerLocation, Player->TargetViewRotation);
+	ShootingBossActor->TeleportTo(StartBossLocation, ShootingBossActor->GetActorRotation());
+	ForwardMovingTriggerActor->TeleportTo(StartForwardMovingLocation,
+		ForwardMovingTriggerActor->GetActorRotation());
 }
 
 void AGTWShootingGameManager::GameClear()
 {
 	bIsGameplayTimerRunning = true;
 	ShowClearViewWidget();
+
+	if (IsValid(ElapsedWidget))
+	{
+		ElapsedWidget->RemoveFromParent();
+		ElapsedWidget->SetVisibility(ESlateVisibility::Hidden);
+	}
+	
+	Player->GetCharacter()->TeleportTo(ShootingBoxTriggerActor->GetActorLocation(), 
+		Player->TargetViewRotation);
 	UE_LOG(LogTemp, Warning, TEXT("ElapsedTiem : %d"), int(ElapsedTime));
 }
-
