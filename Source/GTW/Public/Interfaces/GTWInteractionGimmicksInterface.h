@@ -22,11 +22,7 @@ class GTW_API IGTWInteractionGimmicksInterface
 
 	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	virtual void InteractJumpTile(float JumpPower) = 0;
+	virtual void ApplyJumpImpulse(float JumpPower) = 0;
 
-	virtual void InteractRepulsion(FVector PulseDirection, float RepulsionPower) = 0;
-
-	virtual void InteractMoveThrower() = 0;
-
-	virtual void InteractRotationBarrel() = 0;
+	virtual void ApplyRepulsion(FVector RepulseDirection, float RepulsionPower) = 0;
 };
