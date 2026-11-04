@@ -27,7 +27,7 @@ public:
 	// Level Blueprint에서 GameMode에게 보스, 스포너 참조를 넘겨줄 통로
 	// @TODO: Spawner 타입으로 변경해야 함
 	UFUNCTION(BlueprintCallable, Category="Boss|Phase")
-	void InitGameplay(class ACharacter* InBoss, const TArray<class AActor*>& InHitObjectSpawners);
+	void InitGameplay(class ACharacter* InBoss);
 
 	// 추후 연출이 들어온다면 연출 완료 시 Callback으로 해당 함수 호출(지금은 Level BeginPlay 시 바로 수행)
 	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
@@ -87,7 +87,4 @@ private:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Boss", meta=(AllowPrivateAccess="true"))
 	TObjectPtr<class ACharacter> Boss;
-
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Boss", meta = (AllowPrivateAccess = "true"))
-	TArray<TObjectPtr<class AActor>> HitObjectSpawners;	// 임시로 타입은 Actor
 };

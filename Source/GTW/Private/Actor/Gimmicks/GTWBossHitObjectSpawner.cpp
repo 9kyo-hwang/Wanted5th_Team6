@@ -97,7 +97,7 @@ void AGTWBossHitObjectSpawner::SpawnHitObject()
 		HitObjectInstance = HitObject;
 
 		// @TODO: HitObject에 접촉 대기 종료 델리게이트 연결해줘야 함
-		HitObjectInstance->OnContactEnded.BindUObject(this, &ThisClass::HandleContactEnded);
+		//HitObjectInstance->OnContactEnded.BindUObject(this, &ThisClass::HandleContactEnded);
 
 		if (!HitObjectInstance->Activate(TargetActorRef.Get()))
 		{

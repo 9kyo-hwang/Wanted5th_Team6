@@ -7,8 +7,7 @@
 
 // Sets default values
 AGTWBossHitObject::AGTWBossHitObject()
-	: ContactLifetime(10.0f)
-	, FlightSpeed(1000.0f)
+	: FlightSpeed(1000.0f)
 	, TargetHeightOffset(88.f)
 	, CurrentState(EBossHitObjectState::Inactive)
 {
@@ -59,7 +58,7 @@ bool AGTWBossHitObject::Activate(AActor* InTarget)
 		return false;
 	}
 
-	if (!IsValid(InTarget) || FlightSpeed <= 0.0f || ContactLifetime <= 0.0f)
+	if (!IsValid(InTarget) || FlightSpeed <= 0.0f)
 	{
 		return false;
 	}
@@ -68,15 +67,6 @@ bool AGTWBossHitObject::Activate(AActor* InTarget)
 
 	TargetActorRef = InTarget;
 	CurrentState = EBossHitObjectState::WaitingForContact;
-
-	// 소환 유지 시간 타이머 ON
-	GetWorldTimerManager().SetTimer(
-		ContactLifetimeTimerHandle,
-		this,
-		&ThisClass::OnContactExpired,
-		ContactLifetime,
-		false
-	);
 
 	// 활성화 되었으므로 QueryOnly로 충돌 판정 ON
 	ContactSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
@@ -94,9 +84,9 @@ void AGTWBossHitObject::Cancel()
 	// 여기서는 아무런 통지를 날리지 않음(Spawner 측에서 다 정리해야 하며, 개별 오브젝트는 스스로의 정리만 담당)
 
 	CurrentState = EBossHitObjectState::Finished;
-	GetWorldTimerManager().ClearTimer(ContactLifetimeTimerHandle);
 	ContactSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	SetActorTickEnabled(false);
+
 	Destroy();
 }
 
@@ -107,33 +97,21 @@ void AGTWBossHitObject::OnPlayerContact(UPrimitiveComponent* OverlappedComponent
 		return;
 	}
 
-	// @TODO: 우리가 사용할 BP_{} Player로 캐스팅 필요
-	if (ACharacter* Player = Cast<ACharacter>(OtherActor))
-	{
-		CurrentState = EBossHitObjectState::Flying;
-		GetWorldTimerManager().ClearTimer(ContactLifetimeTimerHandle);
-		ContactSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);	// 플레이어 탐지했으니 역할 끝
-		SetActorTickEnabled(true);	// 이때부터 Tick이 발동하여 이동 시작
-
-		// Spawner에게 재생성 통지
-		OnContactEnded.ExecuteIfBound();
-	}
-}
-
-void AGTWBossHitObject::OnContactExpired()
-{
-	if (CurrentState != EBossHitObjectState::WaitingForContact)
+	APawn* OverlappingPawn = Cast<APawn>(OtherActor);
+	if (!OverlappingPawn)
 	{
 		return;
 	}
 
-	CurrentState = EBossHitObjectState::Finished;
-	ContactSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	
-	// Spawner에게 재생성 통지
-	OnContactEnded.ExecuteIfBound();
+	APlayerController* PlayerController = Cast<APlayerController>(OverlappingPawn->GetController());
+	if (!PlayerController)
+	{
+		return;
+	}
 
-	Destroy();
+	CurrentState = EBossHitObjectState::Flying;
+	ContactSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);	// 플레이어 탐지했으니 역할 끝
+	SetActorTickEnabled(true);	// 이때부터 Tick이 발동하여 이동 시작
 }
 
 void AGTWBossHitObject::FlyToTarget(float DeltaTime)
@@ -169,10 +147,12 @@ void AGTWBossHitObject::FlyToTarget(float DeltaTime)
 void AGTWBossHitObject::OnHitTarget()
 {
 	check(CurrentState == EBossHitObjectState::Flying);
+
 	CurrentState = EBossHitObjectState::Finished;
 	SetActorTickEnabled(false);
 
-	// @TODO: Target한테 명중 이벤트 전달
+	// 보스 적중했음을 알림(맞춘 오브젝트 == 나)
+	OnHitBoss.ExecuteIfBound(this);
 
 	Destroy();
 }

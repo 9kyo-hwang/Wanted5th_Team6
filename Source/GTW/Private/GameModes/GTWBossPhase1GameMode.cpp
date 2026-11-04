@@ -8,7 +8,7 @@
 
 #include <GameFramework/Character.h>  // TEMP. 추후 보스 클래스 생기면 그걸로 체인지
 
-void AGTWBossPhase1GameMode::InitGameplay(ACharacter* InBoss, const TArray<AActor*>& InHitObjectSpawners)
+void AGTWBossPhase1GameMode::InitGameplay(ACharacter* InBoss)
 {
 	if (CurrentState != EBossGameModeState::Ready)
 	{
@@ -16,32 +16,15 @@ void AGTWBossPhase1GameMode::InitGameplay(ACharacter* InBoss, const TArray<AActo
 		return;
 	}
 
-	if (!IsValid(InBoss) || InHitObjectSpawners.IsEmpty())
+	if (!IsValid(InBoss))
 	{
-		Debug::Print(TEXT("[InitGameplay] 보스가 유효하지 않거나 스포너가 없음!"));
+		Debug::Print(TEXT("[InitGameplay] 보스가 유효하지 않음"));
 		return;
 	}
 
-	for (AActor* Spawner : InHitObjectSpawners)
-	{
-		if (!IsValid(Spawner))
-		{
-			Debug::Print(TEXT("[InitGameplay] 스포너가 유효하지 않음!"));
-			return;
-		}
-	}
-
 	Boss = InBoss;
-	HitObjectSpawners.Reset();
-
-	for (AActor* Spawner : InHitObjectSpawners)
-	{
-		// 혹시 모를 중복을 대비
-		HitObjectSpawners.AddUnique(Spawner);
-	}
 
 	// @TODO: GameInstance->TryGetMinigameClearTime() 가지고 난이도 세팅
-	
 	// @TODO: Ready 상태에서는 주로 연출이 재생되니, 플레이어 입력을 차단했다가 풀어주는 기능 필요
 }
 
@@ -67,19 +50,10 @@ void AGTWBossPhase1GameMode::StartGameplay()
 		return;
 	}
 
-	if (!IsValid(Boss.Get()) || HitObjectSpawners.IsEmpty())
+	if (!IsValid(Boss.Get()))
 	{
-		Debug::Print(TEXT("[StartGameplay] 보스랑 스포너가 제대로 세팅되지 않았음"));
+		Debug::Print(TEXT("[StartGameplay] 보스 제대로 세팅되지 않았음"));
 		return;
-	}
-
-	for (AActor* Spawner : HitObjectSpawners)
-	{
-		if (!IsValid(Spawner))
-		{
-			Debug::Print(TEXT("[StartGameplay] 이상한 스포너 객체가 껴있음!"));
-			return;
-		}
 	}
 
 	CurrentHitCount = 0;

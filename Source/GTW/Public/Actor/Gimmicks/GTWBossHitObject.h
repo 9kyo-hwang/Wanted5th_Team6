@@ -6,7 +6,9 @@
 #include "GameFramework/Actor.h"
 #include "GTWBossHitObject.generated.h"
 
-DECLARE_DELEGATE(FOnHitObjectContactEndedSignature);
+class AGTWBossHitObject;
+
+DECLARE_DELEGATE_OneParam(FOnHitBossDelegate, AGTWBossHitObject* /*this*/);
 
 UENUM()
 enum class EBossHitObjectState : uint8
@@ -36,15 +38,12 @@ public:
 	bool Activate(AActor* InTarget);	// 날아가 맞출 대상(보스)을 인자로 받음
 	void Cancel();						// 타이머, 충돌, Tick 종료 후 제거
 
-	FOnHitObjectContactEndedSignature OnContactEnded;
+	FOnHitBossDelegate OnHitBoss;
 
 private:
 	// Player가 오브젝트와 충돌했을 때 발동할 OnComponentBeginOverlap Delegate Callback
 	UFUNCTION()
 	void OnPlayerContact(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
-	// 제한 시간 내에 플레이어가 접촉하지 못했을 때 발동할 Callback
-	void OnContactExpired();
 
 	// Tick에서 타겟을 향해 이동시키는 함수
 	void FlyToTarget(float DeltaTime);
@@ -59,10 +58,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UStaticMeshComponent> VisualMesh;
 
-	// 오브젝트 소환 후 플레이어가 맞힐 수 있는 시간
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
-	float ContactLifetime;
-
 	// 날아가는 속도
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
 	float FlightSpeed;
@@ -75,9 +70,6 @@ private:
 	// 날아가서 명중시킬 대상 보스
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<AActor> TargetActorRef;
-
-	// 소환 후 유지시간
-	FTimerHandle ContactLifetimeTimerHandle;	
 
 	EBossHitObjectState CurrentState;
 };
