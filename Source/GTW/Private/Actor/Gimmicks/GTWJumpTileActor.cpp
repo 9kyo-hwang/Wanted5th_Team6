@@ -69,7 +69,7 @@ void AGTWJumpTileActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent,
 
 	if (OverlappingPawn)
 	{
-		OverlappingPawn->InteractJumpTile(JumpPower);
+		OverlappingPawn->ApplyJumpImpulse(JumpPower);
 	}
 }
 

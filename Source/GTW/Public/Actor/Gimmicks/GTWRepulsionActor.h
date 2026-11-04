@@ -51,7 +51,10 @@ private:
 	TObjectPtr<class UCapsuleComponent> RepulsionTrigger;
 
 	UPROPERTY()
-	FTimerHandle VolumeTimer;
+	FTimerHandle FirstVolumeTimer;
+	
+	UPROPERTY()
+	FTimerHandle SecondVolumeTimer;
 
 	UPROPERTY()
 	float VolumeDelta;
