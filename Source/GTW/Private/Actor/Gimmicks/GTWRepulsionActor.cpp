@@ -67,8 +67,14 @@ void AGTWRepulsionActor::PostInitializeComponents()
 
 void AGTWRepulsionActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (!IsValid(OtherActor) || OtherActor == this)
+	{
+		return;
+	}
+
 	FVector PulseDirecion = OtherActor->GetActorLocation() - GetActorLocation();
-	PulseDirecion.Projection().Normalize();
+	PulseDirecion.Z = 0;
+	PulseDirecion.Normalize();
 
 	// 인터페이스 업캐스팅
 	IGTWInteractionGimmicksInterface* OverlappingPawn =
@@ -78,28 +84,28 @@ void AGTWRepulsionActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 	{
 		OverlappingPawn->InteractRepulsion(PulseDirecion, RepulsionPower);
 	}
-	// TODO: 반발체 크기 커졌다가 줄어드는 
+	// 반발체
 	FVector MeshScale = RepulsionMesh->GetRelativeScale3D();
 
 	// 부피 변화량
 	MeshScale = MeshScale * (VolumeDelta * VolumeDelta);
 
 	// 부피 변화
-	SetActorScale3D(MeshScale);
+	RepulsionMesh->SetRelativeScale3D(MeshScale);
 
 	// 복원 시간 
 	float FirstRestoreTime = 0.1f;
 	float SecondRestoreTime = 0.3f;
 
 	GetWorldTimerManager().SetTimer(
-		VolumeTimer,
+		FirstVolumeTimer,
 		this,
 		&AGTWRepulsionActor::RestoreOriginVolume,
 		FirstRestoreTime,
 		false
 	);
 	GetWorldTimerManager().SetTimer(
-		VolumeTimer,
+		SecondVolumeTimer,
 		this,
 		&AGTWRepulsionActor::RestoreOriginVolume,
 		SecondRestoreTime,
@@ -115,7 +121,7 @@ void AGTWRepulsionActor::RestoreOriginVolume()
 	// 부피 변환
 	MeshScale = MeshScale / VolumeDelta;
 
-	SetActorScale3D(MeshScale);
+	RepulsionMesh->SetRelativeScale3D(MeshScale);
 }
 
 // Called every frame

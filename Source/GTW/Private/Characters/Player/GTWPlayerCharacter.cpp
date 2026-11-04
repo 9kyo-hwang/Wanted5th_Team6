@@ -44,6 +44,8 @@ void AGTWPlayerCharacter::BeginPlay()
 	MediumKnockbackForceThreshold = 10.0f;
 	HighKnockbackForceThreshold = 20.0f;
 
+	bIsRagdoll = false;
+
 }
 
 // Called every frame
@@ -80,7 +82,14 @@ void AGTWPlayerCharacter::Landed(const FHitResult& Hit)
 	{
 		float FallingRagdollTime = 1.0f;
 		
-		BeginRagdoll(FallingRagdollTime);
+		if (FallingRagdollTime > 0.0f)
+		{
+			ReservationEndRagdoll(FallingRagdollTime);
+		}
+		if (!bIsRagdoll)
+		{
+			BeginRagdoll(FallingRagdollTime);
+		}
 	}
 }
 
@@ -144,24 +153,48 @@ void AGTWPlayerCharacter::ActiveGravity(const bool bIsGround, const FVector& Nor
 
 void AGTWPlayerCharacter::BeginRagdoll(float RagdollTime)
 {
-	if (RagdollTime < 0.0f)
+	if (RagdollTime <= 0.0f)
 	{
 		return;
 	}
 
+	USkeletalMeshComponent* Mesh = GetMesh();
+	if (nullptr == Mesh)
+	{
+		return;
+	}
+
+	UCapsuleComponent* CapsuleComponent = GetCapsuleComponent();
+	if (nullptr == CapsuleComponent)
+	{
+		return;
+	}
+	AController* Controller = GetController();
+	if (nullptr == Controller)
+	{
+		return;
+	}
+	// 모두 검증되었을 때 랙돌 시작.
+
+	// 랙돌 플래그
+	bIsRagdoll = true;
+
 	// 랙돌 실행
-	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
-	GetMesh()->SetAllBodiesBelowSimulatePhysics(TEXT("pelvis"), true, false);
-	GetMesh()->SetAllBodiesBelowPhysicsBlendWeight(TEXT("pelvis"), 1.0f, false, false);
+	Mesh->SetCollisionProfileName(TEXT("Ragdoll"));
+	Mesh->SetAllBodiesBelowSimulatePhysics(TEXT("pelvis"), true, false);
+	Mesh->SetAllBodiesBelowPhysicsBlendWeight(TEXT("pelvis"), 1.0f, false, false);
 
 	// 회전 설정
-	GetCapsuleComponent()->SetWorldRotation(
+	CapsuleComponent->SetWorldRotation(
 		SkateCharacterMovementComponent->Velocity.Rotation());
 
 	// 이동 + 입력 금지
 	SkateCharacterMovementComponent->StopMovementImmediately();
-	GetController()->SetIgnoreMoveInput(true);
+	Controller->SetIgnoreMoveInput(true);	
+}
 
+void AGTWPlayerCharacter::ReservationEndRagdoll(float RagdollTime)
+{
 	GetWorldTimerManager().SetTimer(
 		RagdollTimerHandle,
 		this,
@@ -174,9 +207,29 @@ void AGTWPlayerCharacter::BeginRagdoll(float RagdollTime)
 
 void AGTWPlayerCharacter::EndRagdoll()
 {
-	GetMesh()->SetAllBodiesSimulatePhysics(false);
+	// 랙돌 시작 검증
+	if (!bIsRagdoll)
+	{
+		return;
+	}
+	bIsRagdoll = false;
+	
+	// 랙돌 종료
+	USkeletalMeshComponent* Mesh = GetMesh();
+	if (nullptr == Mesh)
+	{
+		return;
+	}
+	Mesh->SetAllBodiesSimulatePhysics(false);
 	SkateCharacterMovementComponent->SetMovementMode(EMovementMode::MOVE_Walking);
-	GetController()->SetIgnoreMoveInput(false);
+
+	// 입력 복원
+	AController* Controller = GetController();
+	if (nullptr == Controller)
+	{
+		return;
+	}
+	Controller->SetIgnoreMoveInput(false);
 
 }
 
@@ -207,12 +260,17 @@ void AGTWPlayerCharacter::HitKnockbackObject(FVector HitDirection, float power)
 	bCanKnockback = false;
 
 	//  충격 전달 방향 속도를 0으로 만들기 
-	for (int ix = 0; ix < 3; ++ix)
+	if (abs(HitDirection.X) > KINDA_SMALL_NUMBER)
 	{
-		if (abs(HitDirection[ix]) > KINDA_SMALL_NUMBER)
-		{
-			SkateCharacterMovementComponent->Velocity[ix] = 0.0f;
-		}
+		SkateCharacterMovementComponent->Velocity.X = 0.0f;
+	}
+	if (abs(HitDirection.Y) > KINDA_SMALL_NUMBER)
+	{
+		SkateCharacterMovementComponent->Velocity.Y = 0.0f;
+	}
+	if (abs(HitDirection.Z) > KINDA_SMALL_NUMBER)
+	{
+		SkateCharacterMovementComponent->Velocity.Z = 0.0f;
 	}
 
 	// 스케일 전달
@@ -233,7 +291,14 @@ void AGTWPlayerCharacter::HitKnockbackObject(FVector HitDirection, float power)
 	}
 
 	// 랙돌 실행
-	BeginRagdoll(RagdollTime);
+	if (RagdollTime > 0.0f)
+	{
+		ReservationEndRagdoll(RagdollTime);
+	}
+	if (!bIsRagdoll)
+	{		
+		BeginRagdoll(RagdollTime);
+	}
 
 	// 연속 피격을 막기 위한 무적 시간
 	float InvincibilityDuration = 0.3f;
@@ -250,13 +315,19 @@ void AGTWPlayerCharacter::HitKnockbackObject(FVector HitDirection, float power)
 void AGTWPlayerCharacter::HitStunObject(float StunTime)
 {
 	// 스턴 금지
-	if (!bCanStun)
+	if (!bCanStun || StunTime <= 0.0f)
 	{
 		return;
 	}
+	// 스턴 무적
+	bCanStun = false;
 
 	// 랙돌 실행
-	BeginRagdoll(StunTime);
+	ReservationEndRagdoll(StunTime);
+	if (!bIsRagdoll)
+	{		
+		BeginRagdoll(StunTime);
+	}
 
 	// 연속적인 스턴 피격을 막기 위한 무적 시간
 	float AddtionalInvincibilityDuration = 0.3f;
@@ -270,7 +341,7 @@ void AGTWPlayerCharacter::HitStunObject(float StunTime)
 	);
 }
 
-void AGTWPlayerCharacter::InteractJumpTile(float JumpPower)
+void AGTWPlayerCharacter::ApplyJumpImpulse(float JumpPower)
 {
 	//  Z 방향 속도를 0으로 만들기 
 	SkateCharacterMovementComponent->Velocity.Z = 0.0f;
@@ -281,33 +352,26 @@ void AGTWPlayerCharacter::InteractJumpTile(float JumpPower)
 	SkateCharacterMovementComponent->AddImpulse(Pulse, true);
 }
 
-void AGTWPlayerCharacter::InteractRepulsion(FVector PulseDirection, float RepulsionPower)
+void AGTWPlayerCharacter::ApplyRepulsion(FVector RepulseDirection, float RepulsionPower)
 {
 	// XY축만 고려
-	for (int ix = 0; ix < 2; ++ix)
+	if (abs(RepulseDirection.X) > KINDA_SMALL_NUMBER)
 	{
-		if (abs(PulseDirection[ix]) > KINDA_SMALL_NUMBER)
-		{
-			SkateCharacterMovementComponent->Velocity[ix] = 0.0f;
-		}
+		SkateCharacterMovementComponent->Velocity.X = 0.0f;
 	}
+	if (abs(RepulseDirection.Y) > KINDA_SMALL_NUMBER)
+	{
+		SkateCharacterMovementComponent->Velocity.Y = 0.0f;
+	}
+	
 
 	// 스케일 전달
-	FVector Pulse = PulseDirection * RepulsionPower;
+	FVector Pulse = RepulseDirection * RepulsionPower;
 
 	// 충격 전달
 	SkateCharacterMovementComponent->AddImpulse(Pulse, true);
 }
 
-void AGTWPlayerCharacter::InteractMoveThrower()
-{
-
-}
-
-void AGTWPlayerCharacter::InteractRotationBarrel()
-{
-
-}
 
 
 
