@@ -133,12 +133,7 @@ FVector AGTWSokobanBoard::GetMapCenterLocation() const
 void AGTWSokobanBoard::AddGoalCount()
 {
 	GoalCount++;
-	if (GoalCount >= 
-		
-		
-		
-		
-		GoalCount)
+	if (GoalCount >= MaxGoalCount)
 	{
 		GameClear();
 	}
