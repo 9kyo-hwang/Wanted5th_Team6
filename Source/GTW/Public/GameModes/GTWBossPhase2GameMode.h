@@ -11,6 +11,9 @@
  * 보스 2페이즈 레벨에서 사용하는 게임 모드
  * - 성공 판정: 맵 끝에 도달 시(목표 Trigger Overlap)
  */
+
+class AGTWBoss;
+
 UCLASS()
 class GTW_API AGTWBossPhase2GameMode : public AGameModeBase
 {
@@ -24,7 +27,7 @@ public:
 public:
 	// 현재 레벨 블루프린트에서 호출하도록 구현함. 
 	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
-	void InitGameplay(class AGTWBoss* InBoss);
+	void InitGameplay(AGTWBoss* InBoss);
 
 	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
 	void StartGameplay();
@@ -74,5 +77,5 @@ private:
 	EBossGameModeState CurrentState = EBossGameModeState::Ready;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class ACharacter> Boss;
+	TObjectPtr<AGTWBoss> Boss;
 };
