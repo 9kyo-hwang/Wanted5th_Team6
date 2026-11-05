@@ -13,6 +13,7 @@
 #include "Components/CapsuleComponent.h"
 #include <Animation/AnimInstance.h>
 #include <Components/SplineComponent.h>
+#include <Components/ArrowComponent.h>
 
 // Sets default values
 AGTWBoss::AGTWBoss()
@@ -83,8 +84,8 @@ void AGTWBoss::PlaySwordWave()
 	FActorSpawnParameters SpawnParams;
 	GetWorld()->SpawnActor<AGTWSwordWaveGimmick>(
 		SwordWaveClass,
-		GetActorLocation() + GetActorRightVector() * FMath::RandRange(-450, 450),
-		FRotator::ZeroRotator,
+		GetActorLocation() + GetActorForwardVector() * 100.0f + GetActorRightVector() * FMath::RandRange(-450, 450),
+		GetActorRotation(),
 		SpawnParams
 	);
 
@@ -101,14 +102,10 @@ void AGTWBoss::PlaySpawnBall()
 	FActorSpawnParameters SpawnParams;
 	GetWorld()->SpawnActor<AGTWMeteorGimmick>(
 		MeteorClass,
-		GetActorLocation() + GetActorForwardVector()* 2000.0f + GetActorRightVector() * FMath::RandRange(-450, 450),
-		FRotator::ZeroRotator,
+		GetActorLocation() + GetActorForwardVector() * 2500.0f + GetActorRightVector() * FMath::RandRange(-450, 450),
+		GetActorRotation(),
 		SpawnParams
 	);
-
-
-
-
 }
 
 void AGTWBoss::PlayLightning()
@@ -119,7 +116,7 @@ void AGTWBoss::PlayLightning()
 	GetWorld()->SpawnActor<AGTWLightningGimmick>(
 		LightningClass,
 		GetActorLocation() + GetActorForwardVector() * 2000.0f + GetActorRightVector() * FMath::RandRange(-450, 450),
-		FRotator::ZeroRotator,
+		GetActorRotation(),
 		SpawnParams
 	);
 

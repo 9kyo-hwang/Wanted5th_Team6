@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+
 #include "GTWBoss.generated.h"
 
 UCLASS()
 class GTW_API AGTWBoss : public ACharacter
 {
 	GENERATED_BODY()
-
+	
 public:
 	// Sets default values for this character's properties
 	AGTWBoss();
@@ -31,6 +32,11 @@ public:
 	// 스플라인 실행 함수
 	UFUNCTION(BlueprintCallable, Category = Spline)
 	void StartSpline();
+
+public:
+	// 화살표 컴포넌트: 스플라인 변경 시 사용
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Arrow)
+	class UArrowComponent* ArrowComp;
 
 protected:
 	// 몽타주
@@ -59,6 +65,8 @@ protected:
 	// 검기
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = GimmickActor)
 	TSubclassOf<class AGTWSwordWaveGimmick> SwordWaveClass;
+
+
 private:
 	// 어택 몽타주 실행
 	void PlayAttackAnim(UAnimMontage* AttackMontage);
