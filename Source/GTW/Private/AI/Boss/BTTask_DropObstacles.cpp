@@ -14,6 +14,11 @@ UBTTask_DropObstacles::UBTTask_DropObstacles()
 EBTNodeResult::Type UBTTask_DropObstacles::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
     AGTWBoss1PAIController* AI = Cast<AGTWBoss1PAIController>(OwnerComp.GetAIOwner());
+    if (!AI)
+    {
+        return EBTNodeResult::Failed;
+    }
+    
     AGTWBoss1* Boss = AI ? Cast<AGTWBoss1>(AI->GetPawn()) : nullptr;
     if (!Boss)
     {

@@ -76,11 +76,14 @@ FVector AGTWBoss1::GetChaseLocation(const FVector& PlayerPosition) const
 
     // 플레이어가 사각형 밖에 있어도 방향을 유지하여 모서리 추격이 한 점에 멈추지 않게 한다.
     float Factor = 1.f;
-    if (FMath::Abs(Local.X) > Extent.X)
+    const bool bOutsideXBounds = FMath::Abs(Local.X) > Extent.X;
+    const bool bOutsideYBounds = FMath::Abs(Local.Y) > Extent.Y;
+
+    if (bOutsideXBounds)
     {
         Factor = FMath::Min(Factor, Extent.X / FMath::Abs(Local.X));
     }
-    if (FMath::Abs(Local.Y) > Extent.Y)
+    if (bOutsideYBounds)
     {
         Factor = FMath::Min(Factor, Extent.Y / FMath::Abs(Local.Y));
     }
@@ -254,11 +257,6 @@ void AGTWBoss1::SpawnAttackActors(APawn* Player)
         GroundQuery.AddIgnoredActor(Attack);
         ++SpawnCount;
     }
-}
-
-bool AGTWBoss1::IsPreparingAttack() const
-{
-    return PreparedMontage != nullptr;
 }
 
 bool AGTWBoss1::PlayAttackAnim(UAnimMontage* Montage, APawn* Player)
