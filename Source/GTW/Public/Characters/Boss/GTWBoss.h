@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include <Interfaces/GTWBossAIInterface.h>
 #include "GTWBoss.generated.h"
 
 UCLASS()
-class GTW_API AGTWBoss : public ACharacter
+class GTW_API AGTWBoss : public ACharacter, public IGTWBossAIInterface
 {
 	GENERATED_BODY()
 
@@ -15,6 +16,10 @@ public:
 	// Sets default values for this character's properties
 	AGTWBoss();
 
+	virtual void StartCombat() override;
+	virtual void StopCombat() override;
+
+public:
 	// 검기 실행 함수
 	UFUNCTION()
 	void PlaySwordWave();

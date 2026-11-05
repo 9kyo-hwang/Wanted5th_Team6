@@ -4,7 +4,7 @@
 #include "GameModes/GTWBaseBossGameMode.h"
 
 #include <GTWDebugHelper.h>
-#include <Characters/Boss/GTWBoss.h>
+#include <Interfaces/GTWBossAIInterface.h>
 #include <Controllers/GTWPlayerController.h>
 #include <Characters/Player/GTWPlayerCharacter.h>
 #include <Kismet/GameplayStatics.h>
@@ -27,23 +27,20 @@ AGTWBaseBossGameMode::AGTWBaseBossGameMode()
 }
 
 // Level Blueprint에서 배치한 보스를 넘겨줄 예정
-void AGTWBaseBossGameMode::InitPhase(AGTWBoss* InBoss)
+void AGTWBaseBossGameMode::InitPhase(AActor* InBoss)
 {
-	if (CurrentState != EBossGameModeState::Ready || !IsValid(InBoss))
+	if (CurrentState != EBossGameModeState::Ready)
 	{
-		Debug::Print(TEXT("[BaseBossGameMode::InitPhase] 세팅할 보스가 유효하지 않음"));
 		return;
 	}
 
-	// 레벨에 배치된 보스를 시작 전에 연결해야 하므로, 아직 유효하면 안됨
-	if (IsValid(Boss.Get()))
+	if (!IsValid(InBoss) || !Cast<IGTWBossAIInterface>(InBoss) || IsValid(Boss.Get()))
 	{
-		Debug::Print(TEXT("[BaseBossGameMode::InitPhase] 아직 보스 세팅 안했는데 있네?"));
+		Debug::Print(TEXT("[BaseBossGameMode::InitPhase] 보스 세팅에 문제가 있음"));
 		return;
 	}
 
 	Boss = InBoss;
-
 	if (!BindBossEvents())
 	{
 		UnbindBossEvents();
@@ -59,12 +56,6 @@ void AGTWBaseBossGameMode::StartPlay()
 
 	SetIgnorePlayerInput(true);
 
-	if (!IsValid(Boss.Get()))
-	{
-		Debug::Print(TEXT("[BaseBossGameMode::StartPlay] 실행해야 할 보스가 유효하지 않음"));
-		return;
-	}
-
 	if (OnIntroRequested.IsBound())
 	{
 		Debug::Print(TEXT("[BaseBossGameMode::StartPlay] 인트로 재생! 종료 시 BeginPhase"));
@@ -79,22 +70,31 @@ void AGTWBaseBossGameMode::StartPlay()
 void AGTWBaseBossGameMode::BeginPhase()
 {
 	if (CurrentState != EBossGameModeState::Ready || 
-		!GetWorld() || !GetWorld()->HasBegunPlay() || 
-		!IsValid(Boss.Get()))
+		!GetWorld() || !GetWorld()->HasBegunPlay())
 	{
 		Debug::Print(TEXT("[BaseBossGameMode::BeginPhase] 페이즈 시작 전에 유효하지 않은 세팅"));
 		return;
 	}
 
 	CurrentState = EBossGameModeState::Play;
+	
+	if (!IsValid(Boss.Get()))
+	{
+		Debug::Print(TEXT("[BaseBossGameMode::BeginPhase] 보스 가동해야 하는데 유효하지 않음"));
+		return;
+	}
 
-	SetIgnorePlayerInput(false);
+	IGTWBossAIInterface* BossAIInterface = Cast<IGTWBossAIInterface>(Boss);
+	if (!BossAIInterface)
+	{
+		Debug::Print(TEXT("[BaseBossGameMode::BeginPhase] 보스 가동해야 하는데 유효하지 않음"));
+		return;
+	}
 
-	// @TODO: 보스 베이스 타입 추가되면
-	// Boss->StartCombat();
-
+	BossAIInterface->StartCombat();
 	if (IsPhasePlaying())
 	{
+		SetIgnorePlayerInput(false);
 		K2_OnPhaseStarted();
 	}
 }
@@ -163,7 +163,10 @@ void AGTWBaseBossGameMode::StopBoss()
 
 	if (IsValid(Boss.Get()))
 	{
-		//Boss->StopCombat();
+		if (IGTWBossAIInterface* BossAIInterface = Cast<IGTWBossAIInterface>(Boss))
+		{
+			BossAIInterface->StopCombat();
+		}
 	}
 }
 

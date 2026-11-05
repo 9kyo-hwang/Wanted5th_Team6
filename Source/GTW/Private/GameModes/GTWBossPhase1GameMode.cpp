@@ -19,7 +19,6 @@ bool AGTWBossPhase1GameMode::BindBossEvents()
 	Super::BindBossEvents();
 
 	// @TODO: 1페 보스 캐릭터로 캐스팅, 실패 시 return false
-
 	//BossHitDelegateHandle = Phase1Boss->OnValidHit.AddUObject(
 	//	this,
 	//	&ThisClass::OnHitBoss

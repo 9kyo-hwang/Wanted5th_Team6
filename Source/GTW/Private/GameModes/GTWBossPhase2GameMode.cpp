@@ -12,26 +12,6 @@
 
 #include <Kismet/GameplayStatics.h>
 
-namespace
-{
-	void TEMP_BossStartCombat(AGTWBoss* InBoss)
-	{
-		// 보스 2페이즈 컨트롤러 클래스 설정. 
-		InBoss->AIControllerClass = AGTWBoss2PAIController::StaticClass();
-		InBoss->AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
-
-		// 1페이즈 컨트롤러 해제.
-		if (AController* ExistingController = InBoss->GetController())
-		{
-			ExistingController->UnPossess();
-			ExistingController->Destroy();
-		}
-
-		// 2페이즈 AI컨트롤러 생성. 
-		InBoss->SpawnDefaultController();
-	}
-}
-
 AGTWBossPhase2GameMode::AGTWBossPhase2GameMode()
 {
 	// 2페용 캐릭터 재설정

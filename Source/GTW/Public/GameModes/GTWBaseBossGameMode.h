@@ -11,11 +11,10 @@
 // 모든 UObject는 CDO가 있어야 하는(인스턴스화) 구조라 = 0으로 하지는 않고,
 // 대신 Runtime에서 크래시를 발생시키도록 함
 
-// @TODO: BossBase 타입으로 변경
-class AGTWBoss;
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnIntroRequestedDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnOutroRequestedDelegate, EBossGameModeState, Result);
+
+class IGTWBossAIInterface;
 
 UCLASS(Abstract)
 class GTW_API AGTWBaseBossGameMode : public AGameModeBase
@@ -26,7 +25,7 @@ public:
 	AGTWBaseBossGameMode();
 
 	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
-	void InitPhase(AGTWBoss* InBoss);
+	void InitPhase(AActor* InBoss);
 
 	// 인트로 재생 후 호출
 	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
@@ -56,7 +55,7 @@ protected:
 
 	void EndPhase(EBossGameModeState Result);
 
-	FORCEINLINE AGTWBoss* GetBoss() const { return Boss.Get(); }
+	FORCEINLINE AActor* GetBoss() const { return Boss.Get(); }
 	FORCEINLINE bool IsPhasePlaying() const { return CurrentState == EBossGameModeState::Play; }
 
 	// Delegate 연결이나 추가 값 세팅 등, 자식 GameMode에서 각자 보스에 맞게 재정의
@@ -84,7 +83,7 @@ private:
 	EBossGameModeState CurrentState = EBossGameModeState::Ready;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<AGTWBoss> Boss;
+	TObjectPtr<AActor> Boss;
 
 	bool bPhaseCompletionRequested = false;
 };

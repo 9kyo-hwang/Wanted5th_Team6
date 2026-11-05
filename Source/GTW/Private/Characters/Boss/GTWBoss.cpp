@@ -1,9 +1,12 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Characters/Boss/GTWBoss.h"
-#include "Components/CapsuleComponent.h"
-#include "Controllers/GTWBoss2PAIController.h"
-#include "Actor/GTWStartMoveSplineActor.h"
+
+#include <Components/CapsuleComponent.h>
+#include <Controllers/GTWBoss2PAIController.h>
+#include <Actor/GTWStartMoveSplineActor.h>
+#include <GTWDebugHelper.h>
+
 #include <Animation/AnimInstance.h>
 #include <Components/SplineComponent.h>
 
@@ -41,6 +44,7 @@ AGTWBoss::AGTWBoss()
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> SwordAttackRef(
 		TEXT("/Game/GTW/Characters/Boss/Animation/AM_SwordAttack.AM_SwordAttack")
 	);
+
 	if (SwordAttackRef.Succeeded())
 	{
 		SwordAttack = SwordAttackRef.Object;
@@ -50,6 +54,7 @@ AGTWBoss::AGTWBoss()
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> LightningAttackRef(
 		TEXT("/Game/GTW/Characters/Boss/Animation/AM_LightAttack.AM_LightAttack")
 	);
+
 	if (LightningAttackRef.Succeeded())
 	{ 
 		LightningAttack = LightningAttackRef.Object;
@@ -59,12 +64,50 @@ AGTWBoss::AGTWBoss()
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> BallAttackRef(
 		TEXT("/Game/GTW/Characters/Boss/Animation/AM_BallAttack.AM_BallAttack")
 	);
+
 	if (BallAttackRef.Succeeded())
 	{
 		BallAttack = BallAttackRef.Object;
 	}
+
 	// 캡슐 컴포넌트의 오브젝트 타입을 Boss(ECC_GameTraceChannel1)로 설정. 
 	GetCapsuleComponent()->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1);
+
+	// 보스 2페이즈 컨트롤러 클래스 설정. 
+	AIControllerClass = AGTWBoss2PAIController::StaticClass();
+	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
+}
+
+void AGTWBoss::StartCombat()
+{
+	if (!GetController())
+	{
+		SpawnDefaultController();	// 2페이즈 AI컨트롤러 생성. 
+	}
+
+	AGTWBoss2PAIController* BossController = Cast<AGTWBoss2PAIController>(GetController());
+	if (!BossController)
+	{
+		Debug::Print(TEXT("[P2 Boss::StartCombat] AI 컨트롤러 사용 불가"));
+		return;
+	}
+
+	BossController->RunAI();
+	StartSpline();
+}
+
+void AGTWBoss::StopCombat()
+{
+	// @TODO: AI, Spline 이동, 공격 활성화 같은 BT쪽 정리하기?
+	AGTWBoss2PAIController* BossController = Cast<AGTWBoss2PAIController>(GetController());
+	if (!BossController)
+	{
+		Debug::Print(TEXT("[P2 Boss::StopCombat] AI 컨트롤러 사용 불가"));
+		return;
+	}
+
+	BossController->StopAI();
+	// @TODO: Stop Spline 등
 }
 
 void AGTWBoss::PlaySwordWave()
