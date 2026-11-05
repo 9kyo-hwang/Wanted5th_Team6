@@ -6,6 +6,7 @@
 #include <GTWDebugHelper.h>
 #include <Characters/Boss/GTWBoss.h>
 #include <Controllers/GTWPlayerController.h>
+#include <Characters/Player/GTWPlayerCharacter.h>
 #include <Kismet/GameplayStatics.h>
 
 #include <Engine/World.h>
@@ -14,6 +15,15 @@ AGTWBaseBossGameMode::AGTWBaseBossGameMode()
 {
 	// @TODO: BP 컨트롤러로 교체?
 	PlayerControllerClass = AGTWPlayerController::StaticClass();
+
+	static ConstructorHelpers::FClassFinder<AGTWPlayerCharacter> PlayerCharacterRef(
+		TEXT("/Game/GTW/Characters/Player/BP_GTWPlayerCharacter.BP_GTWPlayerCharacter_C")
+	);
+
+	if (PlayerCharacterRef.Succeeded())
+	{
+		DefaultPawnClass = PlayerCharacterRef.Class;
+	}
 }
 
 // Level Blueprint에서 배치한 보스를 넘겨줄 예정

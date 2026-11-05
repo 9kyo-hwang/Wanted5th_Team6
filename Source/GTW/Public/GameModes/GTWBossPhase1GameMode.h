@@ -15,9 +15,9 @@
 
 /*
 * 1페 보스쪽에 필요한 것
-* OnValidHit: 인자 없는 C++ 멀티캐스트 Delegate
-* StartCombat(): 전투 시작
-* StopCombat(): 공격·예약·HitObject 정리, 반복 호출 가
+* OnObjectHit: C++ 멀티캐스트(인자 없음)
+* StartCombat(): 전투 시작: RunAI 같은...
+* StopCombat(): 공격·예약·HitObject 정리
 */
 
 
@@ -41,10 +41,10 @@ private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Boss|Phase", meta = (AllowPrivateAccess = "true"))
 	int32 CurrentHitCount = 0;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Boss|Level")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Level", meta = (AllowPrivateAccess = "true"))
 	TSoftObjectPtr<UWorld> Phase1Level;
 
-	UPROPERTY(EditDefaultsOnly, Category = "Boss|Level")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Level", meta = (AllowPrivateAccess = "true"))
 	TSoftObjectPtr<UWorld> Phase2Level;
 
 	FDelegateHandle BossHitDelegateHandle;
