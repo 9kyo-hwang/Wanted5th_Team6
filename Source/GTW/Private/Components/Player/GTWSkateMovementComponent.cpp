@@ -7,6 +7,7 @@
 #include <Engine/HitResult.h>
 #include <GameFramework/Character.h>
 #include <Components/CapsuleComponent.h>
+#include <CharacterMovementComponentAsync.h>
 #include "Kismet/KismetSystemLibrary.h"
 
 UGTWSkateMovementComponent::UGTWSkateMovementComponent()
@@ -28,7 +29,7 @@ void UGTWSkateMovementComponent::InitializeComponent()
 
 	NewImpactNormal = FVector(0.0f, 0.0f, 0.0f);
 	OldImpactNormal = FVector(0.0f, 0.0f, 0.0f);
-	OldFloor = CurrentFloor;
+	OlderFloor = CurrentFloor;
 	GTWVelocity = FVector(0.0f, 0.0f, 0.0f);
 
 }
@@ -100,6 +101,13 @@ void UGTWSkateMovementComponent::PhysicsRotation(float DeltaTime)
 	// 입력 혹은 속도에 의한 회전 적용
 	Super::PhysicsRotation(DeltaTime);
 
+	bool bIsNextSlopeUpHill = NewImpactNormal.Z < OldImpactNormal.Z;
+
+	if (bIsNextSlopeUpHill)
+	{
+		AddImpulse(FVector(0.0f, 0.0f, 10.0f), true);
+	}
+
 	SetGTWVelocity();
 	
 	// 다음 경사가 완만한가?
@@ -115,7 +123,8 @@ void UGTWSkateMovementComponent::PhysicsRotation(float DeltaTime)
 		MaxWalkSpeed = DownHillSpeed;
 	}
 
-	bool bCurrentSpeedIsSlow = Velocity.Length() < DefaultSpeed - 50.0;
+	// 속도가 충분히 낮아졌는가?
+	bool bCurrentSpeedIsSlow = Velocity.Length() < DefaultSpeed - 50.0f;
 
 	if (bIsMovingDownSlope 
 		&& bCurrentSpeedIsSlow)
@@ -124,18 +133,19 @@ void UGTWSkateMovementComponent::PhysicsRotation(float DeltaTime)
 
 		MaxWalkSpeed = DefaultSpeed;
 	}
-
-
+	
 	// OldFloor 업데이트
-	OldFloor = CurrentFloor;
+	OlderFloor = CurrentFloor;
 
 	// 내적이 작다면 바닥의 옆면을 인식한 것으로 판단하여 업데이트를 하지 않음.
-	if (FVector::DotProduct(NewImpactNormal, OldImpactNormal) < 0.05) 
+	if (FVector::DotProduct(NewImpactNormal, OldImpactNormal) < 0.1f)
 	{
 		NewImpactNormal = OldImpactNormal;
 
-		if (NormalCount > 100)
+		if (NormalCount > 2)
 		{
+			AddImpulse(FVector(0.0f, 0.0f, 20.0f), true);
+
 			NormalCount = 0;
 
 			NewImpactNormal = OldImpactNormal = GetNewImpactNormal();
@@ -182,7 +192,7 @@ void UGTWSkateMovementComponent::StartFalling(int32 Iterations, float remainingT
 	{
 		Velocity.Z = -(Velocity.X * NewImpactNormal.X + Velocity.Y * NewImpactNormal.Y) / NewImpactNormal.Z;
 	}
-	
+	 
 	// 최대 속도 초기화.
 	MaxWalkSpeed = DefaultSpeed;
 	bIsMovingDownSlope = false;
@@ -190,6 +200,58 @@ void UGTWSkateMovementComponent::StartFalling(int32 Iterations, float remainingT
 	StartNewPhysics(remainingTime, Iterations);
 }
 
+bool UGTWSkateMovementComponent::ShouldCatchAir(
+    const FFindFloorResult& OldFloor,
+    const FFindFloorResult& NewFloor
+)
+{
+	// 이전 및 현재 발판을 조사하여 모드를 Falling으로 바꿀지 말지 결정하는 함수. 
+    if (Super::ShouldCatchAir(OldFloor, NewFloor))
+    {
+        return true;
+    }
+
+	// 밟을 수 있는 발 판인지 검증.
+    if (!OldFloor.IsWalkableFloor() ||
+        !NewFloor.IsWalkableFloor())
+    {
+        return false;
+    }
+
+    const float Speed = Velocity.Size2D();
+
+	// 경사를 벗어나기 위한 속도가 500이상이어야 함.
+    if (Speed < 500.0f)
+    {
+        return false;
+    }
+
+    const FVector Direction =
+        Velocity.GetSafeNormal2D();
+
+    const FVector OldNormal =
+        OldFloor.HitResult.ImpactNormal;
+
+    const FVector NewNormal =
+        NewFloor.HitResult.ImpactNormal;
+
+    // 진행 방향 기준 지형 기울기
+    const float OldSlope =
+        FVector::DotProduct(Direction, OldNormal);
+
+    const float NewSlope =
+        FVector::DotProduct(Direction, NewNormal);
+
+    // 진행 방향으로 지면이 급격히 낮아지는가?
+    const float SlopeChange = NewSlope - OldSlope;
+
+    if (SlopeChange > 0.1f)
+    {
+        return true;
+    }
+
+    return false;
+}
 
 FVector UGTWSkateMovementComponent::GetMeshRightVector() const
 {

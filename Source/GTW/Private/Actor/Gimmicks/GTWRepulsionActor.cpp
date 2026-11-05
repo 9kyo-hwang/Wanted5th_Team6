@@ -84,28 +84,28 @@ void AGTWRepulsionActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 	{
 		OverlappingPawn->ApplyRepulsion(PulseDirecion, RepulsionPower);
 	}
-	// 반발체
-	FVector MeshScale = RepulsionMesh->GetRelativeScale3D();
 
-	// 부피 변화량
-	MeshScale = MeshScale * (VolumeDelta * VolumeDelta);
-
-	// 부피 변화
-	RepulsionMesh->SetRelativeScale3D(MeshScale);
-
-	// 복원 시간 
-	float FirstRestoreTime = 0.1f;
+	// 펌핑 시간 && 복원 시간 
+	float ExpandedTime = 0.05f;
+	float FirstRestoreTime = 0.2f;
 	float SecondRestoreTime = 0.3f;
 
 	GetWorldTimerManager().SetTimer(
-		FirstVolumeTimer,
+		ExpandedVolumeTimer,
+		this,
+		&AGTWRepulsionActor::ExpandOnRepulsion,
+		ExpandedTime,
+		false
+	);
+	GetWorldTimerManager().SetTimer(
+		FirstRestoreVolumeTimer,
 		this,
 		&AGTWRepulsionActor::RestoreOriginVolume,
 		FirstRestoreTime,
 		false
 	);
 	GetWorldTimerManager().SetTimer(
-		SecondVolumeTimer,
+		SecondRestoreVolumeTimer,
 		this,
 		&AGTWRepulsionActor::RestoreOriginVolume,
 		SecondRestoreTime,
@@ -114,11 +114,21 @@ void AGTWRepulsionActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 
 }
 
+void AGTWRepulsionActor::ExpandOnRepulsion()
+{
+	FVector MeshScale = RepulsionMesh->GetRelativeScale3D();
+
+	// 부피 변환 1.44배 
+	MeshScale = MeshScale * VolumeDelta * VolumeDelta;
+
+	RepulsionMesh->SetRelativeScale3D(MeshScale);
+}
+
 void AGTWRepulsionActor::RestoreOriginVolume()
 {
 	FVector MeshScale = RepulsionMesh->GetRelativeScale3D();
 
-	// 부피 변환
+	// 부피 변환 / 1.2 배
 	MeshScale = MeshScale / VolumeDelta;
 
 	RepulsionMesh->SetRelativeScale3D(MeshScale);

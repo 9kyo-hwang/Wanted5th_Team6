@@ -45,6 +45,9 @@ private:
 		return IsMovingOnGround();
 	}
 
+	virtual bool ShouldCatchAir(const FFindFloorResult& OldFloor, const FFindFloorResult& NewFloor) override;
+
+
 
 	/// 게터
 public:
@@ -55,7 +58,7 @@ public:
 	}
 	FORCEINLINE FVector GetOldImpactNormal() const
 	{
-		return OldFloor.HitResult.ImpactNormal;
+		return OlderFloor.HitResult.ImpactNormal;
 	}
 
 	// 캐릭터 정면 벡터 구하기
@@ -72,7 +75,7 @@ protected:
 	TObjectPtr<class AGTWPlayerCharacter> GTWPlayerCharacter;
 
 	UPROPERTY(Category = Floor, VisibleInstanceOnly, BlueprintReadOnly)
-	FFindFloorResult OldFloor;
+	FFindFloorResult OlderFloor;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Floor)
 	FVector NewImpactNormal;
@@ -87,11 +90,11 @@ protected:
 	FVector GTWVelocity;
 
 	// 기본 속도
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Speed)
 	float DefaultSpeed;
 
 	// 내리막 속도
-	UPROPERTY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Speed)
 	float DownHillSpeed;
 
 	// 내려오는지 
