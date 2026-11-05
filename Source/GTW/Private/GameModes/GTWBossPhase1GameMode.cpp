@@ -5,10 +5,11 @@
 
 #include <GTWGameInstance.h>
 #include <GTWDebugHelper.h>
+#include <Characters/Boss/GTWBoss.h>	// 1페는 다른 보스일 예정
 
-#include <GameFramework/Character.h>  // TEMP. 추후 보스 클래스 생기면 그걸로 체인지
+#include <Kismet/GameplayStatics.h>
 
-void AGTWBossPhase1GameMode::InitGameplay(ACharacter* InBoss)
+void AGTWBossPhase1GameMode::InitGameplay(AGTWBoss* InBoss)
 {
 	if (CurrentState != EBossGameModeState::Ready)
 	{
@@ -22,23 +23,52 @@ void AGTWBossPhase1GameMode::InitGameplay(ACharacter* InBoss)
 		return;
 	}
 
-	Boss = InBoss;
+	/*
+	* [x] 보스 참조 저장
+	* [ ] 보스 명중 델리게이트 구독
+	* [ ] 설정 전달(캐릭터 입력 막기 등?)
+	* [ ] 연출 세팅은 Level BP에서??
+	*/
 
-	// @TODO: GameInstance->TryGetMinigameClearTime() 가지고 난이도 세팅
-	// @TODO: Ready 상태에서는 주로 연출이 재생되니, 플레이어 입력을 차단했다가 풀어주는 기능 필요
+	UnbindBossHitDelegate();
+
+	Boss = InBoss;
+	//BossHitDelegateHandle = Boss->OnValidHit.AddUObject(
+	//	this,
+	//	&ThisClass::OnHitBoss
+	//);
 }
 
 void AGTWBossPhase1GameMode::StartPlay()
 {
 	Super::StartPlay();
 
-	// 일단 여기서 바로 호출: 레벨에 배치된 액터들 BeginPlay 끝나면 시작
-	StartGameplay();
+	if (!IsValid(Boss.Get()))
+	{
+		Debug::Print(TEXT("[Phase1 GameMode] 보스 초기화가 되지 않음"));
+		return;
+	}
+
+	if (OnIntroRequested.IsBound())
+	{
+		Debug::Print(TEXT("[Phase1 GameMode] 인트로 재생! 종료 시 StartGameplay"));
+		OnIntroRequested.Broadcast();
+	}
+	else
+	{
+		StartGameplay();
+	}
 }
 
-// 연출이 있으면 그쪽에서, 없다면 StartPlay 마지막에 호출
 void AGTWBossPhase1GameMode::StartGameplay()
 {
+	/*
+		[ ] 조건 확인
+		[x] 유효타 = 0
+		[x] 상태 = Play
+		[ ] Boss->StartCombat()
+	*/
+
 	if (CurrentState != EBossGameModeState::Ready)
 	{
 		return;
@@ -46,19 +76,20 @@ void AGTWBossPhase1GameMode::StartGameplay()
 
 	if (!GetWorld() || !GetWorld()->HasBegunPlay())
 	{
-		Debug::Print(TEXT("[StartGameplay] World가 BeginPlay를 하지 않았음!"));
+		Debug::Print(TEXT("[GameMode::StartGameplay] World가 BeginPlay를 하지 않았음!"));
 		return;
 	}
 
 	if (!IsValid(Boss.Get()))
 	{
-		Debug::Print(TEXT("[StartGameplay] 보스 제대로 세팅되지 않았음"));
+		Debug::Print(TEXT("[GameMode::StartGameplay] 보스 제대로 세팅되지 않았음"));
 		return;
 	}
 
 	CurrentHitCount = 0;
 	CurrentState = EBossGameModeState::Play;
 
+	//Boss->StartCombat();
 	K2_OnGameplayStarted();
 }
 
@@ -74,6 +105,16 @@ void AGTWBossPhase1GameMode::OnHitBoss()
 	{
 		ClearPhase();
 	}
+}
+
+void AGTWBossPhase1GameMode::UnbindBossHitDelegate()
+{
+	if (IsValid(Boss.Get()) && BossHitDelegateHandle.IsValid())
+	{
+		//Boss->OnValidHit.Remove(BossHitDelegateHandle);
+	}
+
+	BossHitDelegateHandle.Reset();
 }
 
 void AGTWBossPhase1GameMode::ClearPhase()
@@ -95,7 +136,15 @@ void AGTWBossPhase1GameMode::ClearPhase()
 		Debug::Print(TEXT("[Phase1] GameInstance가 없음"));
 	}
 
-	K2_OnPhaseFinished(CurrentState);
+	if (OnOutroRequested.IsBound())
+	{
+		Debug::Print(TEXT("[Phase1 GameMode] 아웃트로 재생. 완료 후 레벨 변경 처리"));
+		OnOutroRequested.Broadcast(CurrentState);
+	}
+	else
+	{
+		OpenNextLevel();
+	}
 }
 
 void AGTWBossPhase1GameMode::FailPhase()
@@ -116,11 +165,67 @@ void AGTWBossPhase1GameMode::FailPhase()
 	{
 		Debug::Print(TEXT("[Phase1] GameInstance가 없음"));
 	}
+	
+	if (OnOutroRequested.IsBound())
+	{
+		Debug::Print(TEXT("[Phase1 GameMode] 아웃트로 재생. 완료 후 레벨 변경 처리"));
+		OnOutroRequested.Broadcast(CurrentState);
+	}
+	else
+	{
+		OpenNextLevel();
+	}
+}
 
-	K2_OnPhaseFinished(CurrentState);
+void AGTWBossPhase1GameMode::OpenNextLevel()
+{
+	if (bRequestedOpenNextLevel)
+	{
+		return;
+	}
+
+	// Clear나 Fail이 아니어야 함
+	if (CurrentState != EBossGameModeState::Clear &&
+		CurrentState != EBossGameModeState::Fail)
+	{
+		return;
+	}
+
+	const TSoftObjectPtr<UWorld>& LevelToOpen =
+		CurrentState == EBossGameModeState::Clear
+		? Phase2Level
+		: Phase1Level;
+
+	if (LevelToOpen.IsNull())
+	{
+		Debug::Print(TEXT("[Phase1 GameMode] 이동할 레벨이 지정되지 않음"));
+		return;
+	}
+
+	bRequestedOpenNextLevel = true;
+	UGameplayStatics::OpenLevelBySoftObjectPtr(this, LevelToOpen);
 }
 
 void AGTWBossPhase1GameMode::StopGameplay()
 {
+	UnbindBossHitDelegate();
+
+	if (IsValid(Boss.Get()))
+	{
+		//Boss->StopCombat();
+	}
+
 	K2_OnGameplayStopped();
+}
+
+void AGTWBossPhase1GameMode::EndPlay(EEndPlayReason::Type EndPlayReason)
+{
+	UnbindBossHitDelegate();
+
+	if (IsValid(Boss.Get()))
+	{
+		//Boss->StopCombat();
+	}
+
+	Super::EndPlay(EndPlayReason);
 }
