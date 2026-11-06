@@ -12,6 +12,16 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
+void AGTWBoss1::StartCombat()
+{
+	StartEncounter();
+}
+
+void AGTWBoss1::StopCombat()
+{
+	StopEncounter();
+}
+
 /*
  * 읽는 순서: StartEncounter → AIController::RunAI → BP Service / BT Task.
  * Service는 추격을 요청하고, Task는 PlayDropObstacles를 호출한다.

@@ -21,20 +21,18 @@ AGTWPlayerCharacter::AGTWPlayerCharacter(
 
 	assert(SkateCharacterMovementComponent);
 
-}
-
-// Called when the game starts or when spawned
-void AGTWPlayerCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-
 	// 중력 기본 값 설정
 	TiltGravity = -250.0f;
 	NoTiltGravity = -450.0f;
-	
+
 	// 상호작용 기본 값 설정
 	bCanKnockback = true;
 	bCanStun = true;
+
+	// 낙하 랙돌 속성
+	FallingRagdollSpeed = 5000.0f;
+	FallingRagdollAngle = 0.5f;
+	FallingRagdollTime = 1.0f;
 
 	// 랙돌 시간 / 기준
 	LowForceRagdollDuration = 0.5f;
@@ -46,6 +44,12 @@ void AGTWPlayerCharacter::BeginPlay()
 
 	bIsRagdoll = false;
 
+}
+
+// Called when the game starts or when spawned
+void AGTWPlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
 }
 
 // Called every frame
@@ -72,16 +76,15 @@ void AGTWPlayerCharacter::Tick(float DeltaTime)
 void AGTWPlayerCharacter::Landed(const FHitResult& Hit)
 {	
 	FVector NormailzeVelocity = SkateCharacterMovementComponent->Velocity;
-	bool bIsUncontrollableSpeed = NormailzeVelocity.Length() > 3600;
+
+	bool bIsUncontrollableSpeed = NormailzeVelocity.Length() > FallingRagdollSpeed;
 
 	NormailzeVelocity.Normalize();
 
-	bool bIsVertical = FVector::DotProduct(NormailzeVelocity, Hit.ImpactNormal) < 0.5f;
+	bool bIsVertical = FVector::DotProduct(NormailzeVelocity, Hit.ImpactNormal) < FallingRagdollAngle;
 
 	if (bIsUncontrollableSpeed && bIsVertical)
-	{
-		float FallingRagdollTime = 1.0f;
-		
+	{		
 		if (FallingRagdollTime > 0.0f)
 		{
 			ReservationEndRagdoll(FallingRagdollTime);
