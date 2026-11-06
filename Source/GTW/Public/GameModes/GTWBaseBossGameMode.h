@@ -14,8 +14,6 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnIntroRequestedDelegate);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnOutroRequestedDelegate, EBossGameModeState, Result);
 
-class IGTWBossAIInterface;
-
 UCLASS(Abstract)
 class GTW_API AGTWBaseBossGameMode : public AGameModeBase
 {

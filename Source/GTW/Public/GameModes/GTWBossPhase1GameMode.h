@@ -16,8 +16,6 @@
 /*
 * 1페 보스쪽에 필요한 것
 * OnObjectHit: C++ 멀티캐스트(인자 없음)
-* StartCombat(): 전투 시작: RunAI 같은...
-* StopCombat(): 공격·예약·HitObject 정리
 */
 
 
@@ -25,6 +23,9 @@ UCLASS()
 class GTW_API AGTWBossPhase1GameMode : public AGTWBaseBossGameMode
 {
 	GENERATED_BODY()
+
+public:
+	AGTWBossPhase1GameMode();
 	
 protected:
 	virtual bool BindBossEvents() override;
@@ -33,7 +34,7 @@ protected:
 	virtual bool HandlePhaseCompletion(EBossGameModeState Result) override;
 
 private:
-	void OnHitBoss();	// 보스가 유효타 맞았을 때 호출될 콜백. Boss측 OnValidHit 델리게이트가 발행될 때.
+	void OnHitBoss();	// 보스가 유효타 맞았을 때 호출될 콜백. Boss측 OnObjectHit 델리게이트가 발행될 때.
 
 private:
 	static constexpr int32 ClearHitCount = 3;	// 3번 맞추면 클리어

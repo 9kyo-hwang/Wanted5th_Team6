@@ -5,24 +5,36 @@
 
 #include <GTWGameInstance.h>
 #include <GTWDebugHelper.h>
-#include <Characters/Boss/GTWBoss.h>	// 1페는 다른 보스일 예정
+#include <Characters/Boss/GTWBoss1.h>
 #include <Kismet/GameplayStatics.h>
 
 /*
 * [x] 보스 참조 저장
-* [ ] 보스 명중 델리게이트 구독
+* [x] 보스 명중 델리게이트 구독
 * [ ] 연출 세팅은 Level BP에서??
 */
+
+AGTWBossPhase1GameMode::AGTWBossPhase1GameMode()
+{
+
+}
 
 bool AGTWBossPhase1GameMode::BindBossEvents()
 {
 	Super::BindBossEvents();
 
-	// @TODO: 1페 보스 캐릭터로 캐스팅, 실패 시 return false
-	//BossHitDelegateHandle = Phase1Boss->OnValidHit.AddUObject(
-	//	this,
-	//	&ThisClass::OnHitBoss
-	//);
+	AGTWBoss1* Phase1Boss = Cast<AGTWBoss1>(GetBoss());
+	if (!Phase1Boss)
+	{
+		Debug::Print(TEXT("[P1 GM : BindBossEvents] 1페이즈 보스 인스턴스가 아니네?"));
+		return false;
+	}
+
+	// 1페 보스 캐릭터로 캐스팅, 실패 시 return false
+	BossHitDelegateHandle = Phase1Boss->OnObjectHit.AddUObject(
+		this,
+		&ThisClass::OnHitBoss
+	);
 
 	CurrentHitCount = 0;
 
@@ -32,11 +44,17 @@ bool AGTWBossPhase1GameMode::BindBossEvents()
 void AGTWBossPhase1GameMode::UnbindBossEvents()
 {
 	Super::UnbindBossEvents();
-
-	// @TODO: 1페 보스 캐스팅 성공 시 
+ 
 	if (BossHitDelegateHandle.IsValid())
 	{
-		//Phase1Boss->OnValidHit.Remove(BossHitDelegateHandle);
+		if (AGTWBoss1* Phase1Boss = Cast<AGTWBoss1>(GetBoss()))
+		{
+			Phase1Boss->OnObjectHit.Remove(BossHitDelegateHandle);
+		}
+		else
+		{
+			Debug::Print(TEXT("[P1 GM : UnbindBossEvents] 1페이즈 보스 인스턴스가 아니네?"));
+		}
 	}
 
 	BossHitDelegateHandle.Reset();
