@@ -111,21 +111,34 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Hit)
 	bool bCanStun;
 
+	// 낙하 시 적용할 랙돌 속성
+	// 이 속력보다 큰 속력으로 떨어지면 랙돌
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ragdoll)
+	float FallingRagdollSpeed;
+	
+	// 이 값이 가리키는 각도보다 크게 떨어지면 랙돌
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ragdoll)
+	float FallingRagdollAngle;
+
+	// 낙하 랙돌 시 실행 시간
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ragdoll)
+	float FallingRagdollTime;
+
 	// 랙돌 시간 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Ragdoll)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ragdoll)
 	float LowForceRagdollDuration;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Ragdoll)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ragdoll)
 	float MediumForceRagdollDuration;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Ragdoll)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ragdoll)
 	float HighForceRagdollDuration;
 
 	// 랙돌 기준 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Ragdoll)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ragdoll)
 	float MediumKnockbackForceThreshold;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Ragdoll)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ragdoll)
 	float HighKnockbackForceThreshold;
 
 	// 랙돌 재진입 방지 
