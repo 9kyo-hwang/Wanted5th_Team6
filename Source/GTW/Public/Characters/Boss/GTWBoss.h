@@ -36,7 +36,7 @@ public:
 public:
 	// 화살표 컴포넌트: 스플라인 변경 시 사용
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Arrow)
-	class UArrowComponent* ArrowComp;
+	class UBoxComponent* BoxCollision;
 
 protected:
 	// 몽타주

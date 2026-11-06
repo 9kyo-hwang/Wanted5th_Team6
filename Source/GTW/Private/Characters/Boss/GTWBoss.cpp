@@ -13,7 +13,7 @@
 #include "Components/CapsuleComponent.h"
 #include <Animation/AnimInstance.h>
 #include <Components/SplineComponent.h>
-#include <Components/ArrowComponent.h>
+#include <Components/BoxComponent.h>
 
 // Sets default values
 AGTWBoss::AGTWBoss()
@@ -73,6 +73,14 @@ AGTWBoss::AGTWBoss()
 	}
 	// 캡슐 컴포넌트의 오브젝트 타입을 Boss(ECC_GameTraceChannel1)로 설정. 
 	GetCapsuleComponent()->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1);
+
+	// 박스 콜리전 추가. 
+	BoxCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCollision"));
+	// 루트 컴포넌트 아래에 추가
+	BoxCollision->SetupAttachment(GetRootComponent());
+	BoxCollision->SetBoxExtent(FVector(0.7f, 2.5f, 2.8f));
+	BoxCollision->SetCollisionProfileName(TEXT("Custom"));
+
 }
 
 void AGTWBoss::PlaySwordWave()
