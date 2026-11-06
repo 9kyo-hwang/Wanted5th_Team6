@@ -119,45 +119,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Attack", meta = (ClampMin = "0.1", Units = "s"))
 	float AttackActorLifeSpan = 12.f;
 
-	/** BT Task의 공격 요청 진입점. DropAttack 정상 종료 후 기믹을 생성한다.
-	 *  몽타주가 없거나 재생에 실패하면 기믹을 즉시 생성한다. */
-	UFUNCTION(BlueprintCallable, Category = "Boss|Attack")
-	void PlayDropObstacles(APawn* TargetPlayer);
-
-	/** 준비 중인 몽타주가 있는지 확인 */
-	UFUNCTION(BlueprintPure, Category = "Boss|Attack")
-	FORCEINLINE bool IsPreparingAttack() const
-	{
-		return PreparedMontage != nullptr;
-	}
-
-	/** BP Service가 전달한 목표로 이동하고 플레이어 쪽으로 회전 */
-	UFUNCTION(BlueprintCallable, Category = "Boss|Movement")
-	void UpdatePursuit(APawn* TargetPlayer, const FVector& ChaseLocation, float DeltaSeconds);
-
-	/** GameMode BP에서 호출한다. 범위/컨트롤러 검증 → 이동 준비 → BT 실행 순서다. */
-	UFUNCTION(BlueprintCallable, Category = "Boss|Encounter")
-	void StartEncounter();
-
-	/** 현재 전투가 진행 중인지 BP와 AIController에서 조회 */
-	UFUNCTION(BlueprintPure, Category = "Boss|Encounter")
-	FORCEINLINE bool IsEncounterRunning() const
-	{
-		return bRunning;
-	}
-
-	/** 플레이어 위치를 사각형 내부의 추격 목표로 변환 */
-	UFUNCTION(BlueprintPure, Category = "Boss|Movement")
-	FVector GetChaseLocation(const FVector& PlayerPosition) const;
-
-	/** AI와 준비 모션을 중지하고 생성한 기믹을 제거한 뒤 전투 전 이동 모드를 복구 */
-	UFUNCTION(BlueprintCallable, Category = "Boss|Encounter")
-	void StopEncounter();
-
-protected:
-	/** 레벨 종료나 보스 제거 시에도 전투 정리가 실행. */
-	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
-
 private:
 	/** 위치를 캡슐 크기만큼 안쪽으로 줄인 사각형 내부로 제한하고 시작 높이를 유지. */
 	FVector ConstrainPosition(const FVector& Position) const;

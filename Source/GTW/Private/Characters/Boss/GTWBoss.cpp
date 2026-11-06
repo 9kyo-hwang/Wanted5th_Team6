@@ -120,7 +120,8 @@ void AGTWBoss::StopCombat()
 	}
 
 	BossController->StopAI();
-	// @TODO: Stop Spline 등
+	// 현재 스플라인 배열의 Tick을 비활성화
+	BossSplines[CurrentSplineNum]->SetActorTickEnabled(false);
 }
 
 void AGTWBoss::PlaySwordWave()
