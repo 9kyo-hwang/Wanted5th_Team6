@@ -1,4 +1,5 @@
-#pragma once
+﻿#pragma once
+
 #include "CoreMinimal.h"
 #include "AIController.h"
 #include "GTWBoss1PAIController.generated.h"
@@ -11,25 +12,27 @@
 UCLASS()
 class GTW_API AGTWBoss1PAIController : public AAIController
 {
-    GENERATED_BODY()
+	GENERATED_BODY()
+
 public:
-    /**
-     * 보스의 전투 시작 요청
-     */
-    UFUNCTION(BlueprintCallable, Category=AI) 
-    bool RunAI();
+	/**
+	 * 보스의 전투 시작 요청
+	 */
+	UFUNCTION(BlueprintCallable, Category = "AI")
+	bool RunAI();
 
-    /** 
-     * 실행 중인 BT 중지
-     */
-    UFUNCTION(BlueprintCallable, Category=AI) 
-    void StopAI();
+	/**
+	 * 실행 중인 BT 중지
+	 */
+	UFUNCTION(BlueprintCallable, Category = "AI")
+	void StopAI();
+
 protected:
-    /* 목표 위치와 공격 간격 등 AI가 사용할 데이터를 저장 */
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=AI) 
-    TObjectPtr<class UBlackboardData> BBAsset;
+	/* 목표 위치와 공격 간격 등 AI가 사용할 데이터를 저장 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
+	TObjectPtr<class UBlackboardData> BBAsset;
 
-    /* 추격 Service와 공격 Task, 대기 순서를 구성한 BT 에셋 */
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category=AI) 
-    TObjectPtr<class UBehaviorTree> BTAsset;
+	/* 추격 Service와 공격 Task, 대기 순서를 구성한 BT 에셋 */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "AI")
+	TObjectPtr<class UBehaviorTree> BTAsset;
 };
