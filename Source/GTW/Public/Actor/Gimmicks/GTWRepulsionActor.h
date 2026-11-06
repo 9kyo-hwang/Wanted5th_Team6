@@ -30,6 +30,8 @@ protected:
 		bool bFromSweep,
 		const FHitResult& SweepResult);
 
+	// 볼륨 커지고 줄어드는 함수
+	void ExpandOnRepulsion();
 	void RestoreOriginVolume();
 
 public:
@@ -51,10 +53,13 @@ private:
 	TObjectPtr<class UCapsuleComponent> RepulsionTrigger;
 
 	UPROPERTY()
-	FTimerHandle FirstVolumeTimer;
+	FTimerHandle ExpandedVolumeTimer;
 	
 	UPROPERTY()
-	FTimerHandle SecondVolumeTimer;
+	FTimerHandle FirstRestoreVolumeTimer;
+	
+	UPROPERTY()
+	FTimerHandle SecondRestoreVolumeTimer;
 
 	UPROPERTY()
 	float VolumeDelta;
