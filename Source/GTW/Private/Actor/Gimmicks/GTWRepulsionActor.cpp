@@ -24,7 +24,7 @@ AGTWRepulsionActor::AGTWRepulsionActor()
 	RepulsionTrigger->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
 
 	// 트리거
-	RepulsionTrigger->SetCapsuleSize(70.0f, 55.0f);
+	RepulsionTrigger->SetCapsuleSize(55.0f, 70.0f);
 	RepulsionTrigger->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f));
 
 	// 메시
