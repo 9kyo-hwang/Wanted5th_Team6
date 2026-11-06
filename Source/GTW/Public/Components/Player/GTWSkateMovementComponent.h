@@ -85,5 +85,17 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement)
 	FVector GTWVelocity;
+
+	// 기본 속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Speed)
+	float DefaultSpeed;
+
+	// 내리막 속도
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Speed)
+	float DownHillSpeed;
+
+	// 내려오는지 
+	UPROPERTY()
+	float bIsMovingDownSlope;
 };
 	

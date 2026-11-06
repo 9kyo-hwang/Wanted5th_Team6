@@ -1,12 +1,16 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "Characters/Boss/GTWBoss.h"
-
-#include <Components/CapsuleComponent.h>
-#include <Controllers/GTWBoss2PAIController.h>
-#include <Actor/GTWStartMoveSplineActor.h>
 #include <GTWDebugHelper.h>
 
+#include <Controllers/GTWBoss2PAIController.h>
+#include <Actor/GTWStartMoveSplineActor.h>
+#include <Actor/Gimmicks/GTWLightningGimmick.h>
+#include <Actor/Gimmicks/GTWRoadblockGimmick.h>
+#include <Actor/Gimmicks/GTWMeteorGimmick.h>
+#include <Actor/Gimmicks/GTWSwordWaveGimmick.h>
+
+#include <Components/CapsuleComponent.h>
 #include <Animation/AnimInstance.h>
 #include <Components/SplineComponent.h>
 
@@ -116,7 +120,13 @@ void AGTWBoss::PlaySwordWave()
 	PlayAttackAnim(SwordAttack);
 
 	// 검기 액터 가져오기
-
+	FActorSpawnParameters SpawnParams;
+	GetWorld()->SpawnActor<AGTWSwordWaveGimmick>(
+		SwordWaveClass,
+		GetActorLocation() + GetActorRightVector() * FMath::RandRange(-450, 450),
+		FRotator::ZeroRotator,
+		SpawnParams
+	);
 
 	// 태스크 실행 후 결과 반환
 	UE_LOG(LogTemp, Log, TEXT("Start SwordWave"));
@@ -126,11 +136,32 @@ void AGTWBoss::PlaySpawnBall()
 {
 	// 캐릭터 애니메이션 실행 
 	PlayAttackAnim(BallAttack);
+
+	// 운석 액터 생성. 
+	FActorSpawnParameters SpawnParams;
+	GetWorld()->SpawnActor<AGTWMeteorGimmick>(
+		MeteorClass,
+		GetActorLocation() + GetActorForwardVector()* 2000.0f + GetActorRightVector() * FMath::RandRange(-450, 450),
+		FRotator::ZeroRotator,
+		SpawnParams
+	);
+
+
+
+
 }
 
 void AGTWBoss::PlayLightning()
 {
 	PlayAttackAnim(LightningAttack);
+
+	FActorSpawnParameters SpawnParams;
+	GetWorld()->SpawnActor<AGTWLightningGimmick>(
+		LightningClass,
+		GetActorLocation() + GetActorForwardVector() * 2000.0f + GetActorRightVector() * FMath::RandRange(-450, 450),
+		FRotator::ZeroRotator,
+		SpawnParams
+	);
 
 }
 
@@ -148,6 +179,9 @@ void AGTWBoss::StartSpline()
 
 void AGTWBoss::NextSpline()
 {
+	// 현재 스플라인 배열의 Tick을 비활성화
+	BossSplines[CurrentSplineNum]->SetActorTickEnabled(false);
+
 	// 현재 스플라인 배열에서 ++;
 	CurrentSplineNum++;
 

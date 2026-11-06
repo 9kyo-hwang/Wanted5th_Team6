@@ -38,6 +38,7 @@ public:
 	void StartSpline();
 
 protected:
+	// 몽타주
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
 	TObjectPtr<class UAnimMontage> SwordAttack;
 
@@ -50,7 +51,19 @@ protected:
 	// 스플라인 3개 설정
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Spline)
 	TArray<TObjectPtr<class AGTWStartMoveSplineActor>> BossSplines;
+	
+	// 투사체 액터 
+	// 운석
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = GimmickActor)
+	TSubclassOf<class AGTWMeteorGimmick> MeteorClass;
 
+	// 번개
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = GimmickActor)
+	TSubclassOf<class AGTWLightningGimmick> LightningClass;
+
+	// 검기
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = GimmickActor)
+	TSubclassOf<class AGTWSwordWaveGimmick> SwordWaveClass;
 private:
 	// 어택 몽타주 실행
 	void PlayAttackAnim(UAnimMontage* AttackMontage);
