@@ -12,11 +12,22 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 
+void AGTWBoss1::StartCombat()
+{
+	StartEncounter();
+}
+
+void AGTWBoss1::StopCombat()
+{
+	StopEncounter();
+}
+
 /*
  * 읽는 순서: StartEncounter → AIController::RunAI → BP Service / BT Task.
  * Service는 추격을 요청하고, Task는 PlayDropObstacles를 호출한다.
  * BP는 에셋·수치·실행 순서, C++은 범위 계산·이동·공격 생성·정리를 담당한다.
  */
+
 void AGTWBoss1::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);

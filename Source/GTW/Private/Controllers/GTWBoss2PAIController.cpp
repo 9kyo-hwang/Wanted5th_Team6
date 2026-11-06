@@ -23,8 +23,6 @@ AGTWBoss2PAIController::AGTWBoss2PAIController()
 	{
 		BTAsset = BTAssetRef.Object;
 	}
-
-
 }
 
 void AGTWBoss2PAIController::RunAI()
@@ -56,5 +54,11 @@ void AGTWBoss2PAIController::StopAI()
 void AGTWBoss2PAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
-	RunAI();
+	//RunAI();	
+
+	/*
+	* [교황]: AI 가동 로직을 GM이 컨트롤할 수 있게 StartCombat()으로 통일하려고 합니다
+	* 현재 보스 생성자에서 AutoPossess 모드라서 배치 -> Possess -> RunAI()로 자동 호출되는 구조인데,
+	* StartCombat에서 Controller 통해서 RunAI()를 직접 호춣기 때문에 2중 호출 구조로 잡힘
+	*/
 }
