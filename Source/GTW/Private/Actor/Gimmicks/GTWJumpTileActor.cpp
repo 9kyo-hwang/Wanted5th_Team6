@@ -36,7 +36,7 @@ AGTWJumpTileActor::AGTWJumpTileActor() : JumpPower(2000.0f)
 
 	// 임시 에셋
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> JumpTileRef(
-		TEXT("/Engine/EngineMeshes/Cube.Cube")
+		TEXT("/Game/Assets/GImmicks/2F/Meshes/SM_GTW_JumpTile.SM_GTW_JumpTile")
 	);
 	if (JumpTileRef.Succeeded())
 	{
