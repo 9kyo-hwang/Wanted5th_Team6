@@ -32,7 +32,6 @@ public:
 	FOnObjectHitDelegate OnObjectHit;
 
 protected:
-	virtual void Tick(float DeltaSeconds) override;
 	/** 레벨 종료나 보스 제거 시에도 전투 정리가 실행. */
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 public:
