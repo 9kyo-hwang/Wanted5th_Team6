@@ -30,7 +30,7 @@ AGTWPlayerCharacter::AGTWPlayerCharacter(
 	bCanStun = true;
 
 	// 낙하 랙돌 속성
-	FallingRagdollSpeed = 4000.0f;
+	FallingRagdollSpeed = 5000.0f;
 	FallingRagdollAngle = 0.5f;
 	FallingRagdollTime = 1.0f;
 
@@ -71,13 +71,6 @@ void AGTWPlayerCharacter::Tick(float DeltaTime)
 
 	// 중력 적용
 	ActiveGravity(bIsGround, NormalVector);
-
-	UE_LOG(LogTemp, Log, 
-		TEXT("X:%f, Y:%f, Z:%f"),
-		SkateCharacterMovementComponent->Velocity.X,
-		SkateCharacterMovementComponent->Velocity.Y,
-		SkateCharacterMovementComponent->Velocity.Z
-	);
 }
 
 void AGTWPlayerCharacter::Landed(const FHitResult& Hit)

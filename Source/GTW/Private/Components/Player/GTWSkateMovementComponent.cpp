@@ -39,9 +39,7 @@ void UGTWSkateMovementComponent::SetGTWVelocity()
 	GTWVelocity = Velocity;
 	if (IsMovingOnGround())
 	{
-		// maintainhoriz
-		GTWVelocity.Z = -(GTWVelocity.X * NewImpactNormal.X + GTWVelocity.Y * NewImpactNormal.Y);
-		/// NewImpactNormal.Z;
+		GTWVelocity.Z = -(GTWVelocity.X * NewImpactNormal.X + GTWVelocity.Y * NewImpactNormal.Y) / NewImpactNormal.Z;
 	}
 	else
 	{
@@ -183,8 +181,7 @@ void UGTWSkateMovementComponent::StartFalling(int32 Iterations, float remainingT
 	// 경사 벗어났을 때 속도 역산
 	if (NewImpactNormal.Z != 0)
 	{
-		Velocity.Z = -(Velocity.X * NewImpactNormal.X + Velocity.Y * NewImpactNormal.Y);
-			/// NewImpactNormal.Z;
+		Velocity.Z = -(Velocity.X * NewImpactNormal.X + Velocity.Y * NewImpactNormal.Y) / NewImpactNormal.Z;
 	}
 	 
 	// 최대 속도 초기화.
@@ -213,6 +210,12 @@ bool UGTWSkateMovementComponent::ShouldCatchAir(
     }
 
     const float Speed = Velocity.Size2D();
+
+	// 경사를 벗어나기 위한 속도가 300이상이어야 함.
+    if (Speed < 300.0f)
+    {
+        return false;
+    }
 
     const FVector Direction =
         Velocity.GetSafeNormal2D();
