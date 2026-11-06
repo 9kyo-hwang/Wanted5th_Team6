@@ -41,23 +41,26 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|Meteor", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USceneComponent> Root;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|Meteor", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UStaticMeshComponent> WarningMarker;	// 예고 지점 표시할 표식.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|FX", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UParticleSystemComponent> WarningFX;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|Meteor", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class USphereComponent> MeteorCollision;				// 운석 충돌체
+	TObjectPtr<class USphereComponent> MeteorCollision;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|Meteor", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UStaticMeshComponent> MeteorVisual;	// 운석 메시
+	TObjectPtr<class UStaticMeshComponent> MeteorVisual;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|FX", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UParticleSystemComponent> MeteorFX;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|Meteor", meta = (AllowPrivateAccess = "true"))
-	float WarningDuration;	// 마커 표시 시간
+	float WarningDuration;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|Meteor", meta = (AllowPrivateAccess = "true"))
-	float FallHeight;		// 낙하 시작 높이. 얘가 필요할까? 조금 더 고민해보자.
+	float FallHeight;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|Meteor", meta = (AllowPrivateAccess = "true"))
-	float FallSpeed;		// 운석 낙하 속도
+	float FallSpeed;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|Meteor", meta = (AllowPrivateAccess = "true"))
 	float GroundedDuration;	// 운석이 땅에 박힌 후 지속 시간

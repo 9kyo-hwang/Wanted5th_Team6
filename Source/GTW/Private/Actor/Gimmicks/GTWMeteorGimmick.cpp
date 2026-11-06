@@ -6,6 +6,7 @@
 #include <GTWDebugHelper.h>
 #include <Interfaces/GTWHitReactionReceiver.h>
 
+#include <Particles/ParticleSystemComponent.h>
 #include <Components/SphereComponent.h>
 #include <Engine/OverlapResult.h>
 
@@ -24,9 +25,10 @@ AGTWMeteorGimmick::AGTWMeteorGimmick()
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	SetRootComponent(Root);
 
-	WarningMarker = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WarningMarker"));
-	WarningMarker->SetCollisionEnabled(ECollisionEnabled::NoCollision);		// 메시는 충돌 X
-	WarningMarker->SetupAttachment(Root);
+	WarningFX = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("WarningFX"));
+	WarningFX->SetVisibility(false);
+	WarningFX->SetAutoActivate(false);
+	WarningFX->SetupAttachment(Root);
 
 	MeteorCollision = CreateDefaultSubobject<USphereComponent>(TEXT("MeteorCollision"));
 	MeteorCollision->SetGenerateOverlapEvents(true);
@@ -36,6 +38,10 @@ AGTWMeteorGimmick::AGTWMeteorGimmick()
 	MeteorVisual = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeteorVisual"));
 	MeteorVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	MeteorVisual->SetupAttachment(MeteorCollision);
+
+	MeteorFX = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MeteorFX"));
+	MeteorFX->SetAutoActivate(false);
+	MeteorFX->SetupAttachment(MeteorCollision);
 }
 
 // 소환과 동시에 마커 표시 -> 시간 경과 시 떨어지기 시작
@@ -50,7 +56,9 @@ void AGTWMeteorGimmick::BeginPlay()
 
 	CurrentState = EMeteorState::Warning;
 
-	WarningMarker->SetVisibility(true);
+	WarningFX->SetVisibility(true);
+	WarningFX->Activate(true);
+
 	MeteorVisual->SetVisibility(false);
 
 	GetWorldTimerManager().SetTimer(WarningTimerHandle, this, &ThisClass::Falling, WarningDuration);
@@ -64,8 +72,10 @@ void AGTWMeteorGimmick::Falling()
 	}
 
 	CurrentState = EMeteorState::Falling;
-	WarningMarker->SetVisibility(false);
 	
+	WarningFX->SetVisibility(false);
+	WarningFX->Deactivate();
+
 	GroundLocation = MeteorCollision->GetComponentLocation();	// 월드 공간의 컴포넌트 위치
 	MeteorCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);	// 떨어질 때는 여전히 충돌이 없어야 함
 
@@ -73,6 +83,8 @@ void AGTWMeteorGimmick::Falling()
 	const FVector StartLocation = GroundLocation + FVector::UpVector * FallHeight;
 	MeteorCollision->SetWorldLocation(StartLocation);
 	MeteorVisual->SetVisibility(true);
+	MeteorFX->SetVisibility(true);
+	MeteorFX->Activate();
 
 	// Interval만큼 knockback 함수를 "반복해서" 호출
 	GetWorldTimerManager().SetTimer(KnockbackTimerHandle, this, &ThisClass::Knockback, KnockbackInterval, true);
