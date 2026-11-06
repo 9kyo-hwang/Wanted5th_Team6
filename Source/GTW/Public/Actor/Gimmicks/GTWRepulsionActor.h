@@ -33,6 +33,7 @@ protected:
 	// 볼륨 커지고 줄어드는 함수
 	void ExpandOnRepulsion();
 	void RestoreOriginVolume();
+	void ForceOriginalVolume();
 
 public:
 	// Called every frame
@@ -60,6 +61,9 @@ private:
 	
 	UPROPERTY()
 	FTimerHandle SecondRestoreVolumeTimer;
+	
+	UPROPERTY()
+	FTimerHandle ForceRestoreVolumeTimer;
 
 	UPROPERTY()
 	float VolumeDelta;

@@ -24,7 +24,7 @@ AGTWRepulsionActor::AGTWRepulsionActor()
 	RepulsionTrigger->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
 
 	// 트리거
-	RepulsionTrigger->SetCapsuleSize(70.0f, 70.0f);
+	RepulsionTrigger->SetCapsuleSize(55.0f, 70.0f);
 	RepulsionTrigger->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f));
 
 	// 메시
@@ -37,7 +37,7 @@ AGTWRepulsionActor::AGTWRepulsionActor()
 
 	// 임시 에셋
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> RepulsionRef(
-		TEXT("/Engine/BasicShapes/Cylinder.Cylinder")
+		TEXT("/Game/Assets/GImmicks/2F/Meshes/SM_GTW_RepulsionBumper.SM_GTW_RepulsionBumper")
 	);
 	if (RepulsionRef.Succeeded())
 	{
@@ -55,8 +55,6 @@ void AGTWRepulsionActor::BeginPlay()
 
 	// 부피 변환 값 설정
 	VolumeDelta = 1.2f;
-
-	UE_LOG(LogTemp, Log, TEXT("시작"));
 }
 
 void AGTWRepulsionActor::PostInitializeComponents()
@@ -66,12 +64,10 @@ void AGTWRepulsionActor::PostInitializeComponents()
 	// 캡슐 컴포넌트의 BeginOverlap 델리게이트에 함수 등록
 	RepulsionTrigger->OnComponentBeginOverlap.AddDynamic(this, &AGTWRepulsionActor::OnOverlapBegin);
 
-	UE_LOG(LogTemp, Log, TEXT("포스트"));
 }
 
 void AGTWRepulsionActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Log, TEXT("오버랩"));
 	if (!IsValid(OtherActor) || OtherActor == this)
 	{
 		return;
@@ -88,13 +84,6 @@ void AGTWRepulsionActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 	if (OverlappingPawn)
 	{
 		OverlappingPawn->ApplyRepulsion(PulseDirecion, RepulsionPower);
-
-		UE_LOG(LogTemp, Log, TEXT("반발체 동작"));
-	}
-	else
-	{
-		UE_LOG(LogTemp, Log, TEXT("반발체 동작"));
-		assert(true);
 	}
 
 	// 펌핑 시간 && 복원 시간 
@@ -124,6 +113,15 @@ void AGTWRepulsionActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 		false
 	);
 
+	float ForcedRestoreTime = 1.0f;
+	GetWorldTimerManager().SetTimer(
+		ForceRestoreVolumeTimer,
+		this,
+		&AGTWRepulsionActor::ForceOriginalVolume,
+		ForcedRestoreTime,
+		false
+	);
+
 }
 
 void AGTWRepulsionActor::ExpandOnRepulsion()
@@ -144,6 +142,11 @@ void AGTWRepulsionActor::RestoreOriginVolume()
 	MeshScale = MeshScale / VolumeDelta;
 
 	RepulsionMesh->SetRelativeScale3D(MeshScale);
+}
+
+void AGTWRepulsionActor::ForceOriginalVolume()
+{
+	RepulsionMesh->SetRelativeScale3D(FVector(1.0f, 1.0f, 1.0f));
 }
 
 // Called every frame

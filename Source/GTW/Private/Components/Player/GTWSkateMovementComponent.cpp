@@ -13,11 +13,16 @@
 UGTWSkateMovementComponent::UGTWSkateMovementComponent()
 	: Super()
 {
+	// 초기화
 	NormalCount = 0;
 	DefaultSpeed = 1800.0f;
 	DownHillSpeed = 2500.0f;
 	MaxWalkSpeed = DefaultSpeed;
 	bIsMovingDownSlope = false;
+
+	NewImpactNormal = FVector(0.0f, 0.0f, 0.0f);
+	OldImpactNormal = FVector(0.0f, 0.0f, 0.0f);
+	GTWVelocity = FVector(0.0f, 0.0f, 0.0f);
 }
 
 void UGTWSkateMovementComponent::InitializeComponent()
@@ -26,12 +31,7 @@ void UGTWSkateMovementComponent::InitializeComponent()
 
 	// 초기화
 	GTWPlayerCharacter = Cast<AGTWPlayerCharacter>(GetCharacterOwner());
-
-	NewImpactNormal = FVector(0.0f, 0.0f, 0.0f);
-	OldImpactNormal = FVector(0.0f, 0.0f, 0.0f);
 	OlderFloor = CurrentFloor;
-	GTWVelocity = FVector(0.0f, 0.0f, 0.0f);
-
 }
 
 void UGTWSkateMovementComponent::SetGTWVelocity()
@@ -46,7 +46,7 @@ void UGTWSkateMovementComponent::SetGTWVelocity()
 		GTWVelocity.Z = Velocity.Z;
 	}
 
-	// m/s -> km/h
+	// cm/s -> km/h
 	int GTWSpeed = GTWVelocity.Length() / 100000 * 3600;
 
 	OnSpeedChanged.Broadcast(GTWSpeed);
@@ -100,13 +100,6 @@ void UGTWSkateMovementComponent::PhysicsRotation(float DeltaTime)
 
 	// 입력 혹은 속도에 의한 회전 적용
 	Super::PhysicsRotation(DeltaTime);
-
-	bool bIsNextSlopeUpHill = NewImpactNormal.Z < OldImpactNormal.Z;
-
-	if (bIsNextSlopeUpHill)
-	{
-		AddImpulse(FVector(0.0f, 0.0f, 10.0f), true);
-	}
 
 	SetGTWVelocity();
 	
@@ -218,8 +211,8 @@ bool UGTWSkateMovementComponent::ShouldCatchAir(
 
     const float Speed = Velocity.Size2D();
 
-	// 경사를 벗어나기 위한 속도가 500이상이어야 함.
-    if (Speed < 500.0f)
+	// 경사를 벗어나기 위한 속도가 300이상이어야 함.
+    if (Speed < 300.0f)
     {
         return false;
     }
