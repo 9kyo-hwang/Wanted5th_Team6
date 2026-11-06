@@ -7,6 +7,7 @@
 #include <Components/CapsuleComponent.h>
 #include <Components/StaticMeshComponent.h>
 
+#include <cassert>
 
 // Sets default values
 AGTWRepulsionActor::AGTWRepulsionActor()
@@ -20,7 +21,7 @@ AGTWRepulsionActor::AGTWRepulsionActor()
 	RepulsionMesh->SetupAttachment(RepulsionTrigger);
 
 	// 박스 컴포넌트에 콜리전 프로필 설정.
-	RepulsionTrigger->SetCollisionProfileName(TEXT("GTWCollision"));
+	RepulsionTrigger->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
 
 	// 트리거
 	RepulsionTrigger->SetCapsuleSize(70.0f, 70.0f);
@@ -31,7 +32,7 @@ AGTWRepulsionActor::AGTWRepulsionActor()
 	RepulsionMesh->SetWorldScale3D(FVector(1.0f, 1.0f, 1.0f));
 
 	// 콜리전
-	RepulsionMesh->SetCollisionProfileName(TEXT("GTWCollision"));
+	RepulsionMesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
 
 
 	// 임시 에셋
@@ -44,7 +45,7 @@ AGTWRepulsionActor::AGTWRepulsionActor()
 	}
 
 	// 반발체 힘
-	RepulsionPower = 10.0f;
+	RepulsionPower = 1000.0f;
 }
 
 // Called when the game starts or when spawned
@@ -54,6 +55,8 @@ void AGTWRepulsionActor::BeginPlay()
 
 	// 부피 변환 값 설정
 	VolumeDelta = 1.2f;
+
+	UE_LOG(LogTemp, Log, TEXT("시작"));
 }
 
 void AGTWRepulsionActor::PostInitializeComponents()
@@ -63,10 +66,12 @@ void AGTWRepulsionActor::PostInitializeComponents()
 	// 캡슐 컴포넌트의 BeginOverlap 델리게이트에 함수 등록
 	RepulsionTrigger->OnComponentBeginOverlap.AddDynamic(this, &AGTWRepulsionActor::OnOverlapBegin);
 
+	UE_LOG(LogTemp, Log, TEXT("포스트"));
 }
 
 void AGTWRepulsionActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	UE_LOG(LogTemp, Log, TEXT("오버랩"));
 	if (!IsValid(OtherActor) || OtherActor == this)
 	{
 		return;
@@ -83,6 +88,13 @@ void AGTWRepulsionActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 	if (OverlappingPawn)
 	{
 		OverlappingPawn->ApplyRepulsion(PulseDirecion, RepulsionPower);
+
+		UE_LOG(LogTemp, Log, TEXT("반발체 동작"));
+	}
+	else
+	{
+		UE_LOG(LogTemp, Log, TEXT("반발체 동작"));
+		assert(true);
 	}
 
 	// 펌핑 시간 && 복원 시간 

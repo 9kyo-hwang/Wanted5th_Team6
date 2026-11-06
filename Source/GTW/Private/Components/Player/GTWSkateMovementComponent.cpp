@@ -144,8 +144,6 @@ void UGTWSkateMovementComponent::PhysicsRotation(float DeltaTime)
 
 		if (NormalCount > 2)
 		{
-			AddImpulse(FVector(0.0f, 0.0f, 20.0f), true);
-
 			NormalCount = 0;
 
 			NewImpactNormal = OldImpactNormal = GetNewImpactNormal();
