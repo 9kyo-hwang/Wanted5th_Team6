@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include <Interfaces/GTWBossAIInterface.h>
 #include "GTWBoss1.generated.h"
 
 class ATriggerBox;
@@ -9,18 +10,66 @@ class UBoxComponent;
 class UAnimMontage;
 struct FCollisionQueryParams;
 
+DECLARE_MULTICAST_DELEGATE(FOnObjectHitDelegate);
+
 /**
  * P1 보스의 실제 이동, 범위 제한, 공격 생성과 전투 종료 정리를 담당
  * BP Service 추격 요청, BT Task 공격 요청.
  */
 UCLASS()
-class GTW_API AGTWBoss1 : public ACharacter
+class GTW_API AGTWBoss1 : public ACharacter, public IGTWBossAIInterface
 {
 	GENERATED_BODY()
 
 public:
-	virtual void Tick(float DeltaSeconds) override;
+	// Begin IGTWBossAIInterface: GameMode가 보스 행동 시작/종료를 컨트롤하기 위한 Interface
+	virtual void StartCombat() override;
+	virtual void StopCombat() override;
+	// End IGTWBossAIInterface
 
+	FOnObjectHitDelegate OnObjectHit;
+
+protected:
+	virtual void Tick(float DeltaSeconds) override;
+	/** 레벨 종료나 보스 제거 시에도 전투 정리가 실행. */
+	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
+public:
+	/** BT Task의 공격 요청 진입점. DropAttack 정상 종료 후 기믹을 생성한다.
+	 *  몽타주가 없거나 재생에 실패하면 기믹을 즉시 생성한다. */
+	UFUNCTION(BlueprintCallable, Category = "Boss|Attack")
+	void PlayDropObstacles(APawn* TargetPlayer);
+
+	/** 준비 중인 몽타주가 있는지 확인 */
+	UFUNCTION(BlueprintPure, Category = "Boss|Attack")
+	FORCEINLINE bool IsPreparingAttack() const
+	{
+		return PreparedMontage != nullptr;
+	}
+
+	/** BP Service가 전달한 목표로 이동하고 플레이어 쪽으로 회전 */
+	UFUNCTION(BlueprintCallable, Category = "Boss|Movement")
+	void UpdatePursuit(APawn* TargetPlayer, const FVector& ChaseLocation, float DeltaSeconds);
+
+	/** GameMode BP에서 호출한다. 범위/컨트롤러 검증 → 이동 준비 → BT 실행 순서다. */
+	UFUNCTION(BlueprintCallable, Category = "Boss|Encounter")
+	void StartEncounter();
+
+	/** 현재 전투가 진행 중인지 BP와 AIController에서 조회 */
+	UFUNCTION(BlueprintPure, Category = "Boss|Encounter")
+	FORCEINLINE bool IsEncounterRunning() const
+	{
+		return bRunning;
+	}
+
+	/** 플레이어 위치를 사각형 내부의 추격 목표로 변환 */
+	UFUNCTION(BlueprintPure, Category = "Boss|Movement")
+	FVector GetChaseLocation(const FVector& PlayerPosition) const;
+
+	/** AI와 준비 모션을 중지하고 생성한 기믹을 제거한 뒤 전투 전 이동 모드를 복구 */
+	UFUNCTION(BlueprintCallable, Category = "Boss|Encounter")
+	void StopEncounter();
+
+public:
 	/** 레벨에 배치한 고정 Trigger Box. 위치/회전/Box Extent로 사각 이동 범위를 편집 */
 	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Boss|Movement")
 	TObjectPtr<ATriggerBox> MovementBoundsActor;
@@ -70,45 +119,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Attack", meta = (ClampMin = "0.1", Units = "s"))
 	float AttackActorLifeSpan = 12.f;
 
-	/** BT Task의 공격 요청 진입점. DropAttack 정상 종료 후 기믹을 생성한다.
-	 *  몽타주가 없거나 재생에 실패하면 기믹을 즉시 생성한다. */
-	UFUNCTION(BlueprintCallable, Category = "Boss|Attack")
-	void PlayDropObstacles(APawn* TargetPlayer);
-
-	/** 준비 중인 몽타주가 있는지 확인 */
-	UFUNCTION(BlueprintPure, Category = "Boss|Attack")
-	FORCEINLINE bool IsPreparingAttack() const
-	{
-		return PreparedMontage != nullptr;
-	}
-
-	/** BP Service가 전달한 목표로 이동하고 플레이어 쪽으로 회전 */
-	UFUNCTION(BlueprintCallable, Category = "Boss|Movement")
-	void UpdatePursuit(APawn* TargetPlayer, const FVector& ChaseLocation, float DeltaSeconds);
-
-	/** GameMode BP에서 호출한다. 범위/컨트롤러 검증 → 이동 준비 → BT 실행 순서다. */
-	UFUNCTION(BlueprintCallable, Category = "Boss|Encounter")
-	void StartEncounter();
-
-	/** 현재 전투가 진행 중인지 BP와 AIController에서 조회 */
-	UFUNCTION(BlueprintPure, Category = "Boss|Encounter")
-	FORCEINLINE bool IsEncounterRunning() const
-	{
-		return bRunning;
-	}
-
-	/** 플레이어 위치를 사각형 내부의 추격 목표로 변환 */
-	UFUNCTION(BlueprintPure, Category = "Boss|Movement")
-	FVector GetChaseLocation(const FVector& PlayerPosition) const;
-
-	/** AI와 준비 모션을 중지하고 생성한 기믹을 제거한 뒤 전투 전 이동 모드를 복구 */
-	UFUNCTION(BlueprintCallable, Category = "Boss|Encounter")
-	void StopEncounter();
-
-protected:
-	/** 레벨 종료나 보스 제거 시에도 전투 정리가 실행. */
-	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
-
 private:
 	/** 위치를 캡슐 크기만큼 안쪽으로 줄인 사각형 내부로 제한하고 시작 높이를 유지. */
 	FVector ConstrainPosition(const FVector& Position) const;
@@ -143,6 +153,7 @@ private:
 	/** 반경 안의 후보 한 곳을 바닥 검사한다. 성공 시 OutLocation에 생성 위치를 기록 */
 	bool FindAttackSpawnLocation(APawn* TargetPlayer, const FCollisionQueryParams& GroundQuery, FVector& OutLocation) const;
 
+private:
 	/** 준비 모션 시작 당시의 공격 대상. */
 	TWeakObjectPtr<APawn> PreparedTarget;
 
@@ -164,5 +175,4 @@ private:
 
 	/** 보스가 생성한 기믹들의 약한 참조 목록. */
 	TArray<TWeakObjectPtr<AActor>> SpawnedAttackActors;
-
 };

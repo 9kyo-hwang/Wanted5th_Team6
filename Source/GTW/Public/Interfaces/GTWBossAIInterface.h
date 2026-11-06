@@ -6,21 +6,21 @@
 #include "UObject/Interface.h"
 #include "GTWBossAIInterface.generated.h"
 
-// This class does not need to be modified.
-UINTERFACE(MinimalAPI)
+UINTERFACE(MinimalAPI, Blueprintable)
 class UGTWBossAIInterface : public UInterface
 {
 	GENERATED_BODY()
 };
 
-/**
- * 
- */
+// 정확한 이름은 BossCombatInterface
 class GTW_API IGTWBossAIInterface
 {
 	GENERATED_BODY()
 
-	// Add interface functions to this class. This is the class that will be inherited to implement this interface.
 public:
-	//virtual void 
+	// 보스 공격, 추격 등 시작. GM이 호출할 곳
+	virtual void StartCombat() = 0;
+
+	// 추격이나 기믹 활성화 등 Stop.
+	virtual void StopCombat() = 0;
 };
