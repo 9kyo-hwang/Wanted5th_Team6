@@ -12,7 +12,6 @@
 // 대신 Runtime에서 크래시를 발생시키도록 함
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnIntroRequestedDelegate);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnOutroRequestedDelegate, EBossGameModeState, Result);
 
 UCLASS(Abstract)
 class GTW_API AGTWBaseBossGameMode : public AGameModeBase
@@ -30,10 +29,9 @@ public:
 	void BeginPhase();
 
 	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
-	void FailPhase();
-
-	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
 	void ClearPhase();
+
+	// Fail은 각 페이즈 별 GameMode에서 정의
 
 	// 아웃트로 재생 후 호출
 	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
@@ -42,10 +40,6 @@ public:
 	// 보스 인트로 요청
 	UPROPERTY(BlueprintAssignable, Category = "Boss|Phase")
 	FOnIntroRequestedDelegate OnIntroRequested;
-
-	// 보스 아웃트로 요청
-	UPROPERTY(BlueprintAssignable, Category = "Boss|Phase")
-	FOnOutroRequestedDelegate OnOutroRequested;
 
 protected:
 	virtual void StartPlay() override;
@@ -60,10 +54,9 @@ protected:
 	virtual bool BindBossEvents() { return true; }
 	virtual void UnbindBossEvents() {}
 	virtual void HandlePhaseResult(EBossGameModeState Result) {}	// 보스 멈추고 연출 실행 전
-
-	// 1페: 레벨 이동 / 2페: 최종 클리어 화면 표시, 성공하면 true, 설정 누락 등으로 실행 안하면 false
-	virtual bool HandlePhaseCompletion(EBossGameModeState Result)
-		PURE_VIRTUAL(AGTWBaseBossGameMode::HandlePhaseCompletion, return false;);	// 연출 실행도 다 끝난 시점
+	virtual bool RequestPhaseOutro(EBossGameModeState Result) { return false; }	// 요청 있으면 발행, 
+	virtual bool HandlePhaseCompletion(EBossGameModeState Result)	
+		PURE_VIRTUAL(AGTWBaseBossGameMode::HandlePhaseCompletion, return false;);	// 연출 실행도 다 끝난 시점. 성공하면 true, 설정 누락 등으로 실행 안하면 false
 
 	// 혹시 BP에서 추가로 더 해야할 게 생기면 여기 통해서 가능
 	UFUNCTION(BlueprintImplementableEvent, Category = "Boss|Phase", meta = (DisplayName = "On Phase Started"))
