@@ -10,10 +10,11 @@
 #include <Actor/Gimmicks/GTWMeteorGimmick.h>
 #include <Actor/Gimmicks/GTWSwordWaveGimmick.h>
 
-#include <Components/CapsuleComponent.h>
 #include <Animation/AnimInstance.h>
 #include <Components/SplineComponent.h>
+#include <Components/CapsuleComponent.h>
 #include <Components/BoxComponent.h>
+#include <GameFramework/CharacterMovementComponent.h>
 
 // Sets default values
 AGTWBoss::AGTWBoss()
@@ -125,6 +126,11 @@ void AGTWBoss::StopCombat()
 	{
 		BossSplines[CurrentSplineNum]->SetActorTickEnabled(false);
 	}
+	// Movement Mode를 MOVE_None으로 변경(중력/이동 정지)
+	GetCharacterMovement()->DisableMovement();
+	// ABP 정리. (시퀀스 시 애니메이션 정지시키기 위해)
+	GetMesh()->SetAnimInstanceClass(nullptr);
+	
 }
 
 void AGTWBoss::PlaySwordWave()
