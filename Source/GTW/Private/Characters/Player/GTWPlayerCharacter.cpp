@@ -3,6 +3,7 @@
 #include <Characters/Player/GTWPlayerCharacter.h>
 #include <Components/Player/GTWSkateMovementComponent.h>
 #include <UI/GTWSpeedWidget.h>
+#include <UI/GTWTimerWidget.h>
 
 #include <Components/CapsuleComponent.h>
 #include <cassert>
@@ -44,6 +45,8 @@ AGTWPlayerCharacter::AGTWPlayerCharacter(
 
 	bIsRagdoll = false;
 
+	ElapsedTime = 0;
+	bSecondFloorClear = false;
 }
 
 // Called when the game starts or when spawned
@@ -56,6 +59,8 @@ void AGTWPlayerCharacter::BeginPlay()
 void AGTWPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	ElapsedTime += DeltaTime * 100;
 
 	//땅에 있는지 확인
 	bool bIsGround = SkateCharacterMovementComponent->CurrentFloor.bWalkableFloor;
@@ -72,12 +77,14 @@ void AGTWPlayerCharacter::Tick(float DeltaTime)
 	// 중력 적용
 	ActiveGravity(bIsGround, NormalVector);
 
-	UE_LOG(LogTemp, Log, 
-		TEXT("X:%f, Y:%f, Z:%f"),
-		SkateCharacterMovementComponent->Velocity.X,
-		SkateCharacterMovementComponent->Velocity.Y,
-		SkateCharacterMovementComponent->Velocity.Z
-	);
+	OnTimeChanged.Broadcast(ElapsedTime);
+
+	if (ElapsedTime > 1000 && !bSecondFloorClear)
+	{
+		OnClearLevelChanged.Broadcast(ELevelClear::SecondFloorClear, ElapsedTime);
+		bSecondFloorClear = true;
+	}
+
 }
 
 void AGTWPlayerCharacter::Landed(const FHitResult& Hit)
@@ -256,6 +263,24 @@ void AGTWPlayerCharacter::SetSpeedWidget(UGTWSpeedWidget* InSpeedWidget)
 	InSpeedWidget->UpdateSpeed(InitSpeed);
 
 	SkateCharacterMovementComponent->OnSpeedChanged.AddUObject(InSpeedWidget, &UGTWSpeedWidget::UpdateSpeed);
+}
+
+void AGTWPlayerCharacter::SetTimerWidget(UGTWTimerWidget* InTimerWidget)
+{
+	// 값 확인
+	if (nullptr == InTimerWidget)
+	{
+		return;
+	}
+
+	// 설정할 초기값
+	int InitTimer = 0;
+
+	InTimerWidget->UpdateTimer(InitTimer);
+
+	// 임시 객체 
+	OnTimeChanged.AddUObject(InTimerWidget, &UGTWTimerWidget::UpdateTimer);
+	OnClearLevelChanged.AddUObject(InTimerWidget, &UGTWTimerWidget::UpdateClearLevel);
 }
 
 void AGTWPlayerCharacter::HitKnockbackObject(FVector HitDirection, float power)

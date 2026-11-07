@@ -57,7 +57,6 @@ void UGTWSpeedWidget::UpdateSpeed(int Speed)
         SpeedText[ix].Get()->SetColorAndOpacity(InActiveTxtColor);
     }
     
-
     UpdateSpeedGauge(Speed);
 }
 

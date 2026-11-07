@@ -6,9 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GTWSkateMovementComponent.generated.h"
 
-
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSpeedChangedDelegate, int /*CurrentSpeed*/);
-
 
 /**
  * 
@@ -33,7 +31,6 @@ private:
 		const FRotator& CurrentRotation,
 		float DeltaTime,
 		FRotator& DeltaRotation) const override;
-
 
 	virtual void PhysicsRotation(float DeltaTime) override;
 
@@ -68,7 +65,6 @@ public:
 public:
 	// 속도 변환 시 갱신
 	FOnSpeedChangedDelegate OnSpeedChanged;
-
 protected:
 	// 오너
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)

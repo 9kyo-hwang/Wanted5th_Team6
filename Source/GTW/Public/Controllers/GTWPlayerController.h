@@ -20,12 +20,20 @@ public:
 	virtual void BeginPlay() override;
 
 protected:
-	// 위젯 클래스 정보.
+	// 속도 위젯 클래스 정보.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = HUD)
 	TSubclassOf<class UGTWSpeedWidget> GTWSpeedWidgetClass;
 
-	// 생성한 위젯을 저장할 변수.
+	// 생성한 속도 위젯을 저장할 변수.
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = HUD)
 	TObjectPtr<UGTWSpeedWidget> GTWSpeedWidget;
+
+	// 시간 위젯 클래스 정보.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = HUD)
+	TSubclassOf<class UGTWTimerWidget> GTWTimerWidgetClass;
+
+	// 생성한 시간 위젯을 저장할 변수.
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = HUD)
+	TObjectPtr<UGTWTimerWidget> GTWTimerWidget;
 
 };
