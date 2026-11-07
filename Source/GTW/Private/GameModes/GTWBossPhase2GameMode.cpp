@@ -35,6 +35,17 @@ void AGTWBossPhase2GameMode::OnGoalReached()
 	ClearPhase();
 }
 
+void AGTWBossPhase2GameMode::FailPhase(EBossPhase2FailReason InFailReason)
+{
+	if (!IsPhasePlaying())
+	{
+		return;
+	}
+
+	FailReason = InFailReason;
+	EndPhase(EBossGameModeState::Fail);
+}
+
 bool AGTWBossPhase2GameMode::BindBossEvents()
 {
 	return true;
@@ -63,6 +74,41 @@ void AGTWBossPhase2GameMode::HandlePhaseResult(EBossGameModeState Result)
 	{
 		GameInstance->ResetBossPhase1Cleared();
 	}
+}
+
+bool AGTWBossPhase2GameMode::RequestPhaseOutro(EBossGameModeState Result)
+{
+	if (OnOutroRequested.IsBound())
+	{
+		switch (Result)
+		{
+		case EBossGameModeState::Clear: 
+		{
+			OnOutroRequested.Broadcast(EBossPhase2OutroTypes::Cleared);
+			return true;
+		}
+		
+		case EBossGameModeState::Fail:
+		{
+			switch (FailReason)
+			{
+			case EBossPhase2FailReason::Fall:
+				OnOutroRequested.Broadcast(EBossPhase2OutroTypes::Fall);
+				return true;
+			case EBossPhase2FailReason::BossContact:
+				OnOutroRequested.Broadcast(EBossPhase2OutroTypes::BossContact);
+				return true;
+			default: 
+				return false;
+			}
+		}
+
+		default: 
+			return false;
+		}
+	}
+
+	return false;
 }
 
 bool AGTWBossPhase2GameMode::HandlePhaseCompletion(EBossGameModeState Result)
