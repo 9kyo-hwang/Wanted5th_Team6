@@ -9,6 +9,13 @@
 AGTWShootingGameMode::AGTWShootingGameMode()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	
+}
+
+void AGTWShootingGameMode::BeginPlay()
+{
+	Super::BeginPlay();
+
 	Player = UGameplayStatics::GetPlayerController(this, 0);
 }
 
