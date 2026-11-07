@@ -40,7 +40,7 @@ public:
 public:
 	// 게임 오버 처리할 박스 콜리전 추가. 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Arrow)
-	class UBoxComponent* BoxCollision;
+	class UBoxComponent* DeathBox;
 
 protected:
 	// 몽타주

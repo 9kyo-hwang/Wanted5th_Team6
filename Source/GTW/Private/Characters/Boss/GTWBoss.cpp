@@ -79,11 +79,11 @@ AGTWBoss::AGTWBoss()
 	GetCapsuleComponent()->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1);
 
 	// 박스 콜리전 추가. 
-	BoxCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("BoxCollision"));
+	DeathBox = CreateDefaultSubobject<UBoxComponent>(TEXT("DeathBox"));
 	// 루트 컴포넌트 아래에 추가
-	BoxCollision->SetupAttachment(GetRootComponent());
-	BoxCollision->SetBoxExtent(FVector(0.7f, 2.5f, 2.8f));
-	BoxCollision->SetCollisionProfileName(TEXT("Custom"));
+	DeathBox->SetupAttachment(GetRootComponent());
+	DeathBox->SetBoxExtent(FVector(0.7f, 2.5f, 2.8f));
+	DeathBox->SetCollisionProfileName(TEXT("Custom"));
 
 
 	// 보스 2페이즈 컨트롤러 클래스 설정. 
@@ -121,7 +121,10 @@ void AGTWBoss::StopCombat()
 
 	BossController->StopAI();
 	// 현재 스플라인 배열의 Tick을 비활성화
-	BossSplines[CurrentSplineNum]->SetActorTickEnabled(false);
+	if (BossSplines.IsValidIndex(CurrentSplineNum))
+	{
+		BossSplines[CurrentSplineNum]->SetActorTickEnabled(false);
+	}
 }
 
 void AGTWBoss::PlaySwordWave()
