@@ -9,6 +9,7 @@
 #include <Particles/ParticleSystemComponent.h>
 #include <Components/SphereComponent.h>
 #include <Engine/OverlapResult.h>
+#include <NiagaraComponent.h>
 
 AGTWMeteorGimmick::AGTWMeteorGimmick()
 	: WarningDuration(1.f)
@@ -25,9 +26,10 @@ AGTWMeteorGimmick::AGTWMeteorGimmick()
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	SetRootComponent(Root);
 
-	WarningFX = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("WarningFX"));
+	WarningFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("WarningFX"));
 	WarningFX->SetVisibility(false);
 	WarningFX->SetAutoActivate(false);
+	WarningFX->SetAutoDestroy(false);
 	WarningFX->SetupAttachment(Root);
 
 	MeteorCollision = CreateDefaultSubobject<USphereComponent>(TEXT("MeteorCollision"));
@@ -35,13 +37,17 @@ AGTWMeteorGimmick::AGTWMeteorGimmick()
 	MeteorCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	MeteorCollision->SetupAttachment(Root);
 
-	MeteorVisual = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("MeteorVisual"));
-	MeteorVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	MeteorVisual->SetupAttachment(MeteorCollision);
+	MeteorBodyFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("MeteorBodyFX"));
+	MeteorBodyFX->SetVisibility(false);
+	MeteorBodyFX->SetAutoActivate(false);
+	MeteorBodyFX->SetAutoDestroy(false);
+	MeteorBodyFX->SetupAttachment(MeteorCollision);
 
-	MeteorFX = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("MeteorFX"));
-	MeteorFX->SetAutoActivate(false);
-	MeteorFX->SetupAttachment(MeteorCollision);
+	MeteorExplosionFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("MeteorExplosionFX"));
+	MeteorExplosionFX->SetVisibility(false);
+	MeteorExplosionFX->SetAutoActivate(false);
+	MeteorExplosionFX->SetAutoDestroy(false);
+	MeteorExplosionFX->SetupAttachment(MeteorCollision);
 }
 
 // 소환과 동시에 마커 표시 -> 시간 경과 시 떨어지기 시작
@@ -58,8 +64,6 @@ void AGTWMeteorGimmick::BeginPlay()
 
 	WarningFX->SetVisibility(true);
 	WarningFX->Activate(true);
-
-	MeteorVisual->SetVisibility(false);
 
 	GetWorldTimerManager().SetTimer(WarningTimerHandle, this, &ThisClass::Falling, WarningDuration);
 }
@@ -82,9 +86,9 @@ void AGTWMeteorGimmick::Falling()
 	// 컴포넌트는 애초부터 땅에 있으니, Height만큼 높은 위치를 시작으로 지정
 	const FVector StartLocation = GroundLocation + FVector::UpVector * FallHeight;
 	MeteorCollision->SetWorldLocation(StartLocation);
-	MeteorVisual->SetVisibility(true);
-	MeteorFX->SetVisibility(true);
-	MeteorFX->Activate();
+
+	MeteorBodyFX->SetVisibility(true);
+	MeteorBodyFX->Activate();
 
 	// Interval만큼 knockback 함수를 "반복해서" 호출
 	GetWorldTimerManager().SetTimer(KnockbackTimerHandle, this, &ThisClass::Knockback, KnockbackInterval, true);
@@ -206,6 +210,9 @@ void AGTWMeteorGimmick::Grounded()
 	
 	MeteorCollision->SetWorldLocation(GroundLocation);
 	MeteorCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);	// @TODO: Pawn Block으로 설정해줘야 함
+
+	MeteorExplosionFX->SetVisibility(true);
+	MeteorExplosionFX->Activate();
 
 	// Finish에 진입하기 전까지 계속 넉백 판정을 일으킴
 	GetWorldTimerManager().SetTimer(GroundedTimerHandle, this, &ThisClass::Finish, GroundedDuration, false);
