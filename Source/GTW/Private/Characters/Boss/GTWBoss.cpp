@@ -13,6 +13,7 @@
 #include <Components/CapsuleComponent.h>
 #include <Animation/AnimInstance.h>
 #include <Components/SplineComponent.h>
+#include <Components/BoxComponent.h>
 
 // Sets default values
 AGTWBoss::AGTWBoss()
@@ -77,6 +78,14 @@ AGTWBoss::AGTWBoss()
 	// 캡슐 컴포넌트의 오브젝트 타입을 Boss(ECC_GameTraceChannel1)로 설정. 
 	GetCapsuleComponent()->SetCollisionObjectType(ECollisionChannel::ECC_GameTraceChannel1);
 
+	// 박스 콜리전 추가. 
+	DeathBox = CreateDefaultSubobject<UBoxComponent>(TEXT("DeathBox"));
+	// 루트 컴포넌트 아래에 추가
+	DeathBox->SetupAttachment(GetRootComponent());
+	DeathBox->SetBoxExtent(FVector(0.7f, 2.5f, 2.8f));
+	DeathBox->SetCollisionProfileName(TEXT("Custom"));
+
+
 	// 보스 2페이즈 컨트롤러 클래스 설정. 
 	AIControllerClass = AGTWBoss2PAIController::StaticClass();
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
@@ -111,7 +120,11 @@ void AGTWBoss::StopCombat()
 	}
 
 	BossController->StopAI();
-	// @TODO: Stop Spline 등
+	// 현재 스플라인 배열의 Tick을 비활성화
+	if (BossSplines.IsValidIndex(CurrentSplineNum))
+	{
+		BossSplines[CurrentSplineNum]->SetActorTickEnabled(false);
+	}
 }
 
 void AGTWBoss::PlaySwordWave()
@@ -123,8 +136,8 @@ void AGTWBoss::PlaySwordWave()
 	FActorSpawnParameters SpawnParams;
 	GetWorld()->SpawnActor<AGTWSwordWaveGimmick>(
 		SwordWaveClass,
-		GetActorLocation() + GetActorRightVector() * FMath::RandRange(-450, 450),
-		FRotator::ZeroRotator,
+		GetActorLocation() + GetActorForwardVector() * 100.0f + GetActorRightVector() * FMath::RandRange(-450, 450),
+		GetActorRotation(),
 		SpawnParams
 	);
 
@@ -141,14 +154,10 @@ void AGTWBoss::PlaySpawnBall()
 	FActorSpawnParameters SpawnParams;
 	GetWorld()->SpawnActor<AGTWMeteorGimmick>(
 		MeteorClass,
-		GetActorLocation() + GetActorForwardVector()* 2000.0f + GetActorRightVector() * FMath::RandRange(-450, 450),
-		FRotator::ZeroRotator,
+		GetActorLocation() + GetActorForwardVector() * 2500.0f + GetActorRightVector() * FMath::RandRange(-450, 450),
+		GetActorRotation(),
 		SpawnParams
 	);
-
-
-
-
 }
 
 void AGTWBoss::PlayLightning()
@@ -159,7 +168,7 @@ void AGTWBoss::PlayLightning()
 	GetWorld()->SpawnActor<AGTWLightningGimmick>(
 		LightningClass,
 		GetActorLocation() + GetActorForwardVector() * 2000.0f + GetActorRightVector() * FMath::RandRange(-450, 450),
-		FRotator::ZeroRotator,
+		GetActorRotation(),
 		SpawnParams
 	);
 

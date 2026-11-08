@@ -35,7 +35,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Interaction)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Interaction)
 	float JumpPower;
 
 private:

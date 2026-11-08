@@ -99,11 +99,6 @@ void AGTWBaseBossGameMode::BeginPhase()
 	}
 }
 
-void AGTWBaseBossGameMode::FailPhase()
-{
-	EndPhase(EBossGameModeState::Fail);
-}
-
 void AGTWBaseBossGameMode::ClearPhase()
 {
 	EndPhase(EBossGameModeState::Clear);
@@ -132,13 +127,9 @@ void AGTWBaseBossGameMode::EndPhase(EBossGameModeState Result)
 	K2_OnPhaseEnded();
 	HandlePhaseResult(Result);
 
-	if (OnOutroRequested.IsBound())
+	if (!RequestPhaseOutro(Result))
 	{
-		Debug::Print(TEXT("[BaseBossGameMode::EndPhase] 아웃트로 재생. 완료 후 레벨 변경 처리"));
-		OnOutroRequested.Broadcast(CurrentState);
-	}
-	else
-	{
+		Debug::Print(TEXT("[BaseBossGameMode::EndPhase] 아웃트로가 없어서 즉시 완료 처리."));
 		CompletePhase();
 	}
 }

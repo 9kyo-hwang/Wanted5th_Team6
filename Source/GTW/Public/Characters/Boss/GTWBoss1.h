@@ -176,4 +176,5 @@ private:
 
 	/** 보스가 생성한 기믹들의 약한 참조 목록. */
 	TArray<TWeakObjectPtr<AActor>> SpawnedAttackActors;
+
 };

@@ -16,6 +16,9 @@ class GTW_API AGTWShootingGameMode : public AGameModeBase
 	
 public:
 	AGTWShootingGameMode();
+
+	virtual void BeginPlay() override;
+
 	virtual void Tick(float DeltaSeconds) override;
 
 	UFUNCTION(BlueprintPure, Category = "Gameplay|Timer")

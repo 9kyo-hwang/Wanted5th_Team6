@@ -18,6 +18,7 @@
 * OnObjectHit: C++ 멀티캐스트(인자 없음)
 */
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPhase1OutroRequestedDelegate, EBossPhase1OutroTypes, OutroType);
 
 UCLASS()
 class GTW_API AGTWBossPhase1GameMode : public AGTWBaseBossGameMode
@@ -26,11 +27,19 @@ class GTW_API AGTWBossPhase1GameMode : public AGTWBaseBossGameMode
 
 public:
 	AGTWBossPhase1GameMode();
-	
+
+	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
+	void FailPhase();
+
+	// 보스 아웃트로 요청
+	UPROPERTY(BlueprintAssignable, Category = "Boss|Phase")
+	FOnPhase1OutroRequestedDelegate OnOutroRequested;
+
 protected:
 	virtual bool BindBossEvents() override;
 	virtual void UnbindBossEvents() override;
 	virtual void HandlePhaseResult(EBossGameModeState Result) override;
+	virtual bool RequestPhaseOutro(EBossGameModeState Result) override;
 	virtual bool HandlePhaseCompletion(EBossGameModeState Result) override;
 
 private:

@@ -11,3 +11,18 @@ enum class EBossGameModeState : uint8
 	Clear	UMETA(DisplayName = "CLEAR"),
 	Fail	UMETA(DisplayName = "FAIL")
 };
+
+UENUM(BlueprintType)
+enum class EBossPhase1OutroTypes : uint8
+{
+	Fall,
+	Cleared
+};
+
+UENUM(BlueprintType)
+enum class EBossPhase2OutroTypes : uint8
+{
+	Fall,
+	BossContact,
+	Cleared
+};

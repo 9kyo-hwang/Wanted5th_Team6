@@ -9,6 +9,7 @@
 #include <Components/StaticMeshComponent.h>
 #include <Components/ArrowComponent.h>
 #include <Components/SphereComponent.h>
+#include <NiagaraComponent.h>
 #include <GameFramework/PlayerController.h>
 
 // Sets default values
@@ -47,9 +48,11 @@ AGTWRoadblockGimmick::AGTWRoadblockGimmick()
 	BlockCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);	// 처음에 충돌 없고, 타겟 위치에 도달하면 ON
 	BlockCollision->SetupAttachment(Root);
 
-	BlockMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("BlockMesh"));
-	BlockMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);			// 메시는 충돌 X
-	BlockMesh->SetupAttachment(BlockCollision);
+	BlockFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("BlockFX"));
+	BlockFX->SetAutoActivate(false);
+	BlockFX->SetAutoDestroy(false);
+	BlockFX->SetVisibility(false);
+	BlockFX->SetupAttachment(BlockCollision);
 }
 
 // Overlap 연결
@@ -57,8 +60,6 @@ void AGTWRoadblockGimmick::BeginPlay()
 {
 	Super::BeginPlay();
 
-	BlockMesh->SetVisibility(false);	// 게임 시작 시 길막 구체 Visible OFF
-	
 	FlightStartLocation = LaunchPoint->GetComponentLocation();
 	FlightTargetLocation = TargetPoint->GetComponentLocation();
 
@@ -113,7 +114,10 @@ void AGTWRoadblockGimmick::Launch()
 
 	// 충돌체 세팅
 	BlockCollision->SetWorldLocation(FlightStartLocation);
-	BlockMesh->SetVisibility(true);
+
+	BlockFX->SetVisibility(true);
+	BlockFX->Activate(true);
+	
 	FlightElapsedTime = 0.f;
 
 	// 이동 시작

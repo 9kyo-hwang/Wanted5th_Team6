@@ -19,6 +19,11 @@ AGTWBossPhase1GameMode::AGTWBossPhase1GameMode()
 
 }
 
+void AGTWBossPhase1GameMode::FailPhase()
+{
+	EndPhase(EBossGameModeState::Fail);
+}
+
 bool AGTWBossPhase1GameMode::BindBossEvents()
 {
 	Super::BindBossEvents();
@@ -78,6 +83,26 @@ void AGTWBossPhase1GameMode::HandlePhaseResult(EBossGameModeState Result)
 	{
 		GameInstance->ResetBossPhase1Cleared();
 	}
+}
+
+bool AGTWBossPhase1GameMode::RequestPhaseOutro(EBossGameModeState Result)
+{
+	if (OnOutroRequested.IsBound())
+	{
+		switch (Result)
+		{
+		case EBossGameModeState::Clear:
+			OnOutroRequested.Broadcast(EBossPhase1OutroTypes::Cleared);
+			break;
+		case EBossGameModeState::Fail:	// 얘는 떨어지는 것 밖에 없음
+			OnOutroRequested.Broadcast(EBossPhase1OutroTypes::Fall);
+			break;
+		}
+
+		return true;
+	}
+
+	return false;
 }
 
 // 연출 실행 후 -> 실제로 레벨 이동 처리
