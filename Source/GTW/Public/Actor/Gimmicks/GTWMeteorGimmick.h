@@ -42,16 +42,15 @@ private:
 	TObjectPtr<class USceneComponent> Root;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|FX", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UParticleSystemComponent> WarningFX;
+	TObjectPtr<class UNiagaraComponent> WarningFX;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|Meteor", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USphereComponent> MeteorCollision;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|Meteor", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UStaticMeshComponent> MeteorVisual;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|FX", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UParticleSystemComponent> MeteorFX;
+	TObjectPtr<class UNiagaraComponent> MeteorBodyFX;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|FX", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UNiagaraComponent> MeteorExplosionFX;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|Meteor", meta = (AllowPrivateAccess = "true"))
 	float WarningDuration;

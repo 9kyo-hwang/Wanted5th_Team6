@@ -24,10 +24,10 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
-	bool Activate(AActor* InTarget);	// 날아가 맞출 대상(보스)을 인자로 받음
-	void Cancel();						// 충돌, Tick 종료 후 제거
+	bool SetTarget(AActor* InTarget);	// 보스가 소환할 때 자기 자신을 설정해주도록
 
 	FOnHitBossDelegate OnHitBoss;
 
@@ -43,9 +43,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USphereComponent> ContactSphere;
 
-	// 오브젝트 외관
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UStaticMeshComponent> VisualMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|FX", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UNiagaraComponent> ObjectBodyFX;
 
 	// 날아가는 속도
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))

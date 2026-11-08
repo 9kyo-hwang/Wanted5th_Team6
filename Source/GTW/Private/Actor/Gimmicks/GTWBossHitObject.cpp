@@ -5,6 +5,7 @@
 
 #include <Components/SphereComponent.h>
 #include <GameFramework/PlayerController.h>
+#include <NiagaraComponent.h>
 
 AGTWBossHitObject::AGTWBossHitObject()
 	: FlightSpeed(1000.0f)
@@ -19,31 +20,16 @@ AGTWBossHitObject::AGTWBossHitObject()
 	
 	SetRootComponent(ContactSphere);
 
-	VisualMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
-	VisualMesh->SetupAttachment(ContactSphere);
-	VisualMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	ObjectBodyFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ObjectBodyFX"));
+	ObjectBodyFX->SetVisibility(false);
+	ObjectBodyFX->SetAutoActivate(false);
+	ObjectBodyFX->SetAutoDestroy(false);
+	ObjectBodyFX->SetupAttachment(ContactSphere);
 }
 
-void AGTWBossHitObject::BeginPlay()
+bool AGTWBossHitObject::SetTarget(AActor* InTarget)
 {
-	Super::BeginPlay();
-
-	ContactSphere->OnComponentBeginOverlap.AddDynamic(
-		this,
-		&ThisClass::OnPlayerContact
-	);
-}
-
-void AGTWBossHitObject::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	FlyToTarget(DeltaTime);
-}
-
-bool AGTWBossHitObject::Activate(AActor* InTarget)
-{
-	if (!IsValid(InTarget) || FlightSpeed <= 0.0f)
+	if (!IsValid(InTarget))
 	{
 		return false;
 	}
@@ -51,19 +37,26 @@ bool AGTWBossHitObject::Activate(AActor* InTarget)
 	// @TODO: 만약 소환 위치에 이미 플레이어와 겹쳐있다면?
 
 	TargetActorRef = InTarget;
-
-	// 활성화 되었으므로 QueryOnly로 충돌 판정 ON
-	ContactSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	return true;
 }
 
-// 플레이어가 공략 실패 or 보스 클리어 시(혹시나) or 비정상 상황인 경우 다 정리하는 역할
-void AGTWBossHitObject::Cancel()
+void AGTWBossHitObject::BeginPlay()
 {
-	ContactSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	SetActorTickEnabled(false);
+	Super::BeginPlay();
 
-	Destroy();
+	if (FlightSpeed <= 0.0f)
+	{
+		return;
+	}
+
+	ContactSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	ContactSphere->OnComponentBeginOverlap.AddDynamic(
+		this,
+		&ThisClass::OnPlayerContact
+	);
+
+	ObjectBodyFX->SetVisibility(true);
+	ObjectBodyFX->Activate();
 }
 
 void AGTWBossHitObject::OnPlayerContact(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -86,12 +79,19 @@ void AGTWBossHitObject::OnPlayerContact(UPrimitiveComponent* OverlappedComponent
 	SetActorTickEnabled(true);	// Tick 발동 -> 이동 시작
 }
 
+void AGTWBossHitObject::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	FlyToTarget(DeltaTime);
+}
+
 void AGTWBossHitObject::FlyToTarget(float DeltaTime)
 {
 	AActor* Target = TargetActorRef.Get();
 	if (!ensureMsgf(IsValid(Target), TEXT("[ERROR] %s lost its target during flight."), *GetName()))
 	{
-		Cancel();
+		Destroy();
 		return;
 	}
 
@@ -122,5 +122,19 @@ void AGTWBossHitObject::OnHitTarget()
 	// 보스 적중했음을 알림(맞춘 오브젝트 == 나)
 	OnHitBoss.ExecuteIfBound(this);
 
-	Destroy();
+	if (!IsActorBeingDestroyed())
+	{
+		ObjectBodyFX->Deactivate();
+		ObjectBodyFX->SetVisibility(false);
+
+		Destroy();
+	}
+}
+
+void AGTWBossHitObject::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	ContactSphere->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	SetActorTickEnabled(false);
+
+	Super::EndPlay(EndPlayReason);
 }
