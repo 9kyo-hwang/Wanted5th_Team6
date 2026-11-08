@@ -80,7 +80,10 @@ void AGTWShootingGameManager::ShootingGameStart()
 {
 	bIsGameplayTimerRunning = true;
 	ShowElapsedWidget();
-	Player->GetCharacter()->TeleportTo(StartPlayerLocation, Player->TargetViewRotation);
+	Player->SetIgnoreMoveInput(false);
+	FRotator StartRotator = FRotator(Player->TargetViewRotation.Pitch, Player->TargetViewRotation.Yaw + 90,
+		Player->TargetViewRotation.Roll);
+	Player->GetCharacter()->TeleportTo(StartPlayerLocation, StartRotator);
 }
 
 void AGTWShootingGameManager::Reset()
