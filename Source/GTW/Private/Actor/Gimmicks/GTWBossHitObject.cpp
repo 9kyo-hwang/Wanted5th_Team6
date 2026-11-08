@@ -49,7 +49,6 @@ void AGTWBossHitObject::BeginPlay()
 		return;
 	}
 
-	ContactSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	ContactSphere->OnComponentBeginOverlap.AddDynamic(
 		this,
 		&ThisClass::OnPlayerContact
@@ -57,6 +56,8 @@ void AGTWBossHitObject::BeginPlay()
 
 	ObjectBodyFX->SetVisibility(true);
 	ObjectBodyFX->Activate();
+
+	ContactSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 }
 
 void AGTWBossHitObject::OnPlayerContact(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
