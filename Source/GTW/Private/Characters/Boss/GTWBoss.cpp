@@ -10,10 +10,11 @@
 #include <Actor/Gimmicks/GTWMeteorGimmick.h>
 #include <Actor/Gimmicks/GTWSwordWaveGimmick.h>
 
-#include <Components/CapsuleComponent.h>
 #include <Animation/AnimInstance.h>
 #include <Components/SplineComponent.h>
+#include <Components/CapsuleComponent.h>
 #include <Components/BoxComponent.h>
+#include <GameFramework/CharacterMovementComponent.h>
 
 // Sets default values
 AGTWBoss::AGTWBoss()
@@ -39,10 +40,11 @@ AGTWBoss::AGTWBoss()
 		TEXT("/Game/GTW/Characters/Boss/ABP_P2Boss.ABP_P2Boss_C")
 	);
 
+	ABPClass = BossAnim.Class;
+
 	if (BossAnim.Succeeded())
 	{
 		GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-		GetMesh()->SetAnimInstanceClass(BossAnim.Class);
 	}
 
 	// 검기 몽타주 연결
@@ -104,7 +106,7 @@ void AGTWBoss::StartCombat()
 		Debug::Print(TEXT("[P2 Boss::StartCombat] AI 컨트롤러 사용 불가"));
 		return;
 	}
-
+	GetMesh()->SetAnimInstanceClass(ABPClass);
 	BossController->RunAI();
 	StartSpline();
 }
@@ -125,6 +127,11 @@ void AGTWBoss::StopCombat()
 	{
 		BossSplines[CurrentSplineNum]->SetActorTickEnabled(false);
 	}
+	// Movement Mode를 MOVE_None으로 변경(중력/이동 정지)
+	GetCharacterMovement()->DisableMovement();
+	// ABP 정리. (시퀀스 시 애니메이션 정지시키기 위해)
+	GetMesh()->SetAnimInstanceClass(nullptr);
+	
 }
 
 void AGTWBoss::PlaySwordWave()
