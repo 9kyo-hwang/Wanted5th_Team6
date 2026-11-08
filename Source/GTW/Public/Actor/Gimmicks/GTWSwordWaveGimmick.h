@@ -30,13 +30,10 @@ private:
 	TObjectPtr<class USceneComponent> Root;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|SwordWave", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UStaticMeshComponent> WarningSign;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|SwordWave", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UBoxComponent> WaveCollision;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|SwordWave", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UStaticMeshComponent> WaveVisual;	// 추후 VFX?
+	TObjectPtr<class UParticleSystemComponent> WaveFX;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|SwordWave", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UProjectileMovementComponent> ProjectileMovement;

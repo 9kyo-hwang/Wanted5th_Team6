@@ -8,6 +8,8 @@
 
 #include <Components/BoxComponent.h>
 #include <GameFramework/ProjectileMovementComponent.h>
+#include <Particles/ParticleSystemComponent.h>
+
 
 // Sets default values
 AGTWSwordWaveGimmick::AGTWSwordWaveGimmick()
@@ -18,20 +20,16 @@ AGTWSwordWaveGimmick::AGTWSwordWaveGimmick()
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	SetRootComponent(Root);
 
-	WarningSign = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WarningSign"));
-	WarningSign->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	WarningSign->SetVisibility(false);
-	WarningSign->SetupAttachment(Root);
-
 	WaveCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("WaveCollision"));
 	WaveCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	WaveCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
 	WaveCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);	// Pawn만 Overlap
 	WaveCollision->SetupAttachment(Root);
 
-	WaveVisual = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WaveVisual"));
-	WaveVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-	WaveVisual->SetupAttachment(WaveCollision);
+	WaveFX = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("WaveFX"));
+	WaveFX->SetVisibility(false);
+	WaveFX->SetAutoActivate(false);
+	WaveFX->SetupAttachment(WaveCollision);
 
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
 	ProjectileMovement->SetUpdatedComponent(WaveCollision);
@@ -44,17 +42,14 @@ void AGTWSwordWaveGimmick::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	WarningSign->SetVisibility(true);
-	WaveVisual->SetVisibility(false);
-
 	WaveCollision->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnPlayerEnter);
 	GetWorldTimerManager().SetTimer(WarningTimerHandle, this, &ThisClass::OnEndWarning, WarningDuration);
 }
 
 void AGTWSwordWaveGimmick::OnEndWarning()
 {
-	WarningSign->SetVisibility(false);
-	WaveVisual->SetVisibility(true);
+	WaveFX->SetVisibility(true);
+	WaveFX->Activate();
 
 	WaveCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	ProjectileMovement->Velocity = GetActorForwardVector() * MovementSpeed;
