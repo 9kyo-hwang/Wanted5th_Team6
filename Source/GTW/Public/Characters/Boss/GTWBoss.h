@@ -79,4 +79,7 @@ private:
 	// 현재 스플라인 번호
 	int CurrentSplineNum = 0;
 
+	// ABP 클래스
+	TSubclassOf<class UAnimInstance> ABPClass;
+
 };

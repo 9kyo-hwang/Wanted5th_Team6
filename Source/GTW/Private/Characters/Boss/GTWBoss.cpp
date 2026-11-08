@@ -40,10 +40,11 @@ AGTWBoss::AGTWBoss()
 		TEXT("/Game/GTW/Characters/Boss/ABP_P2Boss.ABP_P2Boss_C")
 	);
 
+	ABPClass = BossAnim.Class;
+
 	if (BossAnim.Succeeded())
 	{
 		GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
-		GetMesh()->SetAnimInstanceClass(BossAnim.Class);
 	}
 
 	// 검기 몽타주 연결
@@ -105,7 +106,7 @@ void AGTWBoss::StartCombat()
 		Debug::Print(TEXT("[P2 Boss::StartCombat] AI 컨트롤러 사용 불가"));
 		return;
 	}
-
+	GetMesh()->SetAnimInstanceClass(ABPClass);
 	BossController->RunAI();
 	StartSpline();
 }
