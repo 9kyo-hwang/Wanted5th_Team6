@@ -16,18 +16,22 @@
 
 AGTWBossPhase1GameMode::AGTWBossPhase1GameMode()
 {
-
+	FailLevel = FSoftObjectPath(TEXT("/Game/GTW/Maps/BossFirstPhase.BossFirstPhase"));
+	ClearLevel = FSoftObjectPath(TEXT("/Game/GTW/Maps/BossSecondPhase.BossSecondPhase"));
 }
 
-void AGTWBossPhase1GameMode::FailPhase()
+void AGTWBossPhase1GameMode::Fail()
 {
-	EndPhase(EBossGameModeState::Fail);
+	EndCombat(EBossGameModeState::Fail);
+}
+
+UClass* AGTWBossPhase1GameMode::GetBossClass() const
+{
+	return AGTWBoss1::StaticClass();
 }
 
 bool AGTWBossPhase1GameMode::BindBossEvents()
 {
-	Super::BindBossEvents();
-
 	AGTWBoss1* Phase1Boss = Cast<AGTWBoss1>(GetBoss());
 	if (!Phase1Boss)
 	{
@@ -47,31 +51,27 @@ bool AGTWBossPhase1GameMode::BindBossEvents()
 }
 
 void AGTWBossPhase1GameMode::UnbindBossEvents()
-{
-	Super::UnbindBossEvents();
- 
-	if (BossHitDelegateHandle.IsValid())
+{ 
+	if (!BossHitDelegateHandle.IsValid())
 	{
-		if (AGTWBoss1* Phase1Boss = Cast<AGTWBoss1>(GetBoss()))
-		{
-			Phase1Boss->OnObjectHit.Remove(BossHitDelegateHandle);
-		}
-		else
-		{
-			Debug::Print(TEXT("[P1 GM : UnbindBossEvents] 1페이즈 보스 인스턴스가 아니네?"));
-		}
+		return;
+	}
+
+	if (AGTWBoss1* Phase1Boss = Cast<AGTWBoss1>(GetBoss()))
+	{
+		Phase1Boss->OnObjectHit.Remove(BossHitDelegateHandle);
 	}
 
 	BossHitDelegateHandle.Reset();
 }
 
 // 연출 실행 전 -> GI에게 클리어 유무 기록하기
-void AGTWBossPhase1GameMode::HandlePhaseResult(EBossGameModeState Result)
+void AGTWBossPhase1GameMode::RecordCombatResult(EBossGameModeState Result)
 {
 	UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>();
 	if (!GameInstance)
 	{
-		Debug::Print(TEXT("[P1 GM::HandlePhaseResult] GameInstance가 없음"));
+		Debug::Print(TEXT("[P1 GM::RecordCombatResult] GameInstance가 없음"));
 		return;
 	}
 
@@ -85,44 +85,6 @@ void AGTWBossPhase1GameMode::HandlePhaseResult(EBossGameModeState Result)
 	}
 }
 
-bool AGTWBossPhase1GameMode::RequestPhaseOutro(EBossGameModeState Result)
-{
-	if (OnOutroRequested.IsBound())
-	{
-		switch (Result)
-		{
-		case EBossGameModeState::Clear:
-			OnOutroRequested.Broadcast(EBossPhase1OutroTypes::Cleared);
-			break;
-		case EBossGameModeState::Fail:	// 얘는 떨어지는 것 밖에 없음
-			OnOutroRequested.Broadcast(EBossPhase1OutroTypes::Fall);
-			break;
-		}
-
-		return true;
-	}
-
-	return false;
-}
-
-// 연출 실행 후 -> 실제로 레벨 이동 처리
-bool AGTWBossPhase1GameMode::HandlePhaseCompletion(EBossGameModeState Result)
-{
-	const TSoftObjectPtr<UWorld>& LevelToOpen 
-		= Result == EBossGameModeState::Clear
-		? Phase2Level 
-		: Phase1Level;
-
-	if (LevelToOpen.IsNull())
-	{
-		Debug::Print(TEXT("[P1 GM::HandlePhaseCompletion] 이동할 레벨이 지정되지 않음"));
-		return false;
-	}
-
-	UGameplayStatics::OpenLevelBySoftObjectPtr(this, LevelToOpen);
-	return true;
-}
-
 void AGTWBossPhase1GameMode::OnHitBoss()
 {
 	if (!IsPhasePlaying())
@@ -133,6 +95,6 @@ void AGTWBossPhase1GameMode::OnHitBoss()
 	// 카운트 올렸을 때 횟수 충족했다면 Clear!
 	if (++CurrentHitCount >= ClearHitCount)
 	{
-		ClearPhase();
+		Clear();
 	}
 }
