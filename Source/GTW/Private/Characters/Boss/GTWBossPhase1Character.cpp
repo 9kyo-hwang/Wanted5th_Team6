@@ -1,7 +1,5 @@
-#include "Characters/Boss/GTWBossPhase1Character.h"
+﻿#include "Characters/Boss/GTWBossPhase1Character.h"
 
-#include "Actor/Gimmicks/GTWBossHitObject.h"
-#include "TimerManager.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Components/BoxComponent.h"
@@ -393,11 +391,6 @@ void AGTWBossPhase1Character::SpawnAttackActors(APawn* Player)
 	{
 		GroundQuery.AddIgnoredActor(Existing.Get());
 	}
-	// 타격 액터의 접촉 구체를 바닥으로 오인하지 않도록 제외한다.
-	for (const auto& Object : SpawnedHitObjects)
-	{
-		GroundQuery.AddIgnoredActor(Object.Get());
-	}
 
 	// 여기서는 클래스 선택과 생성만 처리한다.
 	// 운석 낙하·번개 예고·넉백 등은 생성된 기믹 BP/C++의 기존 동작이다.
@@ -432,84 +425,6 @@ void AGTWBossPhase1Character::SpawnAttackActors(APawn* Player)
 		GroundQuery.AddIgnoredActor(Attack);
 		++SpawnCount;
 	}
-}
-
-// 타격 액터의 접촉/비행은 기존 GTWBossHitObject가 처리한다.
-// P1 보스는 생성, 목표 지정, 적중 알림 연결과 전투 종료 정리만 담당한다.
-void AGTWBossPhase1Character::SpawnHitObject()
-{
-	if (!bRunning || !HitObjectClass)
-	{
-		return;
-	}
-	SpawnedHitObjects.RemoveAll([](const TWeakObjectPtr<AGTWBossHitObject>& Object)
-	{
-		return !Object.IsValid();
-	});
-	if (SpawnedHitObjects.Num() >= FMath::Clamp(MaxHitObjectCount, 1, 10))
-	{
-		return;
-	}
-	APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0);
-	if (!IsValid(Player))
-	{
-		return;
-	}
-
-	FCollisionQueryParams GroundQuery(SCENE_QUERY_STAT(P1HitObjectGround), true, this);
-	GroundQuery.AddIgnoredActor(Player);
-	GroundQuery.AddIgnoredActor(MovementBoundsActor);
-	for (const auto& Object : SpawnedHitObjects)
-	{
-		GroundQuery.AddIgnoredActor(Object.Get());
-	}
-	for (const auto& Attack : SpawnedAttackActors)
-	{
-		GroundQuery.AddIgnoredActor(Attack.Get());
-	}
-
-	for (int32 Attempt = 0; Attempt < 20; ++Attempt)
-	{
-		FVector Location;
-		if (!FindAttackSpawnLocation(Player, GroundQuery, Location))
-		{
-			continue;
-		}
-		// 생성 즉시 플레이어에게 닿지 않게 떨어뜨리고, 바닥 위에 보이도록 띄운다.
-		if (FVector::DistSquared2D(Location, Player->GetActorLocation()) < FMath::Square(250.f))
-		{
-			continue;
-		}
-		Location.Z += 150.f;
-		const FTransform Transform(FRotator::ZeroRotator, Location);
-		AGTWBossHitObject* Object = GetWorld()->SpawnActorDeferred<AGTWBossHitObject>(
-			HitObjectClass, Transform, this, nullptr, ESpawnActorCollisionHandlingMethod::AlwaysSpawn);
-		if (!Object)
-		{
-			return;
-		}
-		// BeginPlay의 접촉 감지가 켜지기 전에 목표와 적중 콜백을 먼저 연결한다.
-		Object->SetTarget(this);
-		Object->OnHitBoss.BindUObject(this, &ThisClass::OnHitObjectReachedBoss);
-		SpawnedHitObjects.Add(Object);
-		UGameplayStatics::FinishSpawningActor(Object, Transform);
-		if (IsValid(Object))
-		{
-			Object->SetLifeSpan(FMath::Max(5.f, HitObjectLifeSpan));
-		}
-		return;
-	}
-}
-
-void AGTWBossPhase1Character::OnHitObjectReachedBoss(AGTWBossHitObject* HitObject)
-{
-	if (!bRunning || !SpawnedHitObjects.Contains(HitObject))
-	{
-		return;
-	}
-	// 먼저 목록에서 제거해 같은 액터의 중복 알림과 종료 시 중복 정리를 막는다.
-	SpawnedHitObjects.Remove(HitObject);
-	OnObjectHit.Broadcast(); // 기존 GameMode: 1회 누적, 3회면 ClearPhase.
 }
 
 bool AGTWBossPhase1Character::PlayAttackAnim(UAnimMontage* Montage, APawn* Player)
@@ -595,16 +510,6 @@ void AGTWBossPhase1Character::StopEncounter()
 		AI->StopAI();
 	}
 	CancelPreparedAttack();
-	GetWorldTimerManager().ClearTimer(HitObjectSpawnTimer);
-	for (const auto& Object : SpawnedHitObjects)
-	{
-		if (Object.IsValid())
-		{
-			Object->OnHitBoss.Unbind();
-			Object->Destroy();
-		}
-	}
-	SpawnedHitObjects.Reset();
 	for (const auto& Actor : SpawnedAttackActors)
 	{
 		if (Actor.IsValid())
@@ -660,17 +565,6 @@ void AGTWBossPhase1Character::StartEncounter()
 	if (!AI->RunAI())
 	{
 		StopEncounter();
-		return;
-	}
-	if (HitObjectClass)
-	{
-		SpawnHitObject();
-		GetWorldTimerManager().SetTimer(HitObjectSpawnTimer, this, &ThisClass::SpawnHitObject,
-			FMath::Max(0.5f, HitObjectSpawnInterval), true);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("P1: BP_P1Boss의 HitObjectClass에 보스 타격 BP를 지정해야 합니다."));
 	}
 }
 
