@@ -1,13 +1,15 @@
-﻿#pragma once
+#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Engine/TimerHandle.h"
 #include <Interfaces/GTWBossAIInterface.h>
 #include "GTWBossPhase1Character.generated.h"
 
 class ATriggerBox;
 class UBoxComponent;
 class UAnimMontage;
+class AGTWBossHitObject;
 struct FCollisionQueryParams;
 
 DECLARE_MULTICAST_DELEGATE(FOnObjectHitDelegate);
@@ -51,8 +53,11 @@ public:
 	}
 
 	/** Notify State만 판정을 켜고 갱신한다. 종료/중단 시에는 항상 판정을 끈다. */
+	UFUNCTION(BlueprintCallable, Category = "Boss|TornadoKick")
 	void BeginTornadoKickDamage();
+	UFUNCTION(BlueprintCallable, Category = "Boss|TornadoKick")
 	void UpdateTornadoKickDamage();
+	UFUNCTION(BlueprintCallable, Category = "Boss|TornadoKick")
 	void EndTornadoKickDamage();
 	void CancelTornadoKick();
 
@@ -168,6 +173,33 @@ public:
 	/** 자체 수명이 없는 기믹에만 적용하는 생성 후 삭제 시간(초). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Attack", meta = (ClampMin = "0.1", Units = "s"))
 	float AttackActorLifeSpan = 12.f;
+
+public:
+	/** 플레이어가 접촉하면 보스에게 날아가는 타격 BP. BP_P1Boss에서 지정한다. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|HitObject")
+	TSubclassOf<AGTWBossHitObject> HitObjectClass;
+
+	/** 전투 시작 시 1개를 생성하고, 이후 이 간격으로 부족한 타격 액터를 보충한다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|HitObject", meta = (ClampMin = "0.5", Units = "s"))
+	float HitObjectSpawnInterval = 5.f;
+
+	/** 대기 중이거나 보스로 날아가는 타격 액터의 최대 개수. 클리어 횟수는 GameMode가 관리한다. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|HitObject", meta = (ClampMin = "1", ClampMax = "10"))
+	int32 MaxHitObjectCount = 3;
+
+	/** 줍지 않은 액터도 누적되지 않도록 제거하는 시간. */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|HitObject", meta = (ClampMin = "5", Units = "s"))
+	float HitObjectLifeSpan = 30.f;
+
+private:
+	/** 기존 바닥 검색을 재사용해 플레이어 주변 발판에 타격 액터를 생성한다. */
+	void SpawnHitObject();
+
+	/** 실제 도착 알림만 GameMode의 기존 적중 카운트로 전달한다. */
+	void OnHitObjectReachedBoss(AGTWBossHitObject* HitObject);
+
+	FTimerHandle HitObjectSpawnTimer;
+	TArray<TWeakObjectPtr<AGTWBossHitObject>> SpawnedHitObjects;
 
 private:
 	/** 위치를 캡슐 크기만큼 안쪽으로 줄인 사각형 내부로 제한하고 시작 높이를 유지. */
