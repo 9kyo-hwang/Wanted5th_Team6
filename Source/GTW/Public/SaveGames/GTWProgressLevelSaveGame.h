@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -16,4 +16,6 @@ class GTW_API UGTWProgressLevelSaveGame : public USaveGame
 public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "ProgressLevel")
 	FString ProgressLevel;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "ProgressLevel")
+	int32 ProgressPlayTime;
 };
