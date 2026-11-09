@@ -31,7 +31,9 @@ protected:
 
 public:
 	void Strike();
-	void Finish();
+
+	UFUNCTION()
+	void Finish(class UParticleSystemComponent* InParticleSystemComponent);
 
 protected:
 	// VFX, SFX 실행을 위한 BP 이벤트
@@ -39,23 +41,20 @@ protected:
 	void OnPlayLightningEffects();
 
 private:
-	bool FindStrikeTarget(AActor*& OutTarget);
+	bool TryStrikeTarget();
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USceneComponent> Root;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UStaticMeshComponent> WarningMarker;	// 예고 지점 표시할 표식.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|FX", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UParticleSystemComponent> WarningFX;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UStaticMeshComponent> LightningVisual;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|FX", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UParticleSystemComponent> LightningFX;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
 	float WarningDuration;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
-	float VisualDuration;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
 	float StunTime;	// 플레이어 기절 시간
@@ -65,5 +64,4 @@ private:
 
 	ELightningState CurrentState;
 	FTimerHandle WarningTimerHandle;
-	FTimerHandle VisualTimerHandle;
 };

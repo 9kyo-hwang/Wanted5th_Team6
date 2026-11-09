@@ -6,9 +6,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GTWSkateMovementComponent.generated.h"
 
-
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnSpeedChangedDelegate, int /*CurrentSpeed*/);
-
 
 /**
  * 
@@ -34,7 +32,6 @@ private:
 		float DeltaTime,
 		FRotator& DeltaRotation) const override;
 
-
 	virtual void PhysicsRotation(float DeltaTime) override;
 
 	virtual void StartFalling(int32 Iterations, float remainingTime, float timeTick, const FVector& Delta, const FVector& subLoc) override;
@@ -44,6 +41,9 @@ private:
 		// Always remain vertical when walking or falling.
 		return IsMovingOnGround();
 	}
+
+	virtual bool ShouldCatchAir(const FFindFloorResult& OldFloor, const FFindFloorResult& NewFloor) override;
+
 
 
 	/// 게터
@@ -55,7 +55,7 @@ public:
 	}
 	FORCEINLINE FVector GetOldImpactNormal() const
 	{
-		return OldFloor.HitResult.ImpactNormal;
+		return OlderFloor.HitResult.ImpactNormal;
 	}
 
 	// 캐릭터 정면 벡터 구하기
@@ -65,14 +65,13 @@ public:
 public:
 	// 속도 변환 시 갱신
 	FOnSpeedChangedDelegate OnSpeedChanged;
-
 protected:
 	// 오너
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
 	TObjectPtr<class AGTWPlayerCharacter> GTWPlayerCharacter;
 
 	UPROPERTY(Category = Floor, VisibleInstanceOnly, BlueprintReadOnly)
-	FFindFloorResult OldFloor;
+	FFindFloorResult OlderFloor;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Floor)
 	FVector NewImpactNormal;

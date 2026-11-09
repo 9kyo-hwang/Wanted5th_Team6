@@ -5,92 +5,127 @@
 
 #include <GTWGameInstance.h>
 #include <GTWDebugHelper.h>
+#include <Characters/Boss/GTWBoss1.h>
+#include <Kismet/GameplayStatics.h>
 
-#include <GameFramework/Character.h>  // TEMP. 추후 보스 클래스 생기면 그걸로 체인지
+/*
+* [x] 보스 참조 저장
+* [x] 보스 명중 델리게이트 구독
+* [ ] 연출 세팅은 Level BP에서??
+*/
 
-void AGTWBossPhase1GameMode::InitGameplay(ACharacter* InBoss, const TArray<AActor*>& InHitObjectSpawners)
+AGTWBossPhase1GameMode::AGTWBossPhase1GameMode()
 {
-	if (CurrentState != EBossGameModeState::Ready)
-	{
-		Debug::Print(TEXT("[InitGameplay] 상태가 Ready가 아님!"));
-		return;
-	}
 
-	if (!IsValid(InBoss) || InHitObjectSpawners.IsEmpty())
-	{
-		Debug::Print(TEXT("[InitGameplay] 보스가 유효하지 않거나 스포너가 없음!"));
-		return;
-	}
-
-	for (AActor* Spawner : InHitObjectSpawners)
-	{
-		if (!IsValid(Spawner))
-		{
-			Debug::Print(TEXT("[InitGameplay] 스포너가 유효하지 않음!"));
-			return;
-		}
-	}
-
-	Boss = InBoss;
-	HitObjectSpawners.Reset();
-
-	for (AActor* Spawner : InHitObjectSpawners)
-	{
-		// 혹시 모를 중복을 대비
-		HitObjectSpawners.AddUnique(Spawner);
-	}
-
-	// @TODO: GameInstance->TryGetMinigameClearTime() 가지고 난이도 세팅
-	
-	// @TODO: Ready 상태에서는 주로 연출이 재생되니, 플레이어 입력을 차단했다가 풀어주는 기능 필요
 }
 
-void AGTWBossPhase1GameMode::StartPlay()
+void AGTWBossPhase1GameMode::FailPhase()
 {
-	Super::StartPlay();
-
-	// 일단 여기서 바로 호출: 레벨에 배치된 액터들 BeginPlay 끝나면 시작
-	StartGameplay();
+	EndPhase(EBossGameModeState::Fail);
 }
 
-// 연출이 있으면 그쪽에서, 없다면 StartPlay 마지막에 호출
-void AGTWBossPhase1GameMode::StartGameplay()
+bool AGTWBossPhase1GameMode::BindBossEvents()
 {
-	if (CurrentState != EBossGameModeState::Ready)
+	Super::BindBossEvents();
+
+	AGTWBoss1* Phase1Boss = Cast<AGTWBoss1>(GetBoss());
+	if (!Phase1Boss)
 	{
-		return;
+		Debug::Print(TEXT("[P1 GM : BindBossEvents] 1페이즈 보스 인스턴스가 아니네?"));
+		return false;
 	}
 
-	if (!GetWorld() || !GetWorld()->HasBegunPlay())
-	{
-		Debug::Print(TEXT("[StartGameplay] World가 BeginPlay를 하지 않았음!"));
-		return;
-	}
-
-	if (!IsValid(Boss.Get()) || HitObjectSpawners.IsEmpty())
-	{
-		Debug::Print(TEXT("[StartGameplay] 보스랑 스포너가 제대로 세팅되지 않았음"));
-		return;
-	}
-
-	for (AActor* Spawner : HitObjectSpawners)
-	{
-		if (!IsValid(Spawner))
-		{
-			Debug::Print(TEXT("[StartGameplay] 이상한 스포너 객체가 껴있음!"));
-			return;
-		}
-	}
+	// 1페 보스 캐릭터로 캐스팅, 실패 시 return false
+	BossHitDelegateHandle = Phase1Boss->OnObjectHit.AddUObject(
+		this,
+		&ThisClass::OnHitBoss
+	);
 
 	CurrentHitCount = 0;
-	CurrentState = EBossGameModeState::Play;
 
-	K2_OnGameplayStarted();
+	return true;
+}
+
+void AGTWBossPhase1GameMode::UnbindBossEvents()
+{
+	Super::UnbindBossEvents();
+ 
+	if (BossHitDelegateHandle.IsValid())
+	{
+		if (AGTWBoss1* Phase1Boss = Cast<AGTWBoss1>(GetBoss()))
+		{
+			Phase1Boss->OnObjectHit.Remove(BossHitDelegateHandle);
+		}
+		else
+		{
+			Debug::Print(TEXT("[P1 GM : UnbindBossEvents] 1페이즈 보스 인스턴스가 아니네?"));
+		}
+	}
+
+	BossHitDelegateHandle.Reset();
+}
+
+// 연출 실행 전 -> GI에게 클리어 유무 기록하기
+void AGTWBossPhase1GameMode::HandlePhaseResult(EBossGameModeState Result)
+{
+	UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>();
+	if (!GameInstance)
+	{
+		Debug::Print(TEXT("[P1 GM::HandlePhaseResult] GameInstance가 없음"));
+		return;
+	}
+
+	if (Result == EBossGameModeState::Clear)
+	{
+		GameInstance->SetBossPhase1Cleared();
+	}
+	else
+	{
+		GameInstance->ResetBossPhase1Cleared();
+	}
+}
+
+bool AGTWBossPhase1GameMode::RequestPhaseOutro(EBossGameModeState Result)
+{
+	if (OnOutroRequested.IsBound())
+	{
+		switch (Result)
+		{
+		case EBossGameModeState::Clear:
+			OnOutroRequested.Broadcast(EBossPhase1OutroTypes::Cleared);
+			break;
+		case EBossGameModeState::Fail:	// 얘는 떨어지는 것 밖에 없음
+			OnOutroRequested.Broadcast(EBossPhase1OutroTypes::Fall);
+			break;
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+// 연출 실행 후 -> 실제로 레벨 이동 처리
+bool AGTWBossPhase1GameMode::HandlePhaseCompletion(EBossGameModeState Result)
+{
+	const TSoftObjectPtr<UWorld>& LevelToOpen 
+		= Result == EBossGameModeState::Clear
+		? Phase2Level 
+		: Phase1Level;
+
+	if (LevelToOpen.IsNull())
+	{
+		Debug::Print(TEXT("[P1 GM::HandlePhaseCompletion] 이동할 레벨이 지정되지 않음"));
+		return false;
+	}
+
+	UGameplayStatics::OpenLevelBySoftObjectPtr(this, LevelToOpen);
+	return true;
 }
 
 void AGTWBossPhase1GameMode::OnHitBoss()
 {
-	if (CurrentState != EBossGameModeState::Play)
+	if (!IsPhasePlaying())
 	{
 		return;
 	}
@@ -100,53 +135,4 @@ void AGTWBossPhase1GameMode::OnHitBoss()
 	{
 		ClearPhase();
 	}
-}
-
-void AGTWBossPhase1GameMode::ClearPhase()
-{
-	if (CurrentState != EBossGameModeState::Play)
-	{
-		return;
-	}
-
-	CurrentState = EBossGameModeState::Clear;
-	StopGameplay();
-	
-	if (UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>())
-	{
-		GameInstance->SetBossPhase1Cleared();
-	}
-	else
-	{
-		Debug::Print(TEXT("[Phase1] GameInstance가 없음"));
-	}
-
-	K2_OnPhaseFinished(CurrentState);
-}
-
-void AGTWBossPhase1GameMode::FailPhase()
-{
-	if (CurrentState != EBossGameModeState::Play)
-	{
-		return;
-	}
-
-	CurrentState = EBossGameModeState::Fail;
-	StopGameplay();
-
-	if (UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>())
-	{
-		GameInstance->ResetBossPhase1Cleared();
-	}
-	else
-	{
-		Debug::Print(TEXT("[Phase1] GameInstance가 없음"));
-	}
-
-	K2_OnPhaseFinished(CurrentState);
-}
-
-void AGTWBossPhase1GameMode::StopGameplay()
-{
-	K2_OnGameplayStopped();
 }

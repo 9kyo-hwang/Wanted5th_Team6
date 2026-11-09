@@ -73,8 +73,8 @@ private:
 	// 길막 액터
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USphereComponent> BlockCollision;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UStaticMeshComponent> BlockMesh;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|FX", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UNiagaraComponent> BlockFX;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
 	float WarningDuration;

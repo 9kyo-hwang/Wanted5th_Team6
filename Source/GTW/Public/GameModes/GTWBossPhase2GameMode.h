@@ -3,76 +3,56 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/GameModeBase.h"
-#include <GameModes/GTWBossGameModeTypes.h>
+#include <GameModes/GTWBaseBossGameMode.h>
 #include "GTWBossPhase2GameMode.generated.h"
 
 /**
  * 보스 2페이즈 레벨에서 사용하는 게임 모드
  * - 성공 판정: 맵 끝에 도달 시(목표 Trigger Overlap)
  */
+
+UENUM(BlueprintType)
+enum class EBossPhase2FailReason : uint8
+{
+	Fall,
+	BossContact,
+};
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPhase2OutroRequestedDelegate, EBossPhase2OutroTypes, OutroType);
+
 UCLASS()
-class GTW_API AGTWBossPhase2GameMode : public AGameModeBase
+class GTW_API AGTWBossPhase2GameMode : public AGTWBaseBossGameMode
 {
 	GENERATED_BODY()
-	
+
 public:
 	AGTWBossPhase2GameMode();
-
-	virtual void StartPlay() override;
-
-public:
-	// 현재 레벨 블루프린트에서 호출하도록 구현함. 
-	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
-	void InitGameplay(class AGTWBoss* InBoss);
-
-	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
-	void StartGameplay();
 
 	// 플레이어가 목표 지점에 도달했을 때(Trigger Overlap) 호출할 함수
 	UFUNCTION(BlueprintCallable, Category="Boss|Phase")
 	void OnGoalReached();
 
-	/*
-	* 낙하 판정 TriggerVolume OR 보스 접촉 시 호출될 함수
-	*/
-	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
-	void FailPhase();
+	// 2페이즈는 실패 종류가 2가지라 Enum을 받음
+	UFUNCTION(BlueprintCallable, Category="Boss|Phase")
+	void FailPhase(EBossPhase2FailReason InFailReason);
+
+	// 보스 아웃트로 요청
+	UPROPERTY(BlueprintAssignable, Category = "Boss|Phase")
+	FOnPhase2OutroRequestedDelegate OnOutroRequested;
 
 protected:
-	/*
-	TODO 리스트
-	1. 보스 패턴 시작
-	2. 맵 패턴 액터 가동
-	3. Player 조작 시작
-	*/
-	UFUNCTION(BlueprintImplementableEvent, Category = "Boss|Phase", meta = (DisplayName = "On Gameplay Started"))
-	void K2_OnGameplayStarted();
-
-	/*
-	TODO 리스트
-	1. 보스 공격, 예약 실행 중지
-	2. 환경 기믹 액터들 정리(타이머, 판정 OFF 등)
-	3. 게임플레이 이벤트(콜백) 정리
-	4. 플레이어 조작 Block
-	*/
-	UFUNCTION(BlueprintImplementableEvent, Category = "Boss|Phase", meta = (DisplayName = "On Gameplay Stopped"))
-	void K2_OnGameplayStopped();
-
-	// 결과 확정 + 정리 완료 후 연출 등 후속 처리 요청
-	// Clear: 플레이타임 기록 + 클리어 화면 재생(?)
-	// Fail:  Phase 1 레벨 다시 Open
-	UFUNCTION(BlueprintImplementableEvent, Category = "Boss|Phase", meta = (DisplayName = "On Phase Finished"))
-	void K2_OnPhaseFinished(EBossGameModeState Result);
+	virtual bool BindBossEvents() override;
+	virtual void UnbindBossEvents() override;
+	virtual void HandlePhaseResult(EBossGameModeState Result) override;
+	virtual bool RequestPhaseOutro(EBossGameModeState Result) override;
+	virtual bool HandlePhaseCompletion(EBossGameModeState Result) override;
 
 private:
-	void ClearPhase();
-	void StopGameplay();
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Level", meta = (AllowPrivateAccess = "true"))
+	TSoftObjectPtr<UWorld> Phase1Level;
 
-private:
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Boss|Phase", meta = (AllowPrivateAccess = "true"))
-	EBossGameModeState CurrentState = EBossGameModeState::Ready;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Level", meta = (AllowPrivateAccess = "true"))
+	TSoftObjectPtr<UWorld> ClearLevel;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class ACharacter> Boss;
+	EBossPhase2FailReason FailReason;
 };

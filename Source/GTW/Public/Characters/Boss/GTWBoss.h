@@ -4,17 +4,22 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include <Interfaces/GTWBossAIInterface.h>
 #include "GTWBoss.generated.h"
 
 UCLASS()
-class GTW_API AGTWBoss : public ACharacter
+class GTW_API AGTWBoss : public ACharacter, public IGTWBossAIInterface
 {
 	GENERATED_BODY()
-
+	
 public:
 	// Sets default values for this character's properties
 	AGTWBoss();
 
+	virtual void StartCombat() override;
+	virtual void StopCombat() override;
+
+public:
 	// 검기 실행 함수
 	UFUNCTION()
 	void PlaySwordWave();
@@ -31,6 +36,11 @@ public:
 	// 스플라인 실행 함수
 	UFUNCTION(BlueprintCallable, Category = Spline)
 	void StartSpline();
+
+public:
+	// 게임 오버 처리할 박스 콜리전 추가. 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Arrow)
+	class UBoxComponent* DeathBox;
 
 protected:
 	// 몽타주
@@ -59,6 +69,8 @@ protected:
 	// 검기
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = GimmickActor)
 	TSubclassOf<class AGTWSwordWaveGimmick> SwordWaveClass;
+
+
 private:
 	// 어택 몽타주 실행
 	void PlayAttackAnim(UAnimMontage* AttackMontage);

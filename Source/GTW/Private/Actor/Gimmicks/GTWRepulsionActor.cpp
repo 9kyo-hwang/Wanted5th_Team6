@@ -7,6 +7,7 @@
 #include <Components/CapsuleComponent.h>
 #include <Components/StaticMeshComponent.h>
 
+#include <cassert>
 
 // Sets default values
 AGTWRepulsionActor::AGTWRepulsionActor()
@@ -20,10 +21,10 @@ AGTWRepulsionActor::AGTWRepulsionActor()
 	RepulsionMesh->SetupAttachment(RepulsionTrigger);
 
 	// 박스 컴포넌트에 콜리전 프로필 설정.
-	RepulsionTrigger->SetCollisionProfileName(TEXT("GTWCollision"));
+	RepulsionTrigger->SetCollisionProfileName(TEXT("OverlapOnlyPawn"));
 
 	// 트리거
-	RepulsionTrigger->SetCapsuleSize(70.0f, 70.0f);
+	RepulsionTrigger->SetCapsuleSize(55.0f, 70.0f);
 	RepulsionTrigger->SetRelativeLocation(FVector(0.0f, 0.0f, 50.0f));
 
 	// 메시
@@ -31,12 +32,12 @@ AGTWRepulsionActor::AGTWRepulsionActor()
 	RepulsionMesh->SetWorldScale3D(FVector(1.0f, 1.0f, 1.0f));
 
 	// 콜리전
-	RepulsionMesh->SetCollisionProfileName(TEXT("GTWCollision"));
+	RepulsionMesh->SetCollisionProfileName(TEXT("BlockAllDynamic"));
 
 
 	// 임시 에셋
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> RepulsionRef(
-		TEXT("/Engine/BasicShapes/Cylinder.Cylinder")
+		TEXT("/Game/Assets/GImmicks/2F/Meshes/SM_GTW_RepulsionBumper.SM_GTW_RepulsionBumper")
 	);
 	if (RepulsionRef.Succeeded())
 	{
@@ -44,7 +45,7 @@ AGTWRepulsionActor::AGTWRepulsionActor()
 	}
 
 	// 반발체 힘
-	RepulsionPower = 10.0f;
+	RepulsionPower = 1000.0f;
 }
 
 // Called when the game starts or when spawned
@@ -84,44 +85,68 @@ void AGTWRepulsionActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 	{
 		OverlappingPawn->ApplyRepulsion(PulseDirecion, RepulsionPower);
 	}
-	// 반발체
-	FVector MeshScale = RepulsionMesh->GetRelativeScale3D();
 
-	// 부피 변화량
-	MeshScale = MeshScale * (VolumeDelta * VolumeDelta);
-
-	// 부피 변화
-	RepulsionMesh->SetRelativeScale3D(MeshScale);
-
-	// 복원 시간 
-	float FirstRestoreTime = 0.1f;
+	// 펌핑 시간 && 복원 시간 
+	float ExpandedTime = 0.05f;
+	float FirstRestoreTime = 0.2f;
 	float SecondRestoreTime = 0.3f;
 
 	GetWorldTimerManager().SetTimer(
-		FirstVolumeTimer,
+		ExpandedVolumeTimer,
+		this,
+		&AGTWRepulsionActor::ExpandOnRepulsion,
+		ExpandedTime,
+		false
+	);
+	GetWorldTimerManager().SetTimer(
+		FirstRestoreVolumeTimer,
 		this,
 		&AGTWRepulsionActor::RestoreOriginVolume,
 		FirstRestoreTime,
 		false
 	);
 	GetWorldTimerManager().SetTimer(
-		SecondVolumeTimer,
+		SecondRestoreVolumeTimer,
 		this,
 		&AGTWRepulsionActor::RestoreOriginVolume,
 		SecondRestoreTime,
 		false
 	);
 
+	float ForcedRestoreTime = 1.0f;
+	GetWorldTimerManager().SetTimer(
+		ForceRestoreVolumeTimer,
+		this,
+		&AGTWRepulsionActor::ForceOriginalVolume,
+		ForcedRestoreTime,
+		false
+	);
+
+}
+
+void AGTWRepulsionActor::ExpandOnRepulsion()
+{
+	FVector MeshScale = RepulsionMesh->GetRelativeScale3D();
+
+	// 부피 변환 1.44배 
+	MeshScale = MeshScale * VolumeDelta * VolumeDelta;
+
+	RepulsionMesh->SetRelativeScale3D(MeshScale);
 }
 
 void AGTWRepulsionActor::RestoreOriginVolume()
 {
 	FVector MeshScale = RepulsionMesh->GetRelativeScale3D();
 
-	// 부피 변환
+	// 부피 변환 / 1.2 배
 	MeshScale = MeshScale / VolumeDelta;
 
 	RepulsionMesh->SetRelativeScale3D(MeshScale);
+}
+
+void AGTWRepulsionActor::ForceOriginalVolume()
+{
+	RepulsionMesh->SetRelativeScale3D(FVector(1.0f, 1.0f, 1.0f));
 }
 
 // Called every frame

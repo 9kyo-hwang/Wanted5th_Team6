@@ -11,6 +11,11 @@
 
 #include "GTWPlayerCharacter.generated.h"
 
+enum class ELevelClear : uint8;
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnTimerChangedDelegate, double /*CurrentTime*/);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnClearLevelChangedDelegate, ELevelClear /*ClearType*/, double /*ClearTime*/)
+
+
 
 UCLASS()
 class GTW_API AGTWPlayerCharacter : public ACharacter
@@ -55,6 +60,7 @@ protected:
 protected:
 	// 위젯과 상호작용할 인터페이스
 	virtual void SetSpeedWidget(class UGTWSpeedWidget* InSpeedWidget) override;
+	virtual void SetTimerWidget(class UGTWTimerWidget* InTimerWidget) override;
 	
 	// Hit 객체와 상호작용할  인터페이스
 	virtual void HitKnockbackObject(FVector HitDirection, float power) override;
@@ -75,6 +81,18 @@ private:
 	{
 		bCanStun = true;
 	}
+	
+	// 델리게이트 
+protected:
+	// 시간 변경 시 갱신
+	FOnTimerChangedDelegate OnTimeChanged;
+
+	UPROPERTY()
+	float ElapsedTime;
+
+	// 클리어 레벨 갱신
+	FOnClearLevelChangedDelegate OnClearLevelChanged;
+
 
 	// 캐릭터 무브먼트 컴포넌트 
 	// 만약 베이스로 나뉘어야 한다면 이 부분은 자손클래스로 이전
@@ -111,24 +129,45 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Hit)
 	bool bCanStun;
 
+	// 낙하 시 적용할 랙돌 속성
+	// 이 속력보다 큰 속력으로 떨어지면 랙돌
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ragdoll)
+	float FallingRagdollSpeed;
+	
+	// 이 값이 가리키는 각도보다 크게 떨어지면 랙돌
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ragdoll)
+	float FallingRagdollAngle;
+
+	// 낙하 랙돌 시 실행 시간
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ragdoll)
+	float FallingRagdollTime;
+
 	// 랙돌 시간 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Ragdoll)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ragdoll)
 	float LowForceRagdollDuration;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Ragdoll)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ragdoll)
 	float MediumForceRagdollDuration;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Ragdoll)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ragdoll)
 	float HighForceRagdollDuration;
 
 	// 랙돌 기준 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Ragdoll)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ragdoll)
 	float MediumKnockbackForceThreshold;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = Ragdoll)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Ragdoll)
 	float HighKnockbackForceThreshold;
 
 	// 랙돌 재진입 방지 
 	UPROPERTY()
 	bool bIsRagdoll;
+
+	// 클리어위젯 재진입 방지 
+	UPROPERTY()
+	bool bSecondFloorClear;
+
+	// 클리어위젯 재진입 방지 
+	UPROPERTY()
+	bool bSokobanClear;
 };

@@ -5,95 +5,29 @@
 
 #include <GTWGameInstance.h>
 #include <GTWDebugHelper.h>
-
+#include <Characters/Player/GTWPlayerCharacter.h>
 #include <Characters/Boss/GTWBoss.h>
 #include <Controllers/GTWBoss2PAIController.h>
-#include <Characters/Player/GTWPlayerCharacter.h>
 #include <Controllers/GTWPlayerController.h>
 
-void AGTWBossPhase2GameMode::InitGameplay(AGTWBoss* InBoss)
-{
-	if (CurrentState != EBossGameModeState::Ready)
-	{
-		Debug::Print(TEXT("[InitGameplay] Ready 상태가 아님"));
-		return;
-	}
-
-	if (!IsValid(InBoss))
-	{
-		Debug::Print(TEXT("[InitGameplay] 유효하지 않은 보스"));
-		return;
-	}
-
-	// 보스 캐릭터 설정.
-	Boss = InBoss;
-
-	// 보스 2페이즈 컨트롤러 클래스 설정. 
-	InBoss->AIControllerClass = AGTWBoss2PAIController::StaticClass();
-	InBoss->AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
-
-	// 1페이즈 컨트롤러 해제.
-	if (AController* ExistingController = InBoss->GetController())
-	{
-		ExistingController->UnPossess();
-		ExistingController->Destroy();
-	}
-
-	// 2페이즈 AI컨트롤러 생성. 
-	InBoss->SpawnDefaultController();
-
-
-	// @TODO: 여기서는 맵에 존재하는 제어 대상들을 추가로 제어해야 하나?
-}
+#include <Kismet/GameplayStatics.h>
 
 AGTWBossPhase2GameMode::AGTWBossPhase2GameMode()
 {
-	// 디폴트 캐릭터 설정.
-	static ConstructorHelpers::FClassFinder<AGTWPlayerCharacter> Player(
+	// 2페용 캐릭터 재설정
+	static ConstructorHelpers::FClassFinder<AGTWPlayerCharacter> PlayerCharacterRef(
 		TEXT("/Game/GTW/Characters/Player/BP_6FPlayer.BP_6FPlayer_C")
 	);
-	if (Player.Succeeded())
+
+	if (PlayerCharacterRef.Succeeded())
 	{
-		DefaultPawnClass = Player.Class;
+		DefaultPawnClass = PlayerCharacterRef.Class;
 	}
-
-	PlayerControllerClass = AGTWPlayerController::StaticClass();
-}
-
-void AGTWBossPhase2GameMode::StartPlay()
-{
-	Super::StartPlay();
-
-	StartGameplay();
-}
-
-void AGTWBossPhase2GameMode::StartGameplay()
-{
-	if (CurrentState != EBossGameModeState::Ready)
-	{
-		return;
-	}
-
-	if (!GetWorld() || !GetWorld()->HasBegunPlay())
-	{
-		Debug::Print(TEXT("[StartGameplay] World가 BeginPlay를 하지 않았음!"));
-		return;
-	}
-
-	if (!IsValid(Boss.Get()))
-	{
-		Debug::Print(TEXT("[StartGameplay] 보스가 제대로 세팅되지 않았음"));
-		return;
-	}
-
-	CurrentState = EBossGameModeState::Play;
-
-	K2_OnGameplayStarted();
 }
 
 void AGTWBossPhase2GameMode::OnGoalReached()
 {
-	if (CurrentState != EBossGameModeState::Play)
+	if (!IsPhasePlaying())
 	{
 		return;
 	}
@@ -101,52 +35,95 @@ void AGTWBossPhase2GameMode::OnGoalReached()
 	ClearPhase();
 }
 
-void AGTWBossPhase2GameMode::ClearPhase()
+void AGTWBossPhase2GameMode::FailPhase(EBossPhase2FailReason InFailReason)
 {
-	if (CurrentState != EBossGameModeState::Play)
+	if (!IsPhasePlaying())
 	{
 		return;
 	}
 
-	CurrentState = EBossGameModeState::Clear;
-	StopGameplay();
+	FailReason = InFailReason;
+	EndPhase(EBossGameModeState::Fail);
+}
 
-	if (UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>())
+bool AGTWBossPhase2GameMode::BindBossEvents()
+{
+	return true;
+}
+
+void AGTWBossPhase2GameMode::UnbindBossEvents()
+{
+
+}
+
+void AGTWBossPhase2GameMode::HandlePhaseResult(EBossGameModeState Result)
+{
+	UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>();
+	if (!GameInstance)
 	{
-		// @TEMP: 현재 StartNewGame()을 호출하는 경로가 없음 -> 임시로 BP로 열어주자.
+		Debug::Print(TEXT("[P2 GM::HandlePhaseResult] GameInstance가 없음"));
+		return;
+	}
+
+	if (Result == EBossGameModeState::Clear)
+	{
+		// 클리어 기록만 남기자
 		GameInstance->CompleteGame();
 	}
 	else
 	{
-		Debug::Print(TEXT("[Phase2] GameInstance를 찾을 수 없음"));
-	}
-
-	K2_OnPhaseFinished(CurrentState);
-}
-
-void AGTWBossPhase2GameMode::FailPhase()
-{
-	if (CurrentState != EBossGameModeState::Play)
-	{
-		return;
-	}
-
-	CurrentState = EBossGameModeState::Fail;
-	StopGameplay();
-
-	if (UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>())
-	{
 		GameInstance->ResetBossPhase1Cleared();
 	}
-	else
-	{
-		Debug::Print(TEXT("[Phase2] GameInstance가 없음"));
-	}
-
-	K2_OnPhaseFinished(CurrentState);
 }
 
-void AGTWBossPhase2GameMode::StopGameplay()
+bool AGTWBossPhase2GameMode::RequestPhaseOutro(EBossGameModeState Result)
 {
-	K2_OnGameplayStopped();
+	if (OnOutroRequested.IsBound())
+	{
+		switch (Result)
+		{
+		case EBossGameModeState::Clear: 
+		{
+			OnOutroRequested.Broadcast(EBossPhase2OutroTypes::Cleared);
+			return true;
+		}
+		
+		case EBossGameModeState::Fail:
+		{
+			switch (FailReason)
+			{
+			case EBossPhase2FailReason::Fall:
+				OnOutroRequested.Broadcast(EBossPhase2OutroTypes::Fall);
+				return true;
+			case EBossPhase2FailReason::BossContact:
+				OnOutroRequested.Broadcast(EBossPhase2OutroTypes::BossContact);
+				return true;
+			default: 
+				return false;
+			}
+		}
+
+		default: 
+			return false;
+		}
+	}
+
+	return false;
+}
+
+bool AGTWBossPhase2GameMode::HandlePhaseCompletion(EBossGameModeState Result)
+{
+	const TSoftObjectPtr<UWorld>& LevelToOpen
+		= Result == EBossGameModeState::Clear
+		? ClearLevel
+		: Phase1Level;
+
+	if (LevelToOpen.IsNull())
+	{
+		Debug::Print(TEXT("[P2 GM::HandlePhaseCompletion] 이동할 레벨이 지정되지 않음"));
+		return false;
+	}
+
+	UGameplayStatics::OpenLevelBySoftObjectPtr(this, LevelToOpen);
+	return true;
 }

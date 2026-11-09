@@ -3,6 +3,7 @@
 #include <Characters/Player/GTWPlayerCharacter.h>
 #include <Components/Player/GTWSkateMovementComponent.h>
 #include <UI/GTWSpeedWidget.h>
+#include <UI/GTWTimerWidget.h>
 
 #include <Components/CapsuleComponent.h>
 #include <cassert>
@@ -21,20 +22,18 @@ AGTWPlayerCharacter::AGTWPlayerCharacter(
 
 	assert(SkateCharacterMovementComponent);
 
-}
-
-// Called when the game starts or when spawned
-void AGTWPlayerCharacter::BeginPlay()
-{
-	Super::BeginPlay();
-
 	// 중력 기본 값 설정
 	TiltGravity = -250.0f;
 	NoTiltGravity = -450.0f;
-	
+
 	// 상호작용 기본 값 설정
 	bCanKnockback = true;
 	bCanStun = true;
+
+	// 낙하 랙돌 속성
+	FallingRagdollSpeed = 4000.0f;
+	FallingRagdollAngle = 0.5f;
+	FallingRagdollTime = 1.0f;
 
 	// 랙돌 시간 / 기준
 	LowForceRagdollDuration = 0.5f;
@@ -46,12 +45,22 @@ void AGTWPlayerCharacter::BeginPlay()
 
 	bIsRagdoll = false;
 
+	ElapsedTime = 0;
+	bSecondFloorClear = false;
+}
+
+// Called when the game starts or when spawned
+void AGTWPlayerCharacter::BeginPlay()
+{
+	Super::BeginPlay();
 }
 
 // Called every frame
 void AGTWPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	ElapsedTime += DeltaTime * 100;
 
 	//땅에 있는지 확인
 	bool bIsGround = SkateCharacterMovementComponent->CurrentFloor.bWalkableFloor;
@@ -67,21 +76,29 @@ void AGTWPlayerCharacter::Tick(float DeltaTime)
 
 	// 중력 적용
 	ActiveGravity(bIsGround, NormalVector);
+
+	OnTimeChanged.Broadcast(ElapsedTime);
+
+	if (ElapsedTime > 1000 && !bSecondFloorClear)
+	{
+		OnClearLevelChanged.Broadcast(ELevelClear::SecondFloorClear, ElapsedTime);
+		bSecondFloorClear = true;
+	}
+
 }
 
 void AGTWPlayerCharacter::Landed(const FHitResult& Hit)
 {	
 	FVector NormailzeVelocity = SkateCharacterMovementComponent->Velocity;
-	bool bIsUncontrollableSpeed = NormailzeVelocity.Length() > 3600;
+
+	bool bIsUncontrollableSpeed = NormailzeVelocity.Length() > FallingRagdollSpeed;
 
 	NormailzeVelocity.Normalize();
 
-	bool bIsVertical = FVector::DotProduct(NormailzeVelocity, Hit.ImpactNormal) < 0.5f;
+	bool bIsVertical = FVector::DotProduct(NormailzeVelocity, Hit.ImpactNormal) < FallingRagdollAngle;
 
 	if (bIsUncontrollableSpeed && bIsVertical)
-	{
-		float FallingRagdollTime = 1.0f;
-		
+	{		
 		if (FallingRagdollTime > 0.0f)
 		{
 			ReservationEndRagdoll(FallingRagdollTime);
@@ -246,6 +263,24 @@ void AGTWPlayerCharacter::SetSpeedWidget(UGTWSpeedWidget* InSpeedWidget)
 	InSpeedWidget->UpdateSpeed(InitSpeed);
 
 	SkateCharacterMovementComponent->OnSpeedChanged.AddUObject(InSpeedWidget, &UGTWSpeedWidget::UpdateSpeed);
+}
+
+void AGTWPlayerCharacter::SetTimerWidget(UGTWTimerWidget* InTimerWidget)
+{
+	// 값 확인
+	if (nullptr == InTimerWidget)
+	{
+		return;
+	}
+
+	// 설정할 초기값
+	int InitTimer = 0;
+
+	InTimerWidget->UpdateTimer(InitTimer);
+
+	// 임시 객체 
+	OnTimeChanged.AddUObject(InTimerWidget, &UGTWTimerWidget::UpdateTimer);
+	OnClearLevelChanged.AddUObject(InTimerWidget, &UGTWTimerWidget::UpdateClearLevel);
 }
 
 void AGTWPlayerCharacter::HitKnockbackObject(FVector HitDirection, float power)

@@ -9,7 +9,7 @@
 
 
 // Sets default values
-AGTWJumpTileActor::AGTWJumpTileActor()
+AGTWJumpTileActor::AGTWJumpTileActor() : JumpPower(2000.0f)
 {
 	// 컴포넌트 생성
 	JumpTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("Trigger"));
@@ -36,7 +36,7 @@ AGTWJumpTileActor::AGTWJumpTileActor()
 
 	// 임시 에셋
 	static ConstructorHelpers::FObjectFinder<UStaticMesh> JumpTileRef(
-		TEXT("/Engine/EngineMeshes/Cube.Cube")
+		TEXT("/Game/Assets/GImmicks/2F/Meshes/SM_GTW_JumpTile.SM_GTW_JumpTile")
 	);
 	if (JumpTileRef.Succeeded())
 	{
@@ -57,8 +57,6 @@ void AGTWJumpTileActor::PostInitializeComponents()
 	// 박스 컴포넌트의 BeginOverlap 델리게이트에 함수 등록
 	JumpTrigger->OnComponentBeginOverlap.AddDynamic(this, &AGTWJumpTileActor::OnOverlapBegin);
 
-	// 점프 힘 
-	JumpPower = 2000.0f;
 }
 
 void AGTWJumpTileActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

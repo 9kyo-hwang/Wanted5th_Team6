@@ -5,13 +5,14 @@
 
 #include <GTWDebugHelper.h>
 #include <Interfaces/GTWHitReactionReceiver.h>
+#include <Particles/ParticleSystemComponent.h>
 
 #include <Engine/OverlapResult.h>
+
 
 // Sets default values
 AGTWLightningGimmick::AGTWLightningGimmick()
 	: WarningDuration(1.f)	// BP에서 조정
-	, VisualDuration(1.f)
 	, StunTime(1.f)
 	, StrikeRadius(100.f)
 	, CurrentState(ELightningState::Ready)
@@ -19,14 +20,14 @@ AGTWLightningGimmick::AGTWLightningGimmick()
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	SetRootComponent(Root);
 
-	WarningMarker = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WarningMarker"));
-	WarningMarker->SetCollisionEnabled(ECollisionEnabled::NoCollision);		// 메시는 충돌 X
-	WarningMarker->SetVisibility(false);									// 메시는 처음에 표시 X
-	WarningMarker->SetupAttachment(Root);
+	WarningFX = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("WarningFX"));
+	WarningFX->SetVisibility(false);
+	WarningFX->SetAutoActivate(false);
+	WarningFX->SetupAttachment(Root);
 
-	LightningVisual = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("LightningVisual"));
-	LightningVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);		// 메시는 충돌 X
-	LightningVisual->SetupAttachment(Root);
+	LightningFX = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("LightningFX"));
+	LightningFX->SetAutoActivate(false);
+	LightningFX->SetupAttachment(Root);
 }
 
 // 번개 액터 스폰 시 실행
@@ -35,8 +36,12 @@ void AGTWLightningGimmick::BeginPlay()
 	Super::BeginPlay();
 	
 	CurrentState = ELightningState::Warning;
-	WarningMarker->SetVisibility(true);
-	LightningVisual->SetVisibility(false);
+	
+	WarningFX->SetVisibility(true);
+	WarningFX->Activate();
+	
+	LightningFX->OnSystemFinished.AddDynamic(this, &ThisClass::Finish);
+	LightningFX->SetVisibility(false);
 
 	GetWorldTimerManager().SetTimer(WarningTimerHandle, this, &ThisClass::Strike, WarningDuration);
 }
@@ -50,29 +55,26 @@ void AGTWLightningGimmick::Strike()
 	}
 
 	CurrentState = ELightningState::Struck;
-	WarningMarker->SetVisibility(false);
-	LightningVisual->SetVisibility(true);
+	
+	WarningFX->SetVisibility(false);
+	WarningFX->Deactivate();
 
-	if (AActor* Target = nullptr; FindStrikeTarget(Target))
+	TryStrikeTarget();
+
+	if (!LightningFX->Template)
 	{
-		if (IGTWHitReactionReceiver* Receiver = Cast<IGTWHitReactionReceiver>(Target))
-		{
-			Debug::Print(TEXT("[Lightning] Player에게 Stun!"));
-			Receiver->HitStunObject(StunTime);
-		}
+		Debug::Print(TEXT("[Lightning::Strike] 번개 FX가 설정이 안돼있어 재생 X"));
+		Finish(LightningFX);
+		return;
 	}
 
-	OnPlayLightningEffects();
-
-	// @TODO: 나중에 VFX 에셋 준비되면 Visual 메시랑 타이머 다 제거
-	GetWorldTimerManager().SetTimer(VisualTimerHandle, this, &ThisClass::Finish, VisualDuration);
+	LightningFX->SetVisibility(true);
+	LightningFX->Activate();
 }
 
-// 번개 치는 범위 내에 플레이어가 있는지 검사 후 반환
-bool AGTWLightningGimmick::FindStrikeTarget(AActor*& OutTarget)
+// 번개 치는 범위 내에 플레이어가 있으면 타격하는 API
+bool AGTWLightningGimmick::TryStrikeTarget()
 {
-	OutTarget = nullptr;
-
 	UWorld* World = GetWorld();
 	if (!World || StrikeRadius <= 0.f)
 	{
@@ -96,12 +98,12 @@ bool AGTWLightningGimmick::FindStrikeTarget(AActor*& OutTarget)
 		World,
 		GetActorLocation(),
 		StrikeRadius,
-		16,
-		FColor::Red,
-		false,
-		2.f,
-		0,
-		2.f
+		/*Segments*/ 16,
+		/*Color*/ FColor::Red,
+		/*PersistentLines*/ false,
+		/*LifeTime*/ 2.f,
+		/*DepthPriority*/ 0,
+		/*Thickness*/ 2.f
 	);
 #endif
 
@@ -126,10 +128,10 @@ bool AGTWLightningGimmick::FindStrikeTarget(AActor*& OutTarget)
 			continue;
 		}
 
-		if (Cast<IGTWHitReactionReceiver>(Target))
+		if (IGTWHitReactionReceiver* Receiver = Cast<IGTWHitReactionReceiver>(Target))
 		{
-			Debug::Print(FString::Printf(TEXT("[Lightning | %s] 플레이어 발견!"), *GetName()));
-			OutTarget = Target;
+			Debug::Print(FString::Printf(TEXT("[Lightning | %s] Player에게 Stun!"), *GetName()));
+			Receiver->HitStunObject(StunTime);
 			return true;
 		}
 	}
@@ -139,7 +141,7 @@ bool AGTWLightningGimmick::FindStrikeTarget(AActor*& OutTarget)
 }
 
 // 스폰한 번개 삭제
-void AGTWLightningGimmick::Finish()
+void AGTWLightningGimmick::Finish(UParticleSystemComponent* InParticleSystemComponent)
 {
 	if (CurrentState != ELightningState::Struck)
 	{
@@ -153,7 +155,6 @@ void AGTWLightningGimmick::Finish()
 void AGTWLightningGimmick::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	GetWorldTimerManager().ClearTimer(WarningTimerHandle);
-	GetWorldTimerManager().ClearTimer(VisualTimerHandle);
 
 	Super::EndPlay(EndPlayReason);
 }
