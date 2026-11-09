@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GTWBossGimmickBase.h"
 #include "GTWSwordWaveGimmick.generated.h"
 
 UCLASS()
-class GTW_API AGTWSwordWaveGimmick : public AActor
+class GTW_API AGTWSwordWaveGimmick : public AGTWBossGimmickBase
 {
 	GENERATED_BODY()
 	
@@ -31,9 +32,6 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|SwordWave", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UBoxComponent> WaveCollision;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|SwordWave", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UParticleSystemComponent> WaveFX;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|SwordWave", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UProjectileMovementComponent> ProjectileMovement;
