@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
@@ -166,9 +166,13 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Attack")
 	TArray<TSubclassOf<AActor>> AttackActorClasses;
 
-	/** 한 번에 생성할 기믹 개수. */
+	/** 한 공격에서 순차적으로 생성할 기믹 개수. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Attack", meta = (ClampMin = "1", ClampMax = "32"))
 	int32 AttackActorCount = 3;
+
+	/** 장애물이 한 프레임에 몰리지 않도록 생성 사이에 두는 간격(초). */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Attack", meta = (ClampMin = "0.05", Units = "s"))
+	float AttackSpawnInterval = 0.35f;
 
 	/** 자체 수명이 없는 기믹에만 적용하는 생성 후 삭제 시간(초). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Attack", meta = (ClampMin = "0.1", Units = "s"))
@@ -231,6 +235,10 @@ private:
 
 	/** 플레이어 주변의 바닥 위치에 랜덤 기믹을 생성하고 종료 시 정리할 목록에 기록 */
 	void SpawnAttackActors(APawn* TargetPlayer);
+	void SpawnNextAttackActor();
+	FTimerHandle AttackSpawnTimer;
+	TWeakObjectPtr<APawn> AttackSpawnTarget;
+	int32 RemainingAttackActors = 0;
 
 	/** BP에서 지정한 클래스 목록 중 비어 있거나 추상 클래스인 항목을 제외 */
 	TArray<TSubclassOf<AActor>> GetAttackClasses() const;

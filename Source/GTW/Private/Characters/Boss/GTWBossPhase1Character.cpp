@@ -1,4 +1,4 @@
-#include "Characters/Boss/GTWBossPhase1Character.h"
+﻿#include "Characters/Boss/GTWBossPhase1Character.h"
 
 #include "Actor/Gimmicks/GTWBossHitObject.h"
 #include "TimerManager.h"
@@ -370,8 +370,39 @@ bool AGTWBossPhase1Character::FindAttackSpawnLocation(APawn* Player, const FColl
 	return true;
 }
 
+// 수치는 BP_P1Boss에서 편집하고, C++은 순차 생성과 종료 정리만 담당한다.
 void AGTWBossPhase1Character::SpawnAttackActors(APawn* Player)
 {
+	if (!bRunning || !IsValid(Player) || GetWorldTimerManager().IsTimerActive(AttackSpawnTimer))
+	{
+		return;
+	}
+	AttackSpawnTarget = Player;
+	RemainingAttackActors = FMath::Clamp(AttackActorCount, 1, 32);
+	SpawnNextAttackActor();
+	if (RemainingAttackActors > 0)
+	{
+		GetWorldTimerManager().SetTimer(AttackSpawnTimer, this, &ThisClass::SpawnNextAttackActor,
+			FMath::Max(0.05f, AttackSpawnInterval), true);
+	}
+}
+
+void AGTWBossPhase1Character::SpawnNextAttackActor()
+{
+	APawn* Player = AttackSpawnTarget.Get();
+	// 실패한 위치 검색도 한 회로 센다. 대상 소멸·전투 종료 시 타이머를 남기지 않는다.
+	if (!bRunning || !IsValid(Player) || RemainingAttackActors <= 0)
+	{
+		GetWorldTimerManager().ClearTimer(AttackSpawnTimer);
+		AttackSpawnTarget.Reset();
+		RemainingAttackActors = 0;
+		return;
+	}
+	if (--RemainingAttackActors == 0)
+	{
+		GetWorldTimerManager().ClearTimer(AttackSpawnTimer);
+	}
+
 	if (!IsValid(MovementBoundsActor) || !IsEncounterRunning() || !IsValid(Player))
 	{
 		return;
@@ -405,7 +436,7 @@ void AGTWBossPhase1Character::SpawnAttackActors(APawn* Player)
 	Params.Owner = this;
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	const float Scale = FMath::Max(0.1f, GroundAttackScale);
-	const int32 DesiredCount = FMath::Clamp(AttackActorCount, 1, 32);
+	const int32 DesiredCount = 1;
 	const int32 MaxAttempts = DesiredCount * 10;
 	int32 SpawnCount = 0;
 
@@ -596,6 +627,9 @@ void AGTWBossPhase1Character::StopEncounter()
 	}
 	CancelPreparedAttack();
 	GetWorldTimerManager().ClearTimer(HitObjectSpawnTimer);
+	GetWorldTimerManager().ClearTimer(AttackSpawnTimer);
+	AttackSpawnTarget.Reset();
+	RemainingAttackActors = 0;
 	for (const auto& Object : SpawnedHitObjects)
 	{
 		if (Object.IsValid())
