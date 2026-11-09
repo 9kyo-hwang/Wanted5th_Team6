@@ -4,7 +4,6 @@
 #include <Components/Player/GTWSkateMovementComponent.h>
 #include <UI/GTWSpeedWidget.h>
 #include <UI/GTWTimerWidget.h>
-#include <UI/GTWPauseMenuWidget.h>
 
 #include <Components/CapsuleComponent.h>
 #include <cassert>
@@ -61,7 +60,7 @@ void AGTWPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	ElapsedTime += DeltaTime;
+	ElapsedTime += DeltaTime * 100;
 
 	//땅에 있는지 확인
 	bool bIsGround = SkateCharacterMovementComponent->CurrentFloor.bWalkableFloor;
@@ -78,8 +77,14 @@ void AGTWPlayerCharacter::Tick(float DeltaTime)
 	// 중력 적용
 	ActiveGravity(bIsGround, NormalVector);
 
-	// 매 틱마다 호출되도록 작성
 	OnTimeChanged.Broadcast(ElapsedTime);
+
+	if (ElapsedTime > 1000 && !bSecondFloorClear)
+	{
+		OnClearLevelChanged.Broadcast(ELevelClear::SecondFloorClear, ElapsedTime);
+		bSecondFloorClear = true;
+	}
+
 }
 
 void AGTWPlayerCharacter::Landed(const FHitResult& Hit)
@@ -276,11 +281,6 @@ void AGTWPlayerCharacter::SetTimerWidget(UGTWTimerWidget* InTimerWidget)
 	// 임시 객체 
 	OnTimeChanged.AddUObject(InTimerWidget, &UGTWTimerWidget::UpdateTimer);
 	OnClearLevelChanged.AddUObject(InTimerWidget, &UGTWTimerWidget::UpdateClearLevel);
-}
-
-void AGTWPlayerCharacter::SetPauseMenuWidget(UGTWPauseMenuWidget* InPauseMenuWidget)
-{
-
 }
 
 void AGTWPlayerCharacter::HitKnockbackObject(FVector HitDirection, float power)

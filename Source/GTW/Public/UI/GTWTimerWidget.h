@@ -94,7 +94,6 @@ protected:
 	UPROPERTY(Transient)
 	TArray<TObjectPtr<UTextBlock>> ClearTimerText;
 
-	// 클리어 기록 여부
 	UPROPERTY()
 	bool ClearSF;
 

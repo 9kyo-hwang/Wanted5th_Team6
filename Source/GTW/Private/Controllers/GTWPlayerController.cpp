@@ -4,57 +4,30 @@
 #include "Controllers/GTWPlayerController.h"
 #include <UI/GTWSpeedWidget.h>
 #include <UI/GTWTimerWidget.h>
-#include <UI/GTWPauseMenuWidget.h>
-
-#include "EnhancedInputComponent.h"
-#include "EnhancedInputSubsystems.h"
-#include "Engine/LocalPlayer.h"
 
 AGTWPlayerController::AGTWPlayerController()
 {
 	// 위젯 블루프린트 애셋에서 클래스 정보 바인딩(연결).
-	static ConstructorHelpers::FClassFinder<UGTWSpeedWidget> GTWHUDSpeedWidgetRef(
+	static ConstructorHelpers::FClassFinder<UGTWSpeedWidget> ABHUDSpeedWidgetRef(
 		TEXT("/Game/GTW/Widgets/WBP_GTWDisplaySpeed.WBP_GTWDisplaySpeed_C")
 	);
 
 	// 로드에 성공하면 클래스 설정.
-	if (GTWHUDSpeedWidgetRef.Succeeded())
+	if (ABHUDSpeedWidgetRef.Succeeded())
 	{
-		GTWSpeedWidgetClass = GTWHUDSpeedWidgetRef.Class;
+		GTWSpeedWidgetClass = ABHUDSpeedWidgetRef.Class;
 	}
 
 	// 위젯 블루프린트 애셋에서 클래스 정보 바인딩(연결).
-	static ConstructorHelpers::FClassFinder<UGTWTimerWidget> GTWHUDTimerWidgetRef(
+	static ConstructorHelpers::FClassFinder<UGTWTimerWidget> ABHUDTimerWidgetRef(
 		TEXT("/Game/GTW/Widgets/WBP_GTWTimer.WBP_GTWTimer_C")
 	);
 
 	// 로드에 성공하면 클래스 설정.
-	if (GTWHUDTimerWidgetRef.Succeeded())
+	if (ABHUDTimerWidgetRef.Succeeded())
 	{
-		GTWTimerWidgetClass = GTWHUDTimerWidgetRef.Class;
+		GTWTimerWidgetClass = ABHUDTimerWidgetRef.Class;
 	}
-
-	// 위젯 블루프린트 애셋에서 클래스 정보 바인딩(연결).
-	static ConstructorHelpers::FClassFinder<UGTWPauseMenuWidget> GTWPauseMenuWidgetRef(
-		TEXT("/Game/GTW/Widgets/WBP_PauseMenu.WBP_PauseMenu_C")
-	);
-
-	// 로드에 성공하면 클래스 설정.
-	if (GTWPauseMenuWidgetRef.Succeeded())
-	{
-		GTWPauseMenuWidgetClass = GTWPauseMenuWidgetRef.Class;
-	}
-
-	// IA_Pause 찾기
-	static ConstructorHelpers::FObjectFinder<UInputAction> PauseAsset(
-		TEXT("/Game/GTW/Characters/Player/Input/InputAction/IA_GTWPause.IA_GTWPause")
-	);
-
-	if (PauseAsset.Succeeded())
-	{
-		PauseAction = PauseAsset.Object;
-	}
-
 }
 
 void AGTWPlayerController::BeginPlay()
@@ -83,62 +56,4 @@ void AGTWPlayerController::BeginPlay()
 		GTWTimerWidget->AddToViewport();
 	}
 
-	// 위젯 생성.
-	GTWPauseMenuWidget = CreateWidget<UGTWPauseMenuWidget>(this, GTWPauseMenuWidgetClass);
-
-	// 문제 없이 생성됐다면 화면에 추가.
-	if (nullptr != GTWPauseMenuWidget)
-	{
-		GTWPauseMenuWidget->AddToViewport();
-	}
-
-}
-
-void AGTWPlayerController::SetupInputComponent()
-{
-	Super::SetupInputComponent();
-
-	UEnhancedInputComponent* EnhancedInput =
-		Cast<UEnhancedInputComponent>(InputComponent);
-
-	if (EnhancedInput&& PauseAction)
-	{
-		EnhancedInput->BindAction(
-			PauseAction,
-			ETriggerEvent::Started,
-			this,
-			&AGTWPlayerController::HandlePauseInput
-		);
-	}
-}
-
-void AGTWPlayerController::HandlePauseInput()
-{
-	if (GTWPauseMenuWidget->ToggleMenu())
-	{
-		// 게임 일시정지
-		SetPause(true);
-
-		// 마우스 커서 표시
-		bShowMouseCursor = true;
-
-		// UI 조작 허용
-		FInputModeGameAndUI InputMode;
-		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-		InputMode.SetHideCursorDuringCapture(false);
-
-		SetInputMode(InputMode);
-	}
-	else
-	{
-		// 게임 재개
-		SetPause(false);
-
-		// 마우스 커서 숨기기
-		bShowMouseCursor = false;
-
-		// 게임 입력으로 복구
-		FInputModeGameOnly InputMode;
-		SetInputMode(InputMode);
-	}
 }

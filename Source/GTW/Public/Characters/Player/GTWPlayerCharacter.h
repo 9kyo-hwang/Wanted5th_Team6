@@ -61,8 +61,6 @@ protected:
 	// 위젯과 상호작용할 인터페이스
 	virtual void SetSpeedWidget(class UGTWSpeedWidget* InSpeedWidget) override;
 	virtual void SetTimerWidget(class UGTWTimerWidget* InTimerWidget) override;
-	// TODO: 퍼즈메뉴 인터페이스 작성
-	virtual void SetPauseMenuWidget(class UGTWPauseMenuWidget* InPauseMenuWidget) override;
 	
 	// Hit 객체와 상호작용할  인터페이스
 	virtual void HitKnockbackObject(FVector HitDirection, float power) override;
