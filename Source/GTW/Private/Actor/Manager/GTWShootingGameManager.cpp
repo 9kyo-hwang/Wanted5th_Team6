@@ -97,6 +97,7 @@ void AGTWShootingGameManager::Reset()
 void AGTWShootingGameManager::GameClear()
 {
 	bIsGameplayTimerRunning = false;
+	bIsShootingClear = true;
 	GameInstance->SetMinigameClearTime(EMinigameType::Shooting, ElapsedTime);
 	ShowClearViewWidget();
 
