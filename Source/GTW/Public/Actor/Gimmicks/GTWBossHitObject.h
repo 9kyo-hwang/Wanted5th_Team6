@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GTWBossGimmickBase.h"
 #include "GTWBossHitObject.generated.h"
 
 class AGTWBossHitObject;
@@ -14,7 +15,7 @@ DECLARE_DELEGATE_OneParam(FOnHitBossDelegate, AGTWBossHitObject* /*this*/);
 * 보스 1페이즈에서, 플레이어와 부딪히면 보스에게 날아가 유효타를 입히는 오브젝트
 */
 UCLASS()
-class GTW_API AGTWBossHitObject : public AActor
+class GTW_API AGTWBossHitObject : public AGTWBossGimmickBase
 {
 	GENERATED_BODY()
 	
@@ -24,10 +25,10 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 public:
-	bool Activate(AActor* InTarget);	// 날아가 맞출 대상(보스)을 인자로 받음
-	void Cancel();						// 충돌, Tick 종료 후 제거
+	bool SetTarget(AActor* InTarget);	// 보스가 소환할 때 자기 자신을 설정해주도록
 
 	FOnHitBossDelegate OnHitBoss;
 
@@ -42,10 +43,6 @@ private:
 	// RootComponent 겸 Player 접촉 감지 역할
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USphereComponent> ContactSphere;
-
-	// 오브젝트 외관
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UStaticMeshComponent> VisualMesh;
 
 	// 날아가는 속도
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))

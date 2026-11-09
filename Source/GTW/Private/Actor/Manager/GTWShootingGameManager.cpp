@@ -6,6 +6,7 @@
 #include <Blueprint/UserWidget.h>
 #include <GameFramework/PlayerController.h>
 #include <GameFramework/Character.h>
+#include <GTWGameInstance.h>
 
 // Sets default values
 AGTWShootingGameManager::AGTWShootingGameManager()
@@ -19,7 +20,7 @@ void AGTWShootingGameManager::BeginPlay()
 {
 	Super::BeginPlay();
 	Player = UGameplayStatics::GetPlayerController(this, 0);
-
+	GameInstance = GetGameInstance<UGTWGameInstance>();
 	if (IsValid(StartLocationActor))
 	{
 		StartPlayerLocation = StartLocationActor->GetActorLocation();
@@ -79,7 +80,10 @@ void AGTWShootingGameManager::ShootingGameStart()
 {
 	bIsGameplayTimerRunning = true;
 	ShowElapsedWidget();
-	Player->GetCharacter()->TeleportTo(StartPlayerLocation, Player->TargetViewRotation);
+	Player->SetIgnoreMoveInput(false);
+	FRotator StartRotator = FRotator(Player->TargetViewRotation.Pitch, Player->TargetViewRotation.Yaw + 90,
+		Player->TargetViewRotation.Roll);
+	Player->GetCharacter()->TeleportTo(StartPlayerLocation, StartRotator);
 }
 
 void AGTWShootingGameManager::Reset()
@@ -92,7 +96,8 @@ void AGTWShootingGameManager::Reset()
 
 void AGTWShootingGameManager::GameClear()
 {
-	bIsGameplayTimerRunning = true;
+	bIsGameplayTimerRunning = false;
+	GameInstance->SetMinigameClearTime(EMinigameType::Shooting, ElapsedTime);
 	ShowClearViewWidget();
 
 	if (IsValid(ElapsedWidget))
@@ -103,5 +108,4 @@ void AGTWShootingGameManager::GameClear()
 	
 	Player->GetCharacter()->TeleportTo(ShootingBoxTriggerActor->GetActorLocation(), 
 		Player->TargetViewRotation);
-	UE_LOG(LogTemp, Warning, TEXT("ElapsedTiem : %d"), int(ElapsedTime));
 }

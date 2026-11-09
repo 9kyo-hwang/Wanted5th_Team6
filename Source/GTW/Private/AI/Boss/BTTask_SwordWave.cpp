@@ -2,7 +2,7 @@
 
 
 #include "AI/Boss/BTTask_SwordWave.h"
-#include <Characters/Boss/GTWBoss.h>
+#include <Characters/Boss/GTWBossPhase2Character.h>
 #include <AIController.h>
 
 UBTTask_SwordWave::UBTTask_SwordWave()
@@ -14,7 +14,7 @@ EBTNodeResult::Type UBTTask_SwordWave::ExecuteTask(UBehaviorTreeComponent& Owner
 {
 
 	// AI컨트롤러에 연결된 PAwn가져와서 함수 호출
-	AGTWBoss* BossPawn = Cast<AGTWBoss>(OwnerComp.GetAIOwner()->GetPawn());
+	AGTWBossPhase2Character* BossPawn = Cast<AGTWBossPhase2Character>(OwnerComp.GetAIOwner()->GetPawn());
 	if (!BossPawn)
 	{
 		return EBTNodeResult::Failed;

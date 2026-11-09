@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GTWBossGimmickBase.h"
 #include "GTWSwordWaveGimmick.generated.h"
 
 UCLASS()
-class GTW_API AGTWSwordWaveGimmick : public AActor
+class GTW_API AGTWSwordWaveGimmick : public AGTWBossGimmickBase
 {
 	GENERATED_BODY()
 	
@@ -30,13 +31,7 @@ private:
 	TObjectPtr<class USceneComponent> Root;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|SwordWave", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UStaticMeshComponent> WarningSign;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|SwordWave", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UBoxComponent> WaveCollision;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|SwordWave", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UStaticMeshComponent> WaveVisual;	// 추후 VFX?
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|SwordWave", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UProjectileMovementComponent> ProjectileMovement;
