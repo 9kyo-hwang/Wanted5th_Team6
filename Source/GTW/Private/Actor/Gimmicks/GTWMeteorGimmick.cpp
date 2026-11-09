@@ -117,7 +117,7 @@ void AGTWMeteorGimmick::Knockback()
 		QueryParams
 	))
 	{
-		Debug::Print(FString::Printf(TEXT("[Meteor | %s] 현재 범위에 Pawn 타입 객체 없음"), *GetName()));
+		//Debug::Print(FString::Printf(TEXT("[Meteor | %s] 현재 범위에 Pawn 타입 객체 없음"), *GetName()));
 		return;
 	}
 
@@ -131,7 +131,7 @@ void AGTWMeteorGimmick::Knockback()
 
 		if (IGTWHitReactionReceiver* Receiver = Cast<IGTWHitReactionReceiver>(Target))
 		{
-			Debug::Print(FString::Printf(TEXT("[Meteor | %s] 플레이어 발견!"), *GetName()));
+			//Debug::Print(FString::Printf(TEXT("[Meteor | %s] 플레이어 발견!"), *GetName()));
 			
 			// XY축 방향만 계산
 			FVector KnockbackDirection = (Target->GetActorLocation() - MeteorLocation).GetSafeNormal2D();
@@ -151,7 +151,7 @@ void AGTWMeteorGimmick::Knockback()
 		}
 	}
 
-	Debug::Print(FString::Printf(TEXT("[Meteor | %s] 현재 범위에 플레이어(Receiver 구현체) 없음"), *GetName()));
+	//Debug::Print(FString::Printf(TEXT("[Meteor | %s] 현재 범위에 플레이어(Receiver 구현체) 없음"), *GetName()));
 }
 
 void AGTWMeteorGimmick::Tick(float DeltaTime)

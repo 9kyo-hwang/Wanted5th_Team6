@@ -206,10 +206,10 @@ void AGTWBaseBossGameMode::CompleteSetup_AfterCombat()
 
 void AGTWBaseBossGameMode::SetIgnorePlayerInput(bool bNewInput)
 {
-	AGTWPlayerController* PlayerController = Cast<AGTWPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
-	if (!PlayerController)
+	AGTWPlayerController* GTWPC = Cast<AGTWPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
+	if (!GTWPC)
 	{
-		Debug::Print(TEXT("[Base GM::SetIgnorePlayerInput] 컨트롤러가 GTW 것이 아님?"));
+		Debug::Print(TEXT("[Base GM::SetIgnorePlayerInput] GTW 컨트롤러 캐스팅 실패"));
 		return;
 	}
 
@@ -220,8 +220,8 @@ void AGTWBaseBossGameMode::SetIgnorePlayerInput(bool bNewInput)
 
 	bPlayerInputIgnored = bNewInput;
 
-	PlayerController->SetIgnoreMoveInput(bNewInput);
-	PlayerController->SetIgnoreLookInput(bNewInput);
+	GTWPC->SetIgnoreMoveInput(bNewInput);
+	GTWPC->SetIgnoreLookInput(bNewInput);
 }
 
 void AGTWBaseBossGameMode::StopBoss()
@@ -243,7 +243,8 @@ void AGTWBaseBossGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	bWaitingForAfterCombatSetup = false;
 
 	StopBoss();
-	SetIgnorePlayerInput(false);
+	// 여기서는 키 입력 막는 함수 호출 X
+	// OpenLevel에 의해 GM이 내려가는 상황이라, 컨트롤러 접근하면 안됨.
 
 	Super::EndPlay(EndPlayReason);
 }

@@ -41,8 +41,9 @@ UClass* AGTWBossPhase2GameMode::GetBossClass() const
 
 void AGTWBossPhase2GameMode::RecordCombatResult(EBossGameModeState Result)
 {
-	UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>();
-	if (!GameInstance)
+	// Project Settings에서 GTWGI로 지정해주자.
+	UGTWGameInstance* GI = GetGameInstance<UGTWGameInstance>();
+	if (!GI)
 	{
 		Debug::Print(TEXT("[P2 GM::RecordCombatResult] GameInstance가 없음"));
 		return;
@@ -51,10 +52,10 @@ void AGTWBossPhase2GameMode::RecordCombatResult(EBossGameModeState Result)
 	if (Result == EBossGameModeState::Clear)
 	{
 		// 클리어 기록만 남기자
-		GameInstance->CompleteGame();
+		GI->CompleteGame();
 	}
 	else
 	{
-		GameInstance->ResetBossPhase1Cleared();
+		GI->ResetBossPhase1Cleared();
 	}
 }
