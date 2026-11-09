@@ -5,16 +5,16 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include <Interfaces/GTWBossAIInterface.h>
-#include "GTWBoss.generated.h"
+#include "GTWBossPhase2Character.generated.h"
 
 UCLASS()
-class GTW_API AGTWBoss : public ACharacter, public IGTWBossAIInterface
+class GTW_API AGTWBossPhase2Character : public ACharacter, public IGTWBossAIInterface
 {
 	GENERATED_BODY()
 	
 public:
 	// Sets default values for this character's properties
-	AGTWBoss();
+	AGTWBossPhase2Character();
 
 	virtual void StartCombat() override;
 	virtual void StopCombat() override;

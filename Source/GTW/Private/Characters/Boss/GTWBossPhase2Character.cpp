@@ -1,6 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "Characters/Boss/GTWBoss.h"
+#include "Characters/Boss/GTWBossPhase2Character.h"
 #include <GTWDebugHelper.h>
 
 #include <Controllers/GTWBoss2PAIController.h>
@@ -17,7 +17,7 @@
 #include <GameFramework/CharacterMovementComponent.h>
 
 // Sets default values
-AGTWBoss::AGTWBoss()
+AGTWBossPhase2Character::AGTWBossPhase2Character()
 {
 	// 메시 컴포넌트 연결
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BossMesh(
@@ -93,7 +93,7 @@ AGTWBoss::AGTWBoss()
 	AutoPossessAI = EAutoPossessAI::PlacedInWorldOrSpawned;
 }
 
-void AGTWBoss::StartCombat()
+void AGTWBossPhase2Character::StartCombat()
 {
 	if (!GetController())
 	{
@@ -111,7 +111,7 @@ void AGTWBoss::StartCombat()
 	StartSpline();
 }
 
-void AGTWBoss::StopCombat()
+void AGTWBossPhase2Character::StopCombat()
 {
 	// @TODO: AI, Spline 이동, 공격 활성화 같은 BT쪽 정리하기?
 	AGTWBoss2PAIController* BossController = Cast<AGTWBoss2PAIController>(GetController());
@@ -134,7 +134,7 @@ void AGTWBoss::StopCombat()
 	
 }
 
-void AGTWBoss::PlaySwordWave()
+void AGTWBossPhase2Character::PlaySwordWave()
 {
 	// 캐릭터 애니메이션 실행
 	PlayAttackAnim(SwordAttack);
@@ -152,7 +152,7 @@ void AGTWBoss::PlaySwordWave()
 	UE_LOG(LogTemp, Log, TEXT("Start SwordWave"));
 }
 
-void AGTWBoss::PlaySpawnBall()
+void AGTWBossPhase2Character::PlaySpawnBall()
 {
 	// 캐릭터 애니메이션 실행 
 	PlayAttackAnim(BallAttack);
@@ -167,7 +167,7 @@ void AGTWBoss::PlaySpawnBall()
 	);
 }
 
-void AGTWBoss::PlayLightning()
+void AGTWBossPhase2Character::PlayLightning()
 {
 	PlayAttackAnim(LightningAttack);
 
@@ -181,7 +181,7 @@ void AGTWBoss::PlayLightning()
 
 }
 
-void AGTWBoss::StartSpline()
+void AGTWBossPhase2Character::StartSpline()
 {
 	AGTWStartMoveSplineActor* SplineActor = BossSplines[CurrentSplineNum];
 	if (!IsValid(SplineActor))
@@ -193,7 +193,7 @@ void AGTWBoss::StartSpline()
 	SplineActor->K2_OnStartMovement();
 }
 
-void AGTWBoss::NextSpline()
+void AGTWBossPhase2Character::NextSpline()
 {
 	// 현재 스플라인 배열의 Tick을 비활성화
 	BossSplines[CurrentSplineNum]->SetActorTickEnabled(false);
@@ -209,7 +209,7 @@ void AGTWBoss::NextSpline()
 	StartSpline();
 }
 
-void AGTWBoss::PlayAttackAnim(UAnimMontage* AttackMontage)
+void AGTWBossPhase2Character::PlayAttackAnim(UAnimMontage* AttackMontage)
 {
 	// 캐릭터 애니메이션 실행
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
