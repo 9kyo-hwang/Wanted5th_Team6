@@ -1,4 +1,4 @@
-﻿#include "Characters/Boss/GTWBoss1.h"
+﻿#include "Characters/Boss/GTWBossPhase1Character.h"
 
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
@@ -11,13 +11,14 @@
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Interfaces/GTWHitReactionReceiver.h"
 
-void AGTWBoss1::StartCombat()
+void AGTWBossPhase1Character::StartCombat()
 {
 	StartEncounter();
 }
 
-void AGTWBoss1::StopCombat()
+void AGTWBossPhase1Character::StopCombat()
 {
 	StopEncounter();
 }
@@ -27,16 +28,17 @@ void AGTWBoss1::StopCombat()
  * Service는 추격을 요청하고, Task는 PlayDropObstacles를 호출한다.
  * BP는 에셋·수치·실행 순서, C++은 범위 계산·이동·공격 생성·정리를 담당한다.
  */
-void AGTWBoss1::Tick(float DeltaSeconds)
+void AGTWBossPhase1Character::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+	UpdateTornadoKickMotion();
 
 	// 보스 이동 범위 제한
 	EnforceArenaBounds();
 	DrawArenaDebug();
 }
 
-void AGTWBoss1::EnforceArenaBounds()
+void AGTWBossPhase1Character::EnforceArenaBounds()
 {
 	if (!IsValid(MovementBoundsActor) || !IsEncounterRunning())
 	{
@@ -53,7 +55,7 @@ void AGTWBoss1::EnforceArenaBounds()
 }
 
 /* 보스 캡슐 크기에 대한 실제 이동 가능 범위 계산 */
-FVector AGTWBoss1::GetMovementExtent() const
+FVector AGTWBossPhase1Character::GetMovementExtent() const
 {
 	const FTransform Transform = GetMovementBounds()->GetComponentTransform();
 	const FVector Extent = GetMovementBounds()->GetUnscaledBoxExtent();
@@ -67,7 +69,7 @@ FVector AGTWBoss1::GetMovementExtent() const
 }
 
 /* 현재/다음 위치를 각 축으로 제한한다. GetChaseLocation의 방향 보존 계산과 목적이 다르다. */
-FVector AGTWBoss1::ConstrainPosition(const FVector& Position) const
+FVector AGTWBossPhase1Character::ConstrainPosition(const FVector& Position) const
 {
 	const FTransform Transform = GetMovementBounds()->GetComponentTransform();
 	const FVector Extent = GetMovementExtent();
@@ -81,7 +83,7 @@ FVector AGTWBoss1::ConstrainPosition(const FVector& Position) const
 	return Result;
 }
 
-FVector AGTWBoss1::GetChaseLocation(const FVector& PlayerPosition) const
+FVector AGTWBossPhase1Character::GetChaseLocation(const FVector& PlayerPosition) const
 {
 	const FTransform Transform = GetMovementBounds()->GetComponentTransform();
 	const FVector Extent = GetMovementExtent();
@@ -108,7 +110,7 @@ FVector AGTWBoss1::GetChaseLocation(const FVector& PlayerPosition) const
 	return Result;
 }
 
-void AGTWBoss1::UpdatePursuit(APawn* TargetPlayer, const FVector& ChaseLocation, float DeltaSeconds)
+void AGTWBossPhase1Character::UpdatePursuit(APawn* TargetPlayer, const FVector& ChaseLocation, float DeltaSeconds)
 {
 	if (!IsValid(MovementBoundsActor) || !IsEncounterRunning() || !IsValid(TargetPlayer))
 	{
@@ -131,7 +133,7 @@ void AGTWBoss1::UpdatePursuit(APawn* TargetPlayer, const FVector& ChaseLocation,
 	}
 }
 
-void AGTWBoss1::PlayDropObstacles(APawn* Player)
+void AGTWBossPhase1Character::PlayDropObstacles(APawn* Player)
 {
 	// 공격 가능 여부는 보스 한 곳에서 판단한다. Task는 대상 전달만 담당한다.
 	if (!bRunning || !IsValid(MovementBoundsActor) || !IsValid(Player) || IsPreparingAttack())
@@ -145,8 +147,169 @@ void AGTWBoss1::PlayDropObstacles(APawn* Player)
 	}
 }
 
+bool AGTWBossPhase1Character::PlayTornadoKick()
+{
+	if (!bRunning || !IsValid(MovementBoundsActor) || IsPreparingAttack() || !TornadoKick)
+	{
+		return false;
+	}
+
+	// 공통 몽타주 재생/종료 처리를 재사용한다. 킥은 기믹 생성 공격과 구분한다.
+	if (!PlayAttackAnim(TornadoKick, nullptr))
+	{
+		return false;
+	}
+	bTornadoKickPlaying = true;
+	TornadoMeshBaseLocation = GetMesh()->GetRelativeLocation();
+	bTornadoPlayerHit = false;
+	return true;
+}
+
+void AGTWBossPhase1Character::UpdateTornadoKickMotion()
+{
+	UAnimInstance* Instance = GetMesh()->GetAnimInstance();
+	if (!bTornadoKickPlaying || !Instance || !TornadoKick)
+	{
+		return;
+	}
+
+	const float Position = Instance->Montage_GetPosition(TornadoKick);
+	const int32 SectionIndex = TornadoKick->GetSectionIndexFromPosition(Position);
+	if (SectionIndex == INDEX_NONE)
+	{
+		return;
+	}
+	float StartTime = 0.f;
+	float EndTime = 0.f;
+	TornadoKick->GetSectionStartAndEndTime(SectionIndex, StartTime, EndTime);
+	const FName Section = TornadoKick->GetSectionName(SectionIndex);
+	const float Alpha = FMath::Clamp((Position - StartTime) / FMath::Max(EndTime - StartTime, KINDA_SMALL_NUMBER), 0.f, 1.f);
+	const float SmoothAlpha = FMath::SmoothStep(0.f, 1.f, Alpha);
+	const bool bAirKick = Section == TEXT("AirKick");
+	const float HeightAlpha = bAirKick ? 1.f : (Section == TEXT("Land") ? 1.f - SmoothAlpha : SmoothAlpha);
+
+	// 좌표 제한은 액터가 담당한다. 시각적인 추가 점프 높이는 메시 오프셋으로 분리한다.
+	const float ParentScaleZ = FMath::Max(FMath::Abs(GetActorScale3D().Z), KINDA_SMALL_NUMBER);
+	GetMesh()->SetRelativeLocation(TornadoMeshBaseLocation + FVector::UpVector * (FMath::Max(0.f, TornadoKickExtraHeight) * HeightAlpha / ParentScaleZ));
+	// 타임라인/Notify 위치는 바꾸지 않고 재생 시계만 조절해 판정 구간이 모션을 따라가게 한다.
+	Instance->Montage_SetPlayRate(TornadoKick, bAirKick ? FMath::Clamp(TornadoKickPlayRate, 0.1f, 5.f) : 1.f);
+}
+
+void AGTWBossPhase1Character::ResetTornadoKickMotion()
+{
+	GetMesh()->SetRelativeLocation(TornadoMeshBaseLocation);
+	if (UAnimInstance* Instance = GetMesh()->GetAnimInstance())
+	{
+		Instance->Montage_SetPlayRate(TornadoKick, 1.f);
+	}
+}
+
+void AGTWBossPhase1Character::BeginTornadoKickDamage()
+{
+	if (!bRunning || !bTornadoKickPlaying)
+	{
+		return;
+	}
+
+	const FName Bones[] = { LeftKickKnee, LeftKickFoot, RightKickKnee, RightKickFoot };
+	for (int32 Index = 0; Index < UE_ARRAY_COUNT(Bones); ++Index)
+	{
+		if (!GetMesh()->DoesSocketExist(Bones[Index]))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("P1 TornadoKick: missing leg bone %s"), *Bones[Index].ToString());
+			return;
+		}
+		PreviousKickBones[Index] = GetMesh()->GetSocketLocation(Bones[Index]);
+	}
+	bTornadoDamageActive = true;
+}
+
+void AGTWBossPhase1Character::UpdateTornadoKickDamage()
+{
+	if (!bRunning || !bTornadoKickPlaying || !bTornadoDamageActive)
+	{
+		return;
+	}
+
+	const FName Bones[] = { LeftKickKnee, LeftKickFoot, RightKickKnee, RightKickFoot };
+	FVector CurrentBones[4];
+	for (int32 Index = 0; Index < UE_ARRAY_COUNT(Bones); ++Index)
+	{
+		CurrentBones[Index] = GetMesh()->GetSocketLocation(Bones[Index]);
+		// 고속 회전 중 프레임 사이로 지나간 무릎/발의 경로도 검사한다.
+		TraceTornadoKick(PreviousKickBones[Index], CurrentBones[Index]);
+		PreviousKickBones[Index] = CurrentBones[Index];
+	}
+	TraceTornadoKick(CurrentBones[0], CurrentBones[1]);
+	TraceTornadoKick(CurrentBones[2], CurrentBones[3]);
+	// 무릎의 부모 뼈(허벅지)까지 포함해 다리 전체에 판정을 둔다.
+	for (const int32 KneeIndex : { 0, 2 })
+	{
+		const FName Thigh = GetMesh()->GetParentBone(Bones[KneeIndex]);
+		if (!Thigh.IsNone())
+		{
+			TraceTornadoKick(GetMesh()->GetSocketLocation(Thigh), CurrentBones[KneeIndex]);
+		}
+	}
+}
+
+void AGTWBossPhase1Character::TraceTornadoKick(const FVector& Start, const FVector& End)
+{
+	const float Radius = FMath::Max(1.f, TornadoKickRadius);
+#if !UE_BUILD_SHIPPING
+	if (bDrawDebug)
+	{
+		const FVector Delta = End - Start;
+		DrawDebugCapsule(GetWorld(), (Start + End) * 0.5f, Delta.Size() * 0.5f + Radius, Radius,
+			FQuat::FindBetweenNormals(FVector::UpVector, Delta.IsNearlyZero() ? FVector::UpVector : Delta.GetSafeNormal()), FColor::Red, false, 0.05f);
+	}
+#endif
+	if (bTornadoPlayerHit)
+	{
+		return;
+	}
+	APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0);
+	if (!IsValid(Player))
+	{
+		return;
+	}
+
+	TArray<FHitResult> Hits;
+	FCollisionObjectQueryParams Objects(ECC_Pawn);
+	FCollisionQueryParams Query(SCENE_QUERY_STAT(P1TornadoKick), false, this);
+	GetWorld()->SweepMultiByObjectType(Hits, Start, End, FQuat::Identity, Objects, FCollisionShape::MakeSphere(Radius), Query);
+	for (const FHitResult& Hit : Hits)
+	{
+		if (Hit.GetActor() != Player)
+		{
+			continue;
+		}
+		if (IGTWHitReactionReceiver* Receiver = Cast<IGTWHitReactionReceiver>(Player))
+		{
+			// 공격 하나에서 한 번만 전달한다. 무적/래그돌 처리는 기존 플레이어가 담당한다.
+			bTornadoPlayerHit = true;
+			const FVector Direction = (Player->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
+			Receiver->HitKnockbackObject(Direction.IsNearlyZero() ? GetActorForwardVector() : Direction, TornadoKickPower);
+		}
+		break;
+	}
+}
+
+void AGTWBossPhase1Character::EndTornadoKickDamage()
+{
+	bTornadoDamageActive = false;
+}
+
+void AGTWBossPhase1Character::CancelTornadoKick()
+{
+	if (bTornadoKickPlaying)
+	{
+		CancelPreparedAttack();
+	}
+}
+
 // 기믹 BP와 공격 수치는 BP_P1Boss에서 편집한다.
-TArray<TSubclassOf<AActor>> AGTWBoss1::GetAttackClasses() const
+TArray<TSubclassOf<AActor>> AGTWBossPhase1Character::GetAttackClasses() const
 {
 	TArray<TSubclassOf<AActor>> Classes;
 	Classes.Reserve(AttackActorClasses.Num());
@@ -163,7 +326,7 @@ TArray<TSubclassOf<AActor>> AGTWBoss1::GetAttackClasses() const
 
 // 플레이어 주변 한 지점을 선택
 // 지면 기믹은 바닥을 찾은 경우에만
-bool AGTWBoss1::FindAttackSpawnLocation(APawn* Player, const FCollisionQueryParams& GroundQuery, FVector& OutLocation) const
+bool AGTWBossPhase1Character::FindAttackSpawnLocation(APawn* Player, const FCollisionQueryParams& GroundQuery, FVector& OutLocation) const
 {
 	// 1. 플레이어 반경 안에서 무작위 XY 위치를 선택
 	const FVector PlayerLocation = Player->GetActorLocation();
@@ -205,7 +368,7 @@ bool AGTWBoss1::FindAttackSpawnLocation(APawn* Player, const FCollisionQueryPara
 	return true;
 }
 
-void AGTWBoss1::SpawnAttackActors(APawn* Player)
+void AGTWBossPhase1Character::SpawnAttackActors(APawn* Player)
 {
 	if (!IsValid(MovementBoundsActor) || !IsEncounterRunning() || !IsValid(Player))
 	{
@@ -264,7 +427,7 @@ void AGTWBoss1::SpawnAttackActors(APawn* Player)
 	}
 }
 
-bool AGTWBoss1::PlayAttackAnim(UAnimMontage* Montage, APawn* Player)
+bool AGTWBossPhase1Character::PlayAttackAnim(UAnimMontage* Montage, APawn* Player)
 {
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (!Montage || !AnimInstance)
@@ -286,7 +449,7 @@ bool AGTWBoss1::PlayAttackAnim(UAnimMontage* Montage, APawn* Player)
 	return true;
 }
 
-void AGTWBoss1::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+void AGTWBossPhase1Character::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	if (Montage != PreparedMontage)
 	{
@@ -294,19 +457,32 @@ void AGTWBoss1::OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 	}
 
 	APawn* Player = PreparedTarget.Get();
+	const bool bWasTornadoKick = bTornadoKickPlaying;
+	if (bWasTornadoKick)
+	{
+		ResetTornadoKickMotion();
+	}
+	EndTornadoKickDamage();
+	bTornadoKickPlaying = false;
 	PreparedTarget.Reset();
 	PreparedMontage = nullptr;
 
 	// 현재 공격 시점은 Notify가 아니라 몽타주 정상 종료다.
 	// 피격 등으로 모션이 중단되면 공격을 생성하지 않는다.
-	if (!bInterrupted)
+	if (!bInterrupted && !bWasTornadoKick)
 	{
 		SpawnAttackActors(Player);
 	}
 }
 
-void AGTWBoss1::CancelPreparedAttack()
+void AGTWBossPhase1Character::CancelPreparedAttack()
 {
+	if (bTornadoKickPlaying)
+	{
+		ResetTornadoKickMotion();
+	}
+	EndTornadoKickDamage();
+	bTornadoKickPlaying = false;
 	UAnimMontage* Montage = PreparedMontage;
 	PreparedTarget.Reset();
 	PreparedMontage = nullptr;
@@ -321,7 +497,7 @@ void AGTWBoss1::CancelPreparedAttack()
 	}
 }
 
-void AGTWBoss1::StopEncounter()
+void AGTWBossPhase1Character::StopEncounter()
 {
 	if (!bRunning)
 	{
@@ -345,14 +521,14 @@ void AGTWBoss1::StopEncounter()
 	GetCharacterMovement()->SetMovementMode(static_cast<EMovementMode>(PreviousMovementMode), PreviousCustomMode);
 }
 
-void AGTWBoss1::EndPlay(const EEndPlayReason::Type Reason)
+void AGTWBossPhase1Character::EndPlay(const EEndPlayReason::Type Reason)
 {
 	StopEncounter();
 	Super::EndPlay(Reason);
 }
 
 /* 전투 시작 */
-void AGTWBoss1::StartEncounter()
+void AGTWBossPhase1Character::StartEncounter()
 {
 	// 전투중인지 확인
 	if (bRunning || !IsValid(MovementBoundsActor) || !IsValid(GetMovementBounds()))
@@ -392,7 +568,7 @@ void AGTWBoss1::StartEncounter()
 	}
 }
 
-void AGTWBoss1::DrawArenaDebug() const
+void AGTWBossPhase1Character::DrawArenaDebug() const
 {
 #if !UE_BUILD_SHIPPING
 	if (!bRunning || !IsValid(MovementBoundsActor) || !bDrawDebug)
@@ -408,7 +584,7 @@ void AGTWBoss1::DrawArenaDebug() const
 #endif
 }
 
-UBoxComponent* AGTWBoss1::GetMovementBounds() const
+UBoxComponent* AGTWBossPhase1Character::GetMovementBounds() const
 {
 	return IsValid(MovementBoundsActor) ? Cast<UBoxComponent>(MovementBoundsActor->GetCollisionComponent()) : nullptr;
 }
