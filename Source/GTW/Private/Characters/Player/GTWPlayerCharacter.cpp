@@ -4,6 +4,7 @@
 #include <Components/Player/GTWSkateMovementComponent.h>
 #include <UI/GTWSpeedWidget.h>
 #include <UI/GTWTimerWidget.h>
+#include <UI/GTWPauseMenuWidget.h>
 
 #include <Components/CapsuleComponent.h>
 #include <cassert>
@@ -281,6 +282,10 @@ void AGTWPlayerCharacter::SetTimerWidget(UGTWTimerWidget* InTimerWidget)
 	// 임시 객체 
 	OnTimeChanged.AddUObject(InTimerWidget, &UGTWTimerWidget::UpdateTimer);
 	OnClearLevelChanged.AddUObject(InTimerWidget, &UGTWTimerWidget::UpdateClearLevel);
+}
+
+void AGTWPlayerCharacter::SetPauseMenuWidget(UGTWPauseMenuWidget* InSpeedWidget)
+{
 }
 
 void AGTWPlayerCharacter::HitKnockbackObject(FVector HitDirection, float power)

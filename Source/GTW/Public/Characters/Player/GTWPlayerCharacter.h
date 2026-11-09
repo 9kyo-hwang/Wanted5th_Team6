@@ -61,6 +61,7 @@ protected:
 	// 위젯과 상호작용할 인터페이스
 	virtual void SetSpeedWidget(class UGTWSpeedWidget* InSpeedWidget) override;
 	virtual void SetTimerWidget(class UGTWTimerWidget* InTimerWidget) override;
+	virtual void SetPauseMenuWidget(class UGTWPauseMenuWidget* InSpeedWidget) override;
 	
 	// Hit 객체와 상호작용할  인터페이스
 	virtual void HitKnockbackObject(FVector HitDirection, float power) override;
