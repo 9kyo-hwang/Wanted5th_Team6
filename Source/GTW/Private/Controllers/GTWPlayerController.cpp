@@ -114,31 +114,5 @@ void AGTWPlayerController::SetupInputComponent()
 
 void AGTWPlayerController::HandlePauseInput()
 {
-	if (GTWPauseMenuWidget->ToggleMenu())
-	{
-		// 게임 일시정지
-		SetPause(true);
-
-		// 마우스 커서 표시
-		bShowMouseCursor = true;
-
-		// UI 조작 허용
-		FInputModeGameAndUI InputMode;
-		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-		InputMode.SetHideCursorDuringCapture(false);
-
-		SetInputMode(InputMode);
-	}
-	else
-	{
-		// 게임 재개
-		SetPause(false);
-
-		// 마우스 커서 숨기기
-		bShowMouseCursor = false;
-
-		// 게임 입력으로 복구
-		FInputModeGameOnly InputMode;
-		SetInputMode(InputMode);
-	}
+	GTWPauseMenuWidget->ToggleMenu();
 }

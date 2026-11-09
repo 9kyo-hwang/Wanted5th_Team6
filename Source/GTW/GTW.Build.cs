@@ -17,7 +17,9 @@ public class GTW : ModuleRules
             "InputCore", 
             "EnhancedInput", 
             "UMG",
-            "GeometryCollectionEngine"
+            "GeometryCollectionEngine",
+            "Slate", 
+            "SlateCore"
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

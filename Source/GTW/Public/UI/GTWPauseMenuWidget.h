@@ -20,16 +20,13 @@ public:
 
 public:
 	// 창이 포커스를 잃었을 때 메뉴 열기 
-	void UnfocusMenu();
+	void UnfocusMenu(bool bIsActive);
 
 	// ESC를 눌렀을 때 메뉴 토글 및 게임으로 돌아가기 버튼 누름.
 	bool ToggleMenu();
 
-	// 설정 버튼을 눌렀을 때 설정 창 토글
-	void ToggleSetting();
-
-	// TOOD: 사운드 조절 함수 작성
-
+	// TODO: 사운드 조절 함수 작성
+	
 
 	// 타이틀로 돌아가기
 	void GoToTitle();
@@ -39,6 +36,15 @@ protected:
 
 	virtual void NativeOnInitialized() override;
 
+protected:
+	UFUNCTION()
+	void ResumeClicked();
+
+	UFUNCTION()
+	void SettingClicked();
+
+	UFUNCTION()
+	void TitleClicked();
 
 protected:
 	// 이 위젯을 소유하는 액터
