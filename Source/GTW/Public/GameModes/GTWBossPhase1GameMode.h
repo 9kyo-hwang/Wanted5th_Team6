@@ -18,8 +18,6 @@
 * OnObjectHit: C++ 멀티캐스트(인자 없음)
 */
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPhase1OutroRequestedDelegate, EBossPhase1OutroTypes, OutroType);
-
 UCLASS()
 class GTW_API AGTWBossPhase1GameMode : public AGTWBaseBossGameMode
 {
@@ -28,19 +26,16 @@ class GTW_API AGTWBossPhase1GameMode : public AGTWBaseBossGameMode
 public:
 	AGTWBossPhase1GameMode();
 
-	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
-	void FailPhase();
-
-	// 보스 아웃트로 요청
-	UPROPERTY(BlueprintAssignable, Category = "Boss|Phase")
-	FOnPhase1OutroRequestedDelegate OnOutroRequested;
+	UFUNCTION(BlueprintCallable, Category = "Boss|State")
+	void Fail();
 
 protected:
+	virtual UClass* GetBossClass() const override;
+
 	virtual bool BindBossEvents() override;
 	virtual void UnbindBossEvents() override;
-	virtual void HandlePhaseResult(EBossGameModeState Result) override;
-	virtual bool RequestPhaseOutro(EBossGameModeState Result) override;
-	virtual bool HandlePhaseCompletion(EBossGameModeState Result) override;
+	
+	virtual void RecordCombatResult(EBossGameModeState Result) override;
 
 private:
 	void OnHitBoss();	// 보스가 유효타 맞았을 때 호출될 콜백. Boss측 OnObjectHit 델리게이트가 발행될 때.
@@ -50,12 +45,6 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Boss|Phase", meta = (AllowPrivateAccess = "true"))
 	int32 CurrentHitCount = 0;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Level", meta = (AllowPrivateAccess = "true"))
-	TSoftObjectPtr<UWorld> Phase1Level;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Level", meta = (AllowPrivateAccess = "true"))
-	TSoftObjectPtr<UWorld> Phase2Level;
 
 	FDelegateHandle BossHitDelegateHandle;
 };
