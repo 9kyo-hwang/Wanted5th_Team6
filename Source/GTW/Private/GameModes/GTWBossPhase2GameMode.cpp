@@ -6,7 +6,7 @@
 #include <GTWGameInstance.h>
 #include <GTWDebugHelper.h>
 #include <Characters/Player/GTWPlayerCharacter.h>
-#include <Characters/Boss/GTWBoss.h>
+#include <Characters/Boss/GTWBossPhase2Character.h>
 #include <Controllers/GTWBoss2PAIController.h>
 #include <Controllers/GTWPlayerController.h>
 

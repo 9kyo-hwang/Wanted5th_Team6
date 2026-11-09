@@ -3,7 +3,7 @@
 
 #include "AI/Boss/BTTask_Lightning.h"
 #include <AIController.h>
-#include <Characters/Boss/GTWBoss.h>
+#include <Characters/Boss/GTWBossPhase2Character.h>
 
 UBTTask_Lightning::UBTTask_Lightning()
 {
@@ -16,7 +16,7 @@ EBTNodeResult::Type UBTTask_Lightning::ExecuteTask(UBehaviorTreeComponent& Owner
 	// 태스크 실행 후 결과 반환
 	UE_LOG(LogTemp, Log, TEXT("Start Lightning"));
 	// AI컨트롤러에 연결된 PAwn가져와서 함수 호출
-	AGTWBoss* BossPawn = Cast<AGTWBoss>(OwnerComp.GetAIOwner()->GetPawn());
+	AGTWBossPhase2Character* BossPawn = Cast<AGTWBossPhase2Character>(OwnerComp.GetAIOwner()->GetPawn());
 	if (!BossPawn)
 	{
 		return EBTNodeResult::Failed;

@@ -1,7 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "AI/Boss/BTTask_SpawnBall.h"
-#include <Characters/Boss/GTWBoss.h>
+#include <Characters/Boss/GTWBossPhase2Character.h>
 #include <BehaviorTree/BehaviorTreeComponent.h>
 #include <AIController.h>
 
@@ -15,7 +15,7 @@ EBTNodeResult::Type UBTTask_SpawnBall::ExecuteTask(UBehaviorTreeComponent& Owner
 	EBTNodeResult::Type Result = Super::ExecuteTask(OwnerComp, NodeMemory);
 
 	// AI컨트롤러에 연결된 PAwn가져와서 함수 호출
-	AGTWBoss* BossPawn = Cast<AGTWBoss>(OwnerComp.GetAIOwner()->GetPawn());
+	AGTWBossPhase2Character* BossPawn = Cast<AGTWBossPhase2Character>(OwnerComp.GetAIOwner()->GetPawn());
 	if (!BossPawn)
 	{
 		return EBTNodeResult::Failed;
