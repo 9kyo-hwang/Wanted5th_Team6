@@ -23,6 +23,9 @@ AGTWBossPhase2GameMode::AGTWBossPhase2GameMode()
 	{
 		DefaultPawnClass = PlayerCharacterRef.Class;
 	}
+
+	FailLevel = FSoftObjectPath(TEXT("/Game/GTW/Maps/BossSecondPhase.BossSecondPhase"));
+	//ClearLevel = FSoftObjectPath(TEXT("/Game/GTW/Maps/BossSecondPhase.BossSecondPhase"));
 }
 
 void AGTWBossPhase2GameMode::Fail(EBossPhase2FailReason InFailReason)

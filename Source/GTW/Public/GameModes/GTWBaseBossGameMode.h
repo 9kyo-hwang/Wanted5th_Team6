@@ -63,18 +63,19 @@ private:
 
 	bool OpenNextLevelByResult(EBossGameModeState Result);
 
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Level", meta = (AllowPrivateAccess = "true"))
+	TSoftObjectPtr<UWorld> FailLevel;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Level", meta = (AllowPrivateAccess = "true"))
+	TSoftObjectPtr<UWorld> ClearLevel;
+
 private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Boss|Phase", meta = (AllowPrivateAccess = "true"))
 	EBossGameModeState CurrentState = EBossGameModeState::Ready;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<AActor> Boss;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Level", meta = (AllowPrivateAccess = "true"))
-	TSoftObjectPtr<UWorld> FailLevel;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Level", meta = (AllowPrivateAccess = "true"))
-	TSoftObjectPtr<UWorld> ClearLevel;
 
 	bool bWaitingForBeforeCombatSetup = false;
 	bool bWaitingForAfterCombatSetup = false;
