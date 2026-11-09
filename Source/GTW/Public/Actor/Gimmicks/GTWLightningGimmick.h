@@ -4,54 +4,28 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GTWBossGimmickBase.h"
 #include "GTWLightningGimmick.generated.h"
 
-UENUM(BlueprintType)
-enum class ELightningState : uint8
-{
-	Ready,
-	Warning,
-	Struck,
-	Finished
-};
-
 UCLASS()
-class GTW_API AGTWLightningGimmick : public AActor
+class GTW_API AGTWLightningGimmick : public AGTWBossGimmickBase
 {
 	GENERATED_BODY()
 	
 public:	
-	// Sets default values for this actor's properties
 	AGTWLightningGimmick();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-public:
-	void Strike();
-
-	UFUNCTION()
-	void Finish(class UParticleSystemComponent* InParticleSystemComponent);
-
-protected:
-	// VFX, SFX 실행을 위한 BP 이벤트
-	UFUNCTION(BlueprintImplementableEvent, Category="Boss|Gimmick|Lightning")
-	void OnPlayLightningEffects();
-
 private:
+	void Strike();
 	bool TryStrikeTarget();
 
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USceneComponent> Root;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|FX", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UParticleSystemComponent> WarningFX;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|FX", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UParticleSystemComponent> LightningFX;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
 	float WarningDuration;
@@ -62,6 +36,5 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
 	float StrikeRadius;	// 번개 공격 범위(원) 반지름
 
-	ELightningState CurrentState;
 	FTimerHandle WarningTimerHandle;
 };

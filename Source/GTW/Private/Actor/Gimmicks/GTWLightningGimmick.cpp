@@ -5,29 +5,16 @@
 
 #include <GTWDebugHelper.h>
 #include <Interfaces/GTWHitReactionReceiver.h>
-#include <Particles/ParticleSystemComponent.h>
 
 #include <Engine/OverlapResult.h>
 
-
-// Sets default values
 AGTWLightningGimmick::AGTWLightningGimmick()
 	: WarningDuration(1.f)	// BP에서 조정
 	, StunTime(1.f)
 	, StrikeRadius(100.f)
-	, CurrentState(ELightningState::Ready)
 {
 	Root = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
 	SetRootComponent(Root);
-
-	WarningFX = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("WarningFX"));
-	WarningFX->SetVisibility(false);
-	WarningFX->SetAutoActivate(false);
-	WarningFX->SetupAttachment(Root);
-
-	LightningFX = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("LightningFX"));
-	LightningFX->SetAutoActivate(false);
-	LightningFX->SetupAttachment(Root);
 }
 
 // 번개 액터 스폰 시 실행
@@ -35,13 +22,7 @@ void AGTWLightningGimmick::BeginPlay()
 {
 	Super::BeginPlay();
 	
-	CurrentState = ELightningState::Warning;
-	
-	WarningFX->SetVisibility(true);
-	WarningFX->Activate();
-	
-	LightningFX->OnSystemFinished.AddDynamic(this, &ThisClass::Finish);
-	LightningFX->SetVisibility(false);
+	StartLoopingFX(EGimmickFXTypes::Warning, Root);
 
 	GetWorldTimerManager().SetTimer(WarningTimerHandle, this, &ThisClass::Strike, WarningDuration);
 }
@@ -49,27 +30,13 @@ void AGTWLightningGimmick::BeginPlay()
 // Warning 마커 지우고 -> 번개 표시하고 -> 판정
 void AGTWLightningGimmick::Strike()
 {
-	if (CurrentState != ELightningState::Warning)
-	{
-		return;
-	}
+	StopLoopingFX(EGimmickFXTypes::Warning);
 
-	CurrentState = ELightningState::Struck;
+	PlayBurstFX(EGimmickFXTypes::Impact, Root->GetComponentToWorld());
 	
-	WarningFX->SetVisibility(false);
-	WarningFX->Deactivate();
-
 	TryStrikeTarget();
 
-	if (!LightningFX->Template)
-	{
-		Debug::Print(TEXT("[Lightning::Strike] 번개 FX가 설정이 안돼있어 재생 X"));
-		Finish(LightningFX);
-		return;
-	}
-
-	LightningFX->SetVisibility(true);
-	LightningFX->Activate();
+	Destroy();
 }
 
 // 번개 치는 범위 내에 플레이어가 있으면 타격하는 API
@@ -93,7 +60,7 @@ bool AGTWLightningGimmick::TryStrikeTarget()
 		this								/*IgnoreActor*/
 	);
 
-#if defined(ENABLE_DRAW_DEBUG)
+#if ENABLE_DRAW_DEBUG
 	DrawDebugSphere(
 		World,
 		GetActorLocation(),
@@ -138,17 +105,6 @@ bool AGTWLightningGimmick::TryStrikeTarget()
 
 	Debug::Print(FString::Printf(TEXT("[Lightning | %s] 현재 범위에 플레이어(Receiver 구현체) 없음"), *GetName()));
 	return false;
-}
-
-// 스폰한 번개 삭제
-void AGTWLightningGimmick::Finish(UParticleSystemComponent* InParticleSystemComponent)
-{
-	if (CurrentState != ELightningState::Struck)
-	{
-		return;
-	}
-
-	Destroy();
 }
 
 // 타이머 핸들 정리

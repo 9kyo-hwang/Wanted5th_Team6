@@ -8,7 +8,6 @@
 
 #include <Components/BoxComponent.h>
 #include <GameFramework/ProjectileMovementComponent.h>
-#include <Particles/ParticleSystemComponent.h>
 
 
 // Sets default values
@@ -25,11 +24,6 @@ AGTWSwordWaveGimmick::AGTWSwordWaveGimmick()
 	WaveCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
 	WaveCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);	// Pawn만 Overlap
 	WaveCollision->SetupAttachment(Root);
-
-	WaveFX = CreateDefaultSubobject<UParticleSystemComponent>(TEXT("WaveFX"));
-	WaveFX->SetVisibility(false);
-	WaveFX->SetAutoActivate(false);
-	WaveFX->SetupAttachment(WaveCollision);
 
 	ProjectileMovement = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovement"));
 	ProjectileMovement->SetUpdatedComponent(WaveCollision);
@@ -48,8 +42,7 @@ void AGTWSwordWaveGimmick::BeginPlay()
 
 void AGTWSwordWaveGimmick::OnEndWarning()
 {
-	WaveFX->SetVisibility(true);
-	WaveFX->Activate();
+	StartLoopingFX(EGimmickFXTypes::Body, WaveCollision);
 
 	WaveCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	ProjectileMovement->Velocity = GetActorForwardVector() * MovementSpeed;
