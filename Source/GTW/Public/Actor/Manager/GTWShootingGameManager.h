@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "GTWShootingGameManager.generated.h"
 
+class UGTWGameInstance;
 UCLASS()
 class GTW_API AGTWShootingGameManager : public AActor
 {
@@ -62,5 +63,6 @@ private:
 private:
 	float ElapsedTime = 0.0f;
 	bool bIsGameplayTimerRunning = false;
+	UGTWGameInstance* GameInstance;
 	APlayerController* Player;
 };

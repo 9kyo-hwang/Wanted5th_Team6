@@ -33,6 +33,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category="Game|Progress")
 	void StartNewGame();
 
+	// 현재 진행중인 게임저장
+	UFUNCTION(BlueprintCallable, Category = "Game|Progress")
+	void SaveProgressGame();
+
+	// 진행했던 Level부터 게임 시작
+	UFUNCTION(BLueprintCallable, Category = "Game|Progress")
+	bool StartProgressGame();
+
 	// 게임 최종 클리어 시 SaveGame에 클리어타임 기록
 	void CompleteGame();
 
@@ -48,8 +56,8 @@ public:
 	FORCEINLINE void ResetBossPhase1Cleared() { bIsBossPhase1Cleared = false; }
 
 private:
+	void InitClearHistory();
 	bool SaveClearHistory();
-
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	double SokobanClearTime = -1;
@@ -65,4 +73,5 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UGTWClearHistorySaveGame> ClearHistorySaveGame;
+	TObjectPtr<class UGTWProgressLevelSaveGame> ProgressSaveGame;
 };
