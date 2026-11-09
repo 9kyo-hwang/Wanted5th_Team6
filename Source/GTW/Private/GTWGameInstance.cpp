@@ -1,10 +1,11 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include <GTWGameInstance.h>
 
 #include <SaveGames/GTWClearHistorySaveGame.h>
 #include <SaveGames/GTWProgressLevelSaveGame.h>
+#include <UI/GTWTimerWidget.h>
 #include <GTWDebugHelper.h>
 
 #include <Kismet/GameplayStatics.h>
@@ -36,6 +37,11 @@ void UGTWGameInstance::StartNewGame()
     bIsBossPhase1Cleared = false;
     GameStartTimeSeconds = FPlatformTime::Seconds();
     GameClearTimeSeconds = -1;
+    TotalPlayTime = 0.0;
+    CurrentFloorTime = 0.0;
+    //LevelClearTimes.Empty();
+    bIsTickable = true;
+    OnTimeChanged.Broadcast(TotalPlayTime);
 }
 
 void UGTWGameInstance::SaveProgressGame()
@@ -54,9 +60,6 @@ void UGTWGameInstance::SaveProgressGame()
             Cast<UGTWProgressLevelSaveGame>(UGameplayStatics::LoadGameFromSlot(
                 ProgressLevelSlotName, SaveGameInfoUserIndex)))
         {
-            if (ProgressSaveGameInstance->ProgressLevel == CurrentLevelName)
-                return;
-
             ProgressSaveGame = ProgressSaveGameInstance;
             ProgressSaveGame->ProgressLevel = CurrentLevelName;
         }
@@ -92,6 +95,8 @@ void UGTWGameInstance::SaveProgressGame()
         TEXT("저장할 레벨 : %s"),
         *ProgressSaveGame->ProgressLevel));
 
+    ProgressSaveGame->ProgressPlayTime = TotalPlayTime;
+
     if (!UGameplayStatics::SaveGameToSlot(
         ProgressSaveGame,
         ProgressLevelSlotName,
@@ -113,6 +118,18 @@ bool UGTWGameInstance::StartProgressGame()
             Cast<UGTWProgressLevelSaveGame>(UGameplayStatics::LoadGameFromSlot(ProgressLevelSlotName,
                 SaveGameInfoUserIndex)))
         {
+            if (ProgressSaveGameInstance->ProgressLevel.IsEmpty())
+            {
+                return false;
+            }
+
+            // Resume the saved run without resetting its clear state.
+            ProgressSaveGame = ProgressSaveGameInstance;
+            TotalPlayTime = FMath::Max(0.0, ProgressSaveGameInstance->ProgressPlayTime);
+            //GameStartTimeSeconds = FPlatformTime::Seconds();
+            //GameClearTimeSeconds = -1.0;
+            bIsTickable = true;
+            //OnTimeChanged.Broadcast(TotalPlayTime);
             UGameplayStatics::OpenLevel(
                 this,
                 FName(*ProgressSaveGameInstance->ProgressLevel));
@@ -138,7 +155,8 @@ void UGTWGameInstance::CompleteGame()
         return;
     }
 
-    GameClearTimeSeconds = FPlatformTime::Seconds() - GameStartTimeSeconds;
+    bIsTickable = false;
+    GameClearTimeSeconds = TotalPlayTime;
 
     if (!IsValid(ClearHistorySaveGame.Get()))
     {
@@ -153,6 +171,65 @@ void UGTWGameInstance::CompleteGame()
     }
 }
 
+void UGTWGameInstance::Tick(float DeltaTime)
+{
+    if (!IsTickable())
+    {
+        return;
+    }
+
+    TotalPlayTime += DeltaTime;
+    CurrentFloorTime += DeltaTime;
+    OnTimeChanged.Broadcast(TotalPlayTime);
+}
+
+bool UGTWGameInstance::IsTickable() const
+{
+    // CDO(Class Default Object)가 아니고, 활성화 상태일 때만 틱이 돌도록 합니다.
+    return bIsTickable && !IsTemplate() && GetWorld() && GetWorld()->IsGameWorld();
+}
+
+TStatId UGTWGameInstance::GetStatId() const
+{
+    RETURN_QUICK_DECLARE_CYCLE_STAT(UGTWGameInstance, STATGROUP_Tickables);
+}
+
+void UGTWGameInstance::RecordLevelClear(ELevelClear Level)
+{
+    if (LevelClearTimes.Contains(Level))
+    {
+        return;
+    }
+    LevelClearTimes.Add(Level, CurrentFloorTime);
+    OnClearLevelChanged.Broadcast(Level, CurrentFloorTime);
+    CurrentFloorTime = 0.0;
+}
+
+void UGTWGameInstance::RecordMiniGameClear(ELevelClear Level, double ClearTime)
+{
+    if (LevelClearTimes.Contains(Level))
+    {
+        return;
+    }
+
+    OnClearLevelChanged.Broadcast(Level, ClearTime);
+}
+
+
+
+void UGTWGameInstance::InitializeTimerWidget(UGTWTimerWidget* Widget) const
+{
+    if (!IsValid(Widget))
+    {
+        return;
+    }
+    Widget->UpdateTimer(TotalPlayTime);
+    for (const auto& Entry : LevelClearTimes)
+    {
+        Widget->UpdateClearLevel(Entry.Key, Entry.Value);
+    }
+}
+
 bool UGTWGameInstance::SetMinigameClearTime(EMinigameType Type, double InClearTimeSeconds)
 {
     if (InClearTimeSeconds < 0.0 || !FMath::IsFinite(InClearTimeSeconds))
@@ -164,9 +241,11 @@ bool UGTWGameInstance::SetMinigameClearTime(EMinigameType Type, double InClearTi
     {
     case EMinigameType::Sokoban:
         SokobanClearTime = InClearTimeSeconds;
+        RecordMiniGameClear(ELevelClear::SokobanClear, SokobanClearTime);
         return true;
     case EMinigameType::Shooting:
         ShootingClearTime = InClearTimeSeconds;
+        RecordMiniGameClear(ELevelClear::ShootingGameClear, ShootingClearTime);
         return true;
     default:
         return false;
@@ -209,7 +288,7 @@ double UGTWGameInstance::GetPlaytimeSeconds() const
         return GameClearTimeSeconds;
     }
 
-    return FPlatformTime::Seconds() - GameStartTimeSeconds;
+    return TotalPlayTime;
 }
 
 void UGTWGameInstance::InitClearHistory()

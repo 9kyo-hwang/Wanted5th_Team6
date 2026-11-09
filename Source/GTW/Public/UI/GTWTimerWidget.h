@@ -34,6 +34,9 @@ public:
 
 protected:
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
+
+	TWeakObjectPtr<class UGTWGameInstance> TimerGameInstance;
 
 	virtual void NativeOnInitialized() override;
 
