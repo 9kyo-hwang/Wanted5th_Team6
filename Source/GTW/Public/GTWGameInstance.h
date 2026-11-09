@@ -34,7 +34,7 @@ public:
 	void StartNewGame();
 
 	// 게임 최종 클리어 시 SaveGame에 클리어타임 기록
-	void CompleteGame();
+	void CompleteGame(); 
 
 public:
 	bool SetMinigameClearTime(EMinigameType Type, double InClearTimeSeconds);
