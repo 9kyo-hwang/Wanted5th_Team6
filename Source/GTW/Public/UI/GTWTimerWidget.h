@@ -7,14 +7,14 @@
 #include "GTWTimerWidget.generated.h"
 
 // 레벨 클리어를 알릴 열거형
-UENUM()
+UENUM(BlueprintType)
 enum class ELevelClear : uint8
 {
-	SecondFloorClear = 0,
-	SokobanClear,
-	ShootingGameClear,
-	BossFirstPhaseGameClear,
-	BossSecondPhaseGameClear,
+	SecondFloorClear         UMETA(DisplayName = "Second Floor Clear"),
+	SokobanClear             UMETA(DisplayName = "Sokoban Clear"),
+	ShootingGameClear        UMETA(DisplayName = "Shooting Game Clear"),
+	BossFirstPhaseGameClear  UMETA(DisplayName = "Boss First Phase Clear"),
+	BossSecondPhaseGameClear UMETA(DisplayName = "Boss Second Phase Clear"),
 };
 
 /**

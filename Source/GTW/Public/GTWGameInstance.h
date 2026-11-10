@@ -58,13 +58,16 @@ public:
 
 	FOnTimerChangedDelegate OnTimeChanged;
 	FOnClearLevelChangedDelegate OnClearLevelChanged;
+	UFUNCTION(BlueprintCallable, Category = "Game|Progress")
 	void RecordLevelClear(ELevelClear Level);
 	void RecordMiniGameClear(ELevelClear Level, double ClearTime);
+	void RecordProgressGameTime();
 	void InitializeTimerWidget(class UGTWTimerWidget* Widget) const;
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsTickable = false;
+	bool OpenGameLevel(FString LevelName);
 	bool SetMinigameClearTime(EMinigameType Type, double InClearTimeSeconds);
 	bool TryGetMinigameClearTime(EMinigameType Type, double& OutClearTimeSeconds) const;
 	
@@ -87,9 +90,6 @@ private:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	uint8 bIsBossPhase1Cleared : 1;
-
-	double GameStartTimeSeconds = -1;
-	double GameClearTimeSeconds = -1;
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UGTWClearHistorySaveGame> ClearHistorySaveGame;

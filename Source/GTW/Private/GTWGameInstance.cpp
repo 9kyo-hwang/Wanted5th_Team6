@@ -10,10 +10,18 @@
 
 #include <Kismet/GameplayStatics.h>
 
+// 이거 개노가다임 내일 key값 저장해서 들어있는거에 대해서 반복문돌려서 DoesSaveGameExist 체크해서
+// 코드 줄이기 안줄이면 복사 코드로 개많이 줄수만 늘어남
 namespace
 {
-    const FString ClearHistorySlotName = TEXT("ClearHistory");
+    //const FString ClearHistorySlotName = TEXT("ClearHistory");
     const FString ProgressLevelSlotName = TEXT("ProgressLevel");
+    const FString TotalPlayTimeSlotName = TEXT("TotalPlayTime");
+    const FString ClearSecondLevelSlotName = TEXT("SecondFloorClear");
+    const FString ClearSokobanSlotName = TEXT("SokobanClear");
+    const FString ClearShootingSlotName = TEXT("ShootingGameClear");
+    const FString ClearBossPhase1LevelSlotName = TEXT("BossFirstPhaseGameClear");
+    const FString ClearBossPhase2LevelSlotName = TEXT("BossSecondPhaseGameClear");
     constexpr int32 SaveGameInfoUserIndex = 0;
 }
 
@@ -35,8 +43,6 @@ void UGTWGameInstance::StartNewGame()
     SokobanClearTime = -1;
     ShootingClearTime = -1;
     bIsBossPhase1Cleared = false;
-    GameStartTimeSeconds = FPlatformTime::Seconds();
-    GameClearTimeSeconds = -1;
     TotalPlayTime = 0.0;
     CurrentFloorTime = 0.0;
     LevelClearTimes.Empty();
@@ -126,13 +132,9 @@ bool UGTWGameInstance::StartProgressGame()
             // Resume the saved run without resetting its clear state.
             ProgressSaveGame = ProgressSaveGameInstance;
             TotalPlayTime = FMath::Max(0.0, ProgressSaveGameInstance->ProgressPlayTime);
-            //GameStartTimeSeconds = FPlatformTime::Seconds();
-            //GameClearTimeSeconds = -1.0;
             bIsTickable = true;
-            //OnTimeChanged.Broadcast(TotalPlayTime);
-            UGameplayStatics::OpenLevel(
-                this,
-                FName(*ProgressSaveGameInstance->ProgressLevel));
+            OnTimeChanged.Broadcast(TotalPlayTime);
+            OpenGameLevel(ProgressSaveGameInstance->ProgressLevel);
 
             return true;
         }
@@ -143,20 +145,7 @@ bool UGTWGameInstance::StartProgressGame()
 
 void UGTWGameInstance::CompleteGame()
 {
-    if (GameStartTimeSeconds < 0.0)
-    {
-        Debug::Print(TEXT("[GameInstance::CompleteGame] 아직 게임을 시작하지 않았음"));
-        return;
-    }
-
-    if (GameClearTimeSeconds >= 0.0)
-    {
-        Debug::Print(TEXT("[GameInstance::CompleteGame] 이미 이번 게임에 대해서는 처리가 완료됨"));
-        return;
-    }
-
     bIsTickable = false;
-    GameClearTimeSeconds = TotalPlayTime;
 
     if (!IsValid(ClearHistorySaveGame.Get()))
     {
@@ -164,7 +153,7 @@ void UGTWGameInstance::CompleteGame()
         return;
     }
 
-    ClearHistorySaveGame->ClearTimes.Add(GameClearTimeSeconds);
+    //ClearHistorySaveGame->ClearTimes.Add(CurrentFloorTime);
     if (!SaveClearHistory())
     {
         Debug::Print(TEXT("[GameInstance::CompleteGame] 클리어 기록 저장 실패"));
@@ -200,6 +189,8 @@ void UGTWGameInstance::RecordLevelClear(ELevelClear Level)
     {
         return;
     }
+    // 여기다가 Switch 만들어서 층별로 저장
+
     LevelClearTimes.Add(Level, CurrentFloorTime);
     OnClearLevelChanged.Broadcast(Level, CurrentFloorTime);
     CurrentFloorTime = 0.0;
@@ -211,11 +202,57 @@ void UGTWGameInstance::RecordMiniGameClear(ELevelClear Level, double ClearTime)
     {
         return;
     }
-
+    // 여기다가 Switch 만들어서 층별로 저장
+    // 여긴 미니게임 저장
+    LevelClearTimes.Add(Level, CurrentFloorTime);
     OnClearLevelChanged.Broadcast(Level, ClearTime);
 }
 
+void UGTWGameInstance::RecordProgressGameTime()
+{
+    if (UGameplayStatics::DoesSaveGameExist(TotalPlayTimeSlotName, SaveGameInfoUserIndex))
+    {
+        if (UGTWProgressLevelSaveGame* ProgressSaveGameInstance =
+            Cast<UGTWProgressLevelSaveGame>(UGameplayStatics::LoadGameFromSlot(
+                TotalPlayTimeSlotName, SaveGameInfoUserIndex)))
+        {
+            ProgressSaveGameInstance->ProgressPlayTime = TotalPlayTime;
+            Debug::Print(TEXT("ProgressGameTime 성공"));
+        }
+        else
+        {
+            Debug::Print(TEXT("ProgressGameTime 실패"));
+            return;
+        }
+    }
+    else
+    {
+        if (UGTWProgressLevelSaveGame* ProgressSaveGameInstance =
+            Cast<UGTWProgressLevelSaveGame>(UGameplayStatics::CreateSaveGameObject(
+                UGTWProgressLevelSaveGame::StaticClass())))
+        {
+            ProgressSaveGameInstance->ProgressPlayTime = TotalPlayTime;
+            Debug::Print(TEXT("ProgressGameTime 성공"));
+        }
+        else
+        {
+            Debug::Print(TEXT("ProgressGameTime 실패"));
+            return;
+        }
+    }
 
+    if (UGameplayStatics::SaveGameToSlot(
+        ProgressSaveGame,
+        TotalPlayTimeSlotName,
+        SaveGameInfoUserIndex) == false)
+    {
+        Debug::Print(TEXT("ProgressSaveGame 저장 실패"));
+    }
+    else
+    {
+        Debug::Print(TEXT("ProgressSaveGame 저장 성공"));
+    }
+}
 
 void UGTWGameInstance::InitializeTimerWidget(UGTWTimerWidget* Widget) const
 {
@@ -228,6 +265,32 @@ void UGTWGameInstance::InitializeTimerWidget(UGTWTimerWidget* Widget) const
     {
         Widget->UpdateClearLevel(Entry.Key, Entry.Value);
     }
+}
+
+bool UGTWGameInstance::OpenGameLevel(FString LevelName)
+{
+    if (LevelName.IsEmpty())
+        return false;
+
+   const FString LevelPath = FPaths::Combine(FPaths::ProjectContentDir(),
+        TEXT("GTW/Maps/"), LevelName);
+
+    // 레벨 패키지가 실제로 존재하는지 확인
+    if (FPackageName::DoesPackageExist(LevelPath) == false)
+    {
+        return false;
+    }
+
+    if (LevelName == TEXT("Title"))
+    {
+        RecordProgressGameTime();
+    }
+
+    UGameplayStatics::OpenLevel(
+        this,
+        FName(LevelName));
+
+    return true;
 }
 
 bool UGTWGameInstance::SetMinigameClearTime(EMinigameType Type, double InClearTimeSeconds)
@@ -278,17 +341,12 @@ bool UGTWGameInstance::TryGetMinigameClearTime(EMinigameType Type, double& OutCl
 
 double UGTWGameInstance::GetPlaytimeSeconds() const
 {
-    if (GameStartTimeSeconds < 0.0)
+    if (TotalPlayTime > 0.0)
     {
-        return 0.0;
+        return TotalPlayTime;
     }
 
-    if (GameClearTimeSeconds >= 0.0)
-    {
-        return GameClearTimeSeconds;
-    }
-
-    return TotalPlayTime;
+    return 0.0;
 }
 
 void UGTWGameInstance::InitClearHistory()
