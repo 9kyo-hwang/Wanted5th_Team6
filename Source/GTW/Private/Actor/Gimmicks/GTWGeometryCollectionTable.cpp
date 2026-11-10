@@ -8,6 +8,11 @@
 #include <GeometryCollection/GeometryCollectionComponent.h>
 #include <Characters/Boss/GTWBossPhase2Character.h>
 
+AGTWGeometryCollectionTable::AGTWGeometryCollectionTable()
+{
+	TargetClass = AGTWBossPhase2Character::StaticClass();
+}
+
 void AGTWGeometryCollectionTable::Tick(float deltaTime)
 {
 	Super::Tick(deltaTime);
