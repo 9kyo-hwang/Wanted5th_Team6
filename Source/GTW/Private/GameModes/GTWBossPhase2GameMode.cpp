@@ -23,107 +23,39 @@ AGTWBossPhase2GameMode::AGTWBossPhase2GameMode()
 	{
 		DefaultPawnClass = PlayerCharacterRef.Class;
 	}
+
+	FailLevel = FSoftObjectPath(TEXT("/Game/GTW/Maps/BossSecondPhase.BossSecondPhase"));
+	//ClearLevel = FSoftObjectPath(TEXT("/Game/GTW/Maps/BossSecondPhase.BossSecondPhase"));
 }
 
-void AGTWBossPhase2GameMode::OnGoalReached()
+void AGTWBossPhase2GameMode::Fail(EBossPhase2FailReason InFailReason)
 {
-	if (!IsPhasePlaying())
-	{
-		return;
-	}
-
-	ClearPhase();
-}
-
-void AGTWBossPhase2GameMode::FailPhase(EBossPhase2FailReason InFailReason)
-{
-	if (!IsPhasePlaying())
-	{
-		return;
-	}
-
 	FailReason = InFailReason;
-	EndPhase(EBossGameModeState::Fail);
+	EndCombat(EBossGameModeState::Fail);
 }
 
-bool AGTWBossPhase2GameMode::BindBossEvents()
+UClass* AGTWBossPhase2GameMode::GetBossClass() const
 {
-	return true;
+	return AGTWBossPhase2Character::StaticClass();
 }
 
-void AGTWBossPhase2GameMode::UnbindBossEvents()
+void AGTWBossPhase2GameMode::RecordCombatResult(EBossGameModeState Result)
 {
-
-}
-
-void AGTWBossPhase2GameMode::HandlePhaseResult(EBossGameModeState Result)
-{
-	UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>();
-	if (!GameInstance)
+	// Project Settings에서 GTWGI로 지정해주자.
+	UGTWGameInstance* GI = GetGameInstance<UGTWGameInstance>();
+	if (!GI)
 	{
-		Debug::Print(TEXT("[P2 GM::HandlePhaseResult] GameInstance가 없음"));
+		Debug::Print(TEXT("[P2 GM::RecordCombatResult] GameInstance가 없음"));
 		return;
 	}
 
 	if (Result == EBossGameModeState::Clear)
 	{
 		// 클리어 기록만 남기자
-		GameInstance->CompleteGame();
+		GI->CompleteGame();
 	}
 	else
 	{
-		GameInstance->ResetBossPhase1Cleared();
+		GI->ResetBossPhase1Cleared();
 	}
-}
-
-bool AGTWBossPhase2GameMode::RequestPhaseOutro(EBossGameModeState Result)
-{
-	if (OnOutroRequested.IsBound())
-	{
-		switch (Result)
-		{
-		case EBossGameModeState::Clear: 
-		{
-			OnOutroRequested.Broadcast(EBossPhase2OutroTypes::Cleared);
-			return true;
-		}
-		
-		case EBossGameModeState::Fail:
-		{
-			switch (FailReason)
-			{
-			case EBossPhase2FailReason::Fall:
-				OnOutroRequested.Broadcast(EBossPhase2OutroTypes::Fall);
-				return true;
-			case EBossPhase2FailReason::BossContact:
-				OnOutroRequested.Broadcast(EBossPhase2OutroTypes::BossContact);
-				return true;
-			default: 
-				return false;
-			}
-		}
-
-		default: 
-			return false;
-		}
-	}
-
-	return false;
-}
-
-bool AGTWBossPhase2GameMode::HandlePhaseCompletion(EBossGameModeState Result)
-{
-	const TSoftObjectPtr<UWorld>& LevelToOpen
-		= Result == EBossGameModeState::Clear
-		? ClearLevel
-		: Phase1Level;
-
-	if (LevelToOpen.IsNull())
-	{
-		Debug::Print(TEXT("[P2 GM::HandlePhaseCompletion] 이동할 레벨이 지정되지 않음"));
-		return false;
-	}
-
-	UGameplayStatics::OpenLevelBySoftObjectPtr(this, LevelToOpen);
-	return true;
 }

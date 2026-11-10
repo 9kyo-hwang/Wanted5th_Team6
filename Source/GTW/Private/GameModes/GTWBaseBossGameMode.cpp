@@ -13,7 +13,6 @@
 
 AGTWBaseBossGameMode::AGTWBaseBossGameMode()
 {
-	// @TODO: BP 컨트롤러로 교체?
 	PlayerControllerClass = AGTWPlayerController::StaticClass();
 
 	static ConstructorHelpers::FClassFinder<AGTWPlayerCharacter> PlayerCharacterRef(
@@ -26,28 +25,34 @@ AGTWBaseBossGameMode::AGTWBaseBossGameMode()
 	}
 }
 
-// Level Blueprint에서 배치한 보스를 넘겨줄 예정
-void AGTWBaseBossGameMode::InitPhase(AActor* InBoss)
+bool AGTWBaseBossGameMode::SetupBoss()
 {
-	if (CurrentState != EBossGameModeState::Ready)
+	UClass* BossClass = GetBossClass();
+	if (!BossClass)
 	{
-		return;
+		Debug::Print(TEXT("[Base GM:SetupBoss] 보스 클래스 가져오기 실패"));
+		return false;
 	}
 
-	if (!IsValid(InBoss) || !Cast<IGTWBossAIInterface>(InBoss) || IsValid(Boss.Get()))
+	TArray<AActor*> BossActors;
+	UGameplayStatics::GetAllActorsOfClass(this, BossClass, BossActors);
+	if (BossActors.Num() != 1 || !IsValid(BossActors[0]) || !Cast<IGTWBossAIInterface>(BossActors[0]) || IsValid(Boss.Get()))
 	{
-		Debug::Print(TEXT("[BaseBossGameMode::InitPhase] 보스 세팅에 문제가 있음"));
-		return;
+		Debug::Print(TEXT("[Base GM:SetupBoss] 맵에 GTWBoss 인스턴스 1개가 있는 게 아닌 것 같음"));
+		return false;
 	}
 
-	Boss = InBoss;
+	Boss = BossActors[0];
 	if (!BindBossEvents())
 	{
 		UnbindBossEvents();
 		Boss = nullptr;
 
-		Debug::Print(TEXT("[BaseBossGameMode::InitPhase] 보스 타입 또는 델리게이트 바인딩이 유효하지 않음"));
+		Debug::Print(TEXT("[Base GM:SetupBoss] 보스 타입 또는 델리게이트 바인딩이 유효하지 않음"));
+		return false;
 	}
+
+	return true;
 }
 
 void AGTWBaseBossGameMode::StartPlay()
@@ -56,36 +61,66 @@ void AGTWBaseBossGameMode::StartPlay()
 
 	SetIgnorePlayerInput(true);
 
-	if (OnIntroRequested.IsBound())
+	if (!SetupBoss())
 	{
-		Debug::Print(TEXT("[BaseBossGameMode::StartPlay] 인트로 재생! 종료 시 BeginPhase"));
-		OnIntroRequested.Broadcast();
+		SetIgnorePlayerInput(false);
+		return;
 	}
-	else
-	{
-		BeginPhase();
-	}
+
+	NativeBeginSetup_BeforeCombat();
 }
 
-void AGTWBaseBossGameMode::BeginPhase()
+void AGTWBaseBossGameMode::NativeBeginSetup_BeforeCombat()
+{
+	if (CurrentState != EBossGameModeState::Ready ||
+		bWaitingForBeforeCombatSetup)
+	{
+		return;
+	}
+
+	bWaitingForBeforeCombatSetup = true;
+
+	//if (OnIntroRequested.IsBound())
+	//{
+	//	Debug::Print(TEXT("[BaseBossGameMode::StartPlay] 인트로 재생! 종료 시 BeginPhase"));
+	//	OnIntroRequested.Broadcast();
+	//}
+
+	BP_BeginSetup_BeforeCombat();
+}
+
+void AGTWBaseBossGameMode::CompleteSetup_BeforeCombat()
+{
+	if (!bWaitingForBeforeCombatSetup || 
+		CurrentState != EBossGameModeState::Ready)
+	{
+		return;
+	}
+
+	bWaitingForBeforeCombatSetup = false;
+
+	BeginCombat();
+}
+
+void AGTWBaseBossGameMode::BeginCombat()
 {
 	if (CurrentState != EBossGameModeState::Ready || 
 		!GetWorld() || !GetWorld()->HasBegunPlay())
 	{
-		Debug::Print(TEXT("[BaseBossGameMode::BeginPhase] 페이즈 시작 전에 유효하지 않은 세팅"));
+		Debug::Print(TEXT("[Base GM::BeginCombat] 페이즈 시작 전에 유효하지 않은 세팅"));
 		return;
 	}
 	
 	if (!IsValid(Boss.Get()))
 	{
-		Debug::Print(TEXT("[BaseBossGameMode::BeginPhase] 보스 가동해야 하는데 유효하지 않음"));
+		Debug::Print(TEXT("[Base GM::BeginCombat] 보스 가동해야 하는데 유효하지 않음"));
 		return;
 	}
 
 	IGTWBossAIInterface* BossAIInterface = Cast<IGTWBossAIInterface>(Boss);
 	if (!BossAIInterface)
 	{
-		Debug::Print(TEXT("[BaseBossGameMode::BeginPhase] 보스 가동해야 하는데 유효하지 않음"));
+		Debug::Print(TEXT("[Base GM::BeginCombat] 보스 가동해야 하는데 유효하지 않음"));
 		return;
 	}
 
@@ -95,57 +130,98 @@ void AGTWBaseBossGameMode::BeginPhase()
 	if (IsPhasePlaying())
 	{
 		SetIgnorePlayerInput(false);
-		K2_OnPhaseStarted();
 	}
 }
 
-void AGTWBaseBossGameMode::ClearPhase()
+void AGTWBaseBossGameMode::Clear()
 {
-	EndPhase(EBossGameModeState::Clear);
+	EndCombat(EBossGameModeState::Clear);
 }
 
 // Clear/Fail 공통으로 처리해야 할 로직: 입력 Block, 보스 Stop, 하위 GM 별 추가 처리 및 아웃트로
-void AGTWBaseBossGameMode::EndPhase(EBossGameModeState Result)
+void AGTWBaseBossGameMode::EndCombat(EBossGameModeState Result)
 {
-	if (CurrentState != EBossGameModeState::Play)
+	if (!IsPhasePlaying())
 	{
-		Debug::Print(TEXT("[BaseBossGameMode::EndPhase] 페이즈 끝나는 시점에 Play 상태가 아님"));
+		Debug::Print(TEXT("[Base GM::EndCombat] 페이즈 끝나는 시점에 Play 상태가 아님"));
 		return;
 	}
 
 	if (Result != EBossGameModeState::Clear &&
 		Result != EBossGameModeState::Fail)
 	{
-		Debug::Print(TEXT("[BaseBossGameMode::EndPhase] Clear 또는 Fail만 가능"));
+		Debug::Print(TEXT("[BaseBossGameMode::EndCombat] Clear 또는 Fail만 가능"));
 		return;
 	}
 
 	CurrentState = Result;
+
 	SetIgnorePlayerInput(true);
 	StopBoss();
 
-	K2_OnPhaseEnded();
-	HandlePhaseResult(Result);
+	RecordCombatResult(Result);
 
-	if (!RequestPhaseOutro(Result))
+	NativeBeginSetup_AfterCombat();
+}
+
+void AGTWBaseBossGameMode::NativeBeginSetup_AfterCombat()
+{
+	//if (!RequestPhaseOutro(Result))
+	//{
+	//	Debug::Print(TEXT("[BaseBossGameMode::EndPhase] 아웃트로가 없어서 즉시 완료 처리."));
+	//	CompletePhase();
+	//}
+
+	if (CurrentState != EBossGameModeState::Clear &&
+		CurrentState != EBossGameModeState::Fail)
 	{
-		Debug::Print(TEXT("[BaseBossGameMode::EndPhase] 아웃트로가 없어서 즉시 완료 처리."));
-		CompletePhase();
+		return;
 	}
+
+	if (bWaitingForAfterCombatSetup)
+	{
+		return;
+	}
+
+	bWaitingForAfterCombatSetup = true;
+	BP_BeginSetup_AfterCombat(CurrentState);
+}
+
+void AGTWBaseBossGameMode::CompleteSetup_AfterCombat()
+{
+	if (!bWaitingForAfterCombatSetup)
+	{
+		return;
+	}
+
+	if (CurrentState != EBossGameModeState::Clear &&
+		CurrentState != EBossGameModeState::Fail)
+	{
+		return;
+	}
+
+	bWaitingForAfterCombatSetup = false;
+	OpenNextLevelByResult(CurrentState);
 }
 
 void AGTWBaseBossGameMode::SetIgnorePlayerInput(bool bNewInput)
 {
-	AGTWPlayerController* PlayerController = Cast<AGTWPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
-	if (!PlayerController)
+	AGTWPlayerController* GTWPC = Cast<AGTWPlayerController>(UGameplayStatics::GetPlayerController(this, 0));
+	if (!GTWPC)
 	{
-		Debug::Print(TEXT("[Base GM::SetIgnorePlayerInput] 컨트롤러가 GTW 것이 아님?"));
+		Debug::Print(TEXT("[Base GM::SetIgnorePlayerInput] GTW 컨트롤러 캐스팅 실패"));
 		return;
 	}
 
-	// @TODO: Lock/Unlock 짝이 맞아야 해서, 나중에 PC에 별도 API를 하나 둬야할 듯
-	PlayerController->SetIgnoreMoveInput(bNewInput);
-	PlayerController->SetIgnoreLookInput(bNewInput);
+	if (bPlayerInputIgnored == bNewInput)
+	{
+		return;
+	}
+
+	bPlayerInputIgnored = bNewInput;
+
+	GTWPC->SetIgnoreMoveInput(bNewInput);
+	GTWPC->SetIgnoreLookInput(bNewInput);
 }
 
 void AGTWBaseBossGameMode::StopBoss()
@@ -161,31 +237,31 @@ void AGTWBaseBossGameMode::StopBoss()
 	}
 }
 
-void AGTWBaseBossGameMode::CompletePhase()
+void AGTWBaseBossGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if (bPhaseCompletionRequested)
-	{
-		return;
-	}
+	bWaitingForBeforeCombatSetup = false;
+	bWaitingForAfterCombatSetup = false;
 
-	if (CurrentState != EBossGameModeState::Clear &&
-		CurrentState != EBossGameModeState::Fail)
-	{
-		return;
-	}
-
-	bPhaseCompletionRequested = true;
-	if (!HandlePhaseCompletion(CurrentState))
-	{
-		// 자식 GM에서 페이즈 정리가 제대로 되지 않으면 return false
-		bPhaseCompletionRequested = false;
-	}
-}
-
-void AGTWBaseBossGameMode::EndPlay(EEndPlayReason::Type EndPlayReason)
-{
 	StopBoss();
+	// 여기서는 키 입력 막는 함수 호출 X
+	// OpenLevel에 의해 GM이 내려가는 상황이라, 컨트롤러 접근하면 안됨.
 
 	Super::EndPlay(EndPlayReason);
 }
 
+bool AGTWBaseBossGameMode::OpenNextLevelByResult(EBossGameModeState Result)
+{
+	const TSoftObjectPtr<UWorld>& LevelToOpen
+		= Result == EBossGameModeState::Clear
+		? ClearLevel
+		: FailLevel;
+
+	if (LevelToOpen.IsNull())
+	{
+		Debug::Print(TEXT("[Base GM::OpenNextLevelByResult] 이동할 레벨이 지정되지 않음"));
+		return false;
+	}
+
+	UGameplayStatics::OpenLevelBySoftObjectPtr(this, LevelToOpen);
+	return true;
+}
