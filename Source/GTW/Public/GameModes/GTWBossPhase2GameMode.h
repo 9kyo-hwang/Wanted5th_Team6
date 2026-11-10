@@ -37,5 +37,6 @@ protected:
 	virtual void RecordCombatResult(EBossGameModeState Result) override;
 
 private:
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Boss|Phase", meta=(AllowPrivateAccess = "true"))
 	EBossPhase2FailReason FailReason;
 };
