@@ -36,6 +36,8 @@ protected:
 
 public:	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ActorStartLocation)
+	FVector ClearTelePortLocation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ActorStartLocation)
 	FVector StartPlayerLocation;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ActorStartLocation)
 	FVector StartBossLocation;

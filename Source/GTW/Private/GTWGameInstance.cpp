@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include <GTWGameInstance.h>
@@ -39,7 +39,7 @@ void UGTWGameInstance::StartNewGame()
     GameClearTimeSeconds = -1;
     TotalPlayTime = 0.0;
     CurrentFloorTime = 0.0;
-    //LevelClearTimes.Empty();
+    LevelClearTimes.Empty();
     bIsTickable = true;
     OnTimeChanged.Broadcast(TotalPlayTime);
 }
