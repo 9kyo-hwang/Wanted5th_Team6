@@ -4,7 +4,6 @@
 #include <Components/Player/GTWSkateMovementComponent.h>
 #include "Components/Player/GTWPlayerAudioComponent.h"
 #include <UI/GTWSpeedWidget.h>
-#include <UI/GTWPauseMenuWidget.h>
 
 #include <Components/CapsuleComponent.h>
 #include <cassert>
@@ -83,12 +82,11 @@ void AGTWPlayerCharacter::Tick(float DeltaTime)
 	// 중력 적용
 	ActiveGravity(bIsGround, NormalVector);
 
-		SkateCharacterMovementComponent->IsMovingOnGround()
-
 	// 사운드 섹션
 	bool bStartSkating =
-		&& SkateCharacterMovementComponent->StartSkate();
-	
+	SkateCharacterMovementComponent->IsMovingOnGround()
+	&& SkateCharacterMovementComponent->StartSkate();
+
 
 	if (!SkateCharacterMovementComponent->WasSkate()
 		&& bStartSkating)
@@ -97,21 +95,19 @@ void AGTWPlayerCharacter::Tick(float DeltaTime)
 		{
 			// 여기에서 Loop를 자동 실행
 			SkateAudioComponent->PlaySkateStart();
-	SkateCharacterMovementComponent->SetWasSkate();
-	}
 		}
+	}
+	SkateCharacterMovementComponent->SetWasSkate();
 
 	if (SkateCharacterMovementComponent->IsMovingOnGround()
-
 		&& !SkateCharacterMovementComponent->IsStop())
 	{
 		SkateAudioComponent->PlaySkateLoop();
 	}
-	{
 	else
+	{
 		SkateAudioComponent->EndSkateLoop();
 	}
-
 }
 
 void AGTWPlayerCharacter::Landed(const FHitResult& Hit)

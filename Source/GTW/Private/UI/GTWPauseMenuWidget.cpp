@@ -103,17 +103,6 @@ void UGTWPauseMenuWidget::GoToTitle()
     );
 }
 
-void UGTWPauseMenuWidget::NativeConstruct()
-{
-    Super::NativeConstruct();
-
-    // 세팅
-    IGTWWidgetInterface* HUDPawn = GetOwningPlayerPawn<IGTWWidgetInterface>();
-    if (nullptr != HUDPawn)
-    {
-        HUDPawn->SetPauseMenuWidget(this);
-    }
-}
 
 
 void UGTWPauseMenuWidget::NativeOnInitialized()
