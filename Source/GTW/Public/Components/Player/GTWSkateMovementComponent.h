@@ -44,8 +44,11 @@ private:
 
 	virtual bool ShouldCatchAir(const FFindFloorResult& OldFloor, const FFindFloorResult& NewFloor) override;
 
-
-
+	virtual void HandleImpact(
+		const FHitResult& Hit,
+		float TimeSlice,
+		const FVector& MoveDelta
+	) override;
 	/// 게터
 public:
 	// 바닥 법선 벡터 구하기
@@ -58,6 +61,28 @@ public:
 		return OlderFloor.HitResult.ImpactNormal;
 	}
 
+	FORCEINLINE int GetGTWSpeed() const
+	{
+		return GTWSpeed;
+	}
+	FORCEINLINE bool IsStop() const
+	{
+		return bIsStop;
+	}
+	FORCEINLINE bool StartSkate() const
+	{
+		return bStartSkate;
+	}
+	FORCEINLINE bool WasSkate() const
+	{
+		return bWasSkate;
+	}
+	// 세터
+	FORCEINLINE void SetWasSkate() 
+	{
+		bWasSkate = bStartSkate;
+	}
+
 	// 캐릭터 정면 벡터 구하기
 	FVector GetMeshRightVector() const;
 
@@ -65,6 +90,8 @@ public:
 public:
 	// 속도 변환 시 갱신
 	FOnSpeedChangedDelegate OnSpeedChanged;
+
+	
 protected:
 	// 오너
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
@@ -95,6 +122,29 @@ protected:
 
 	// 내려오는지 
 	UPROPERTY()
-	float bIsMovingDownSlope;
+	bool bIsMovingDownSlope;
+	
+	UPROPERTY()
+	int GTWSpeed;
+
+	// 멈췄는지
+	UPROPERTY()
+	bool bIsStop;
+
+	// 이동을 시작했는지
+	UPROPERTY()
+	bool bStartSkate;
+
+	// 이동을 시작했는지
+	UPROPERTY()
+	bool bWasSkate;
+
+	// 충돌 재진입 방지 시간
+	UPROPERTY()
+	double ImpactDeltaTime;
+
+	// 충돌 후 소요 계산할 변수
+	UPROPERTY()
+	double LastImpactTime;
 };
 	

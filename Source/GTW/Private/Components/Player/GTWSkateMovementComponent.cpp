@@ -23,6 +23,14 @@ UGTWSkateMovementComponent::UGTWSkateMovementComponent()
 	NewImpactNormal = FVector(0.0f, 0.0f, 0.0f);
 	OldImpactNormal = FVector(0.0f, 0.0f, 0.0f);
 	GTWVelocity = FVector(0.0f, 0.0f, 0.0f);
+
+	bIsMovingDownSlope = false;
+	GTWSpeed = 0;
+	bIsStop = true;
+	bStartSkate = false;
+	bWasSkate = false;
+
+	ImpactDeltaTime = 0.3;
 }
 
 void UGTWSkateMovementComponent::InitializeComponent()
@@ -49,9 +57,30 @@ void UGTWSkateMovementComponent::SetGTWVelocity()
 	}
 
 	// cm/s -> km/h
-	int GTWSpeed = GTWVelocity.Length() / 100000 * 3600;
+	GTWSpeed = GTWVelocity.Length() / 100000 * 3600;
 
 	OnSpeedChanged.Broadcast(GTWSpeed);
+
+	// 가속을 시작했는지 (입력을 받는지)
+	if (Acceleration.Length() > KINDA_SMALL_NUMBER)
+	{
+		bStartSkate = true;
+	}
+	else
+	{
+		bStartSkate = false;
+	}
+
+	// 멈췄는지
+	if(IsMovingOnGround() && GTWSpeed < KINDA_SMALL_NUMBER)
+	{
+		bIsStop = true;
+	}
+	else
+	{
+		bIsStop = false;
+	}
+
 }
 
 
@@ -239,6 +268,23 @@ bool UGTWSkateMovementComponent::ShouldCatchAir(
     }
 
     return false;
+}
+
+void UGTWSkateMovementComponent::HandleImpact(const FHitResult& Hit, float TimeSlice, const FVector& MoveDelta)
+{
+	Super::HandleImpact(Hit, TimeSlice, MoveDelta);
+
+	// 현재 시간
+	const double Now = GetWorld()->GetTimeSeconds();
+
+	if (Now - LastImpactTime < ImpactDeltaTime)
+	{
+		return;
+	}
+
+	LastImpactTime = Now;
+
+	GTWPlayerCharacter->PlayerWallImpact(GTWSpeed);
 }
 
 FVector UGTWSkateMovementComponent::GetMeshRightVector() const
