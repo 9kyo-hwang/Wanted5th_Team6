@@ -44,4 +44,9 @@ private:
 
 	UPROPERTY(VisibleAnywhere, Category = JumpTile)
 	TObjectPtr<class UBoxComponent> JumpTrigger;
+
+	// 사운드
+	UPROPERTY(EditAnywhere, Category = "Audio")
+	TObjectPtr<class USoundBase> JumpTileSound;
+
 };

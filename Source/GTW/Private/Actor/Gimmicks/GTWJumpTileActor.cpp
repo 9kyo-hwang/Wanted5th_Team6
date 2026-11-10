@@ -7,6 +7,9 @@
 #include <Components/BoxComponent.h>
 #include <Components/StaticMeshComponent.h>
 
+#include "UObject/ConstructorHelpers.h"
+#include "Sound/SoundBase.h"
+#include "Kismet/GameplayStatics.h"
 
 // Sets default values
 AGTWJumpTileActor::AGTWJumpTileActor() : JumpPower(2000.0f)
@@ -43,6 +46,14 @@ AGTWJumpTileActor::AGTWJumpTileActor() : JumpPower(2000.0f)
 		JumpTileMesh->SetStaticMesh(JumpTileRef.Object);
 	}
 
+	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(
+		TEXT("/Game/Assets/Sounds/jump_pad.jump_pad")
+	);
+
+	if (SoundAsset.Succeeded())
+	{
+		JumpTileSound = SoundAsset.Object;
+	}
 }
 // Called when the game starts or when spawned
 void AGTWJumpTileActor::BeginPlay()
@@ -68,6 +79,16 @@ void AGTWJumpTileActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent,
 	if (OverlappingPawn)
 	{
 		OverlappingPawn->ApplyJumpImpulse(JumpPower);
+
+		// 사운드 재생
+		if (JumpTileSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(
+				this,
+				JumpTileSound,
+				GetActorLocation()
+			);
+		}
 	}
 }
 
