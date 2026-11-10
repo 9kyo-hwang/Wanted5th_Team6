@@ -19,7 +19,8 @@ public class GTW : ModuleRules
             "UMG",
             "GeometryCollectionEngine",
             "Slate", 
-            "SlateCore"
+            "SlateCore",
+            "Niagara"
         });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });

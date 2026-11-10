@@ -1,10 +1,10 @@
 ﻿#include "AI/Boss/BTTask_DropObstacles.h"
 
 #include "AIController.h"
-#include "Characters/Boss/GTWBoss1.h"
+#include "Characters/Boss/GTWBossPhase1Character.h"
 #include "Kismet/GameplayStatics.h"
 
-// BT에서 공격을 요청하는 연결 노드다. 몽타주 재생/기믹 생성 로직은 GTWBoss1에만 둔다.
+// BT에서 공격을 요청하는 연결 노드다. 몽타주 재생/기믹 생성 로직은 GTWBossPhase1Character에만 둔다.
 UBTTask_DropObstacles::UBTTask_DropObstacles()
 {
 	NodeName = TEXT("DropObstacles");
@@ -18,7 +18,7 @@ EBTNodeResult::Type UBTTask_DropObstacles::ExecuteTask(UBehaviorTreeComponent& O
 		return EBTNodeResult::Failed;
 	}
 
-	AGTWBoss1* Boss = Cast<AGTWBoss1>(AI->GetPawn());
+	AGTWBossPhase1Character* Boss = Cast<AGTWBossPhase1Character>(AI->GetPawn());
 	if (!Boss)
 	{
 		return EBTNodeResult::Failed;
