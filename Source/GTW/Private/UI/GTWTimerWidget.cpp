@@ -4,7 +4,7 @@
 #include "UI/GTWTimerWidget.h"
 #include <Components/HorizontalBox.h>
 #include <Components/TextBlock.h>
-#include <Interfaces/GTWWidgetInterface.h>
+#include "GTWGameInstance.h"
 
 UGTWTimerWidget::UGTWTimerWidget(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
@@ -115,13 +115,26 @@ void UGTWTimerWidget::NativeConstruct()
 {
     Super::NativeConstruct();
 
-    // 세팅
-    IGTWWidgetInterface* HUDPawn = GetOwningPlayerPawn<IGTWWidgetInterface>();
-    if (nullptr != HUDPawn)
+    if (UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>())
     {
-        HUDPawn->SetTimerWidget(this);
+        TimerGameInstance = GameInstance;
+        GameInstance->OnTimeChanged.RemoveAll(this);
+        GameInstance->OnClearLevelChanged.RemoveAll(this);
+        GameInstance->OnTimeChanged.AddUObject(this, &UGTWTimerWidget::UpdateTimer);
+        GameInstance->OnClearLevelChanged.AddUObject(this, &UGTWTimerWidget::UpdateClearLevel);
+        GameInstance->InitializeTimerWidget(this);
     }
+}
 
+void UGTWTimerWidget::NativeDestruct()
+{
+    if (UGTWGameInstance* GameInstance = TimerGameInstance.Get())
+    {
+        GameInstance->OnTimeChanged.RemoveAll(this);
+        GameInstance->OnClearLevelChanged.RemoveAll(this);
+    }
+    TimerGameInstance.Reset();
+    Super::NativeDestruct();
 }
 
 void UGTWTimerWidget::NativeOnInitialized()

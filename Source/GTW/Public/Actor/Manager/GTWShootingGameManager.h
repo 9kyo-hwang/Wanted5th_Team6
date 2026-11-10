@@ -21,7 +21,9 @@ public:
 	UFUNCTION(BlueprintPure, Category = "Gameplay|Timer")
 	float GetElapsedTime() const { return ElapsedTime; }
 	UFUNCTION(BlueprintPure)
-	bool GetGameplayTimerRunning() const { return bIsGameplayTimerRunning; }
+	FORCEINLINE bool GetGameplayTimerRunning() const { return bIsGameplayTimerRunning; }
+	UFUNCTION(BlueprintPure)
+	FORCEINLINE bool GetShootingClear() const { return bIsShootingClear; }
 	UFUNCTION(BlueprintCallable)
 	void ShootingGameStart();
 	UFUNCTION(BlueprintCallable)
@@ -33,6 +35,8 @@ protected:
 	virtual void BeginPlay() override;
 
 public:	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ActorStartLocation)
+	FVector ClearTelePortLocation;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ActorStartLocation)
 	FVector StartPlayerLocation;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = ActorStartLocation)
@@ -63,6 +67,7 @@ private:
 private:
 	float ElapsedTime = 0.0f;
 	bool bIsGameplayTimerRunning = false;
+	bool bIsShootingClear = false;
 	UGTWGameInstance* GameInstance;
 	APlayerController* Player;
 };
