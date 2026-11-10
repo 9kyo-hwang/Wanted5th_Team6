@@ -1,10 +1,9 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #include <Characters/Player/GTWPlayerCharacter.h>
 #include <Components/Player/GTWSkateMovementComponent.h>
 #include "Components/Player/GTWPlayerAudioComponent.h"
 #include <UI/GTWSpeedWidget.h>
-#include <UI/GTWTimerWidget.h>
 #include <UI/GTWPauseMenuWidget.h>
 
 #include <Components/CapsuleComponent.h>
@@ -51,9 +50,6 @@ AGTWPlayerCharacter::AGTWPlayerCharacter(
 
 	bIsRagdoll = false;
 
-	ElapsedTime = 0;
-	bSecondFloorClear = false;
-
 	HitThreshold = 15;
 	StrongHitThreshold = 50;
 }
@@ -71,7 +67,6 @@ void AGTWPlayerCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	ElapsedTime += DeltaTime;
 
 	//땅에 있는지 확인
 	bool bIsGround = SkateCharacterMovementComponent->CurrentFloor.bWalkableFloor;
@@ -88,14 +83,13 @@ void AGTWPlayerCharacter::Tick(float DeltaTime)
 	// 중력 적용
 	ActiveGravity(bIsGround, NormalVector);
 
-	OnTimeChanged.Broadcast(ElapsedTime);
+		SkateCharacterMovementComponent->IsMovingOnGround()
 
 	// 사운드 섹션
 	bool bStartSkating =
-		SkateCharacterMovementComponent->IsMovingOnGround()
 		&& SkateCharacterMovementComponent->StartSkate();
-
 	
+
 	if (!SkateCharacterMovementComponent->WasSkate()
 		&& bStartSkating)
 	{
@@ -103,20 +97,20 @@ void AGTWPlayerCharacter::Tick(float DeltaTime)
 		{
 			// 여기에서 Loop를 자동 실행
 			SkateAudioComponent->PlaySkateStart();
-		}
-	}
 	SkateCharacterMovementComponent->SetWasSkate();
+	}
+		}
 
 	if (SkateCharacterMovementComponent->IsMovingOnGround()
+
 		&& !SkateCharacterMovementComponent->IsStop())
 	{
 		SkateAudioComponent->PlaySkateLoop();
 	}
-	else
 	{
+	else
 		SkateAudioComponent->EndSkateLoop();
 	}
-
 
 }
 
@@ -317,28 +311,6 @@ void AGTWPlayerCharacter::SetSpeedWidget(UGTWSpeedWidget* InSpeedWidget)
 	InSpeedWidget->UpdateSpeed(InitSpeed);
 
 	SkateCharacterMovementComponent->OnSpeedChanged.AddUObject(InSpeedWidget, &UGTWSpeedWidget::UpdateSpeed);
-}
-
-void AGTWPlayerCharacter::SetTimerWidget(UGTWTimerWidget* InTimerWidget)
-{
-	// 값 확인
-	if (nullptr == InTimerWidget)
-	{
-		return;
-	}
-
-	// 설정할 초기값
-	int InitTimer = 0;
-
-	InTimerWidget->UpdateTimer(InitTimer);
-
-	// 임시 객체 
-	OnTimeChanged.AddUObject(InTimerWidget, &UGTWTimerWidget::UpdateTimer);
-	OnClearLevelChanged.AddUObject(InTimerWidget, &UGTWTimerWidget::UpdateClearLevel);
-}
-
-void AGTWPlayerCharacter::SetPauseMenuWidget(UGTWPauseMenuWidget* InSpeedWidget)
-{
 }
 
 void AGTWPlayerCharacter::HitKnockbackObject(FVector HitDirection, float power)

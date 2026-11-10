@@ -81,7 +81,7 @@ void AGTWShootingGameManager::ShootingGameStart()
 	bIsGameplayTimerRunning = true;
 	ShowElapsedWidget();
 	Player->SetIgnoreMoveInput(false);
-	FRotator StartRotator = FRotator(Player->TargetViewRotation.Pitch, Player->TargetViewRotation.Yaw + 90,
+	FRotator StartRotator = FRotator(Player->TargetViewRotation.Pitch, Player->TargetViewRotation.Yaw,
 		Player->TargetViewRotation.Roll);
 	Player->GetCharacter()->TeleportTo(StartPlayerLocation, StartRotator);
 }
@@ -97,15 +97,15 @@ void AGTWShootingGameManager::Reset()
 void AGTWShootingGameManager::GameClear()
 {
 	bIsGameplayTimerRunning = false;
+	bIsShootingClear = true;
 	GameInstance->SetMinigameClearTime(EMinigameType::Shooting, ElapsedTime);
 	ShowClearViewWidget();
+	Player->GetCharacter()->TeleportTo(ShootingBoxTriggerActor->GetActorLocation(),
+		Player->GetCharacter()->GetActorRotation());
 
 	if (IsValid(ElapsedWidget))
 	{
 		ElapsedWidget->RemoveFromParent();
 		ElapsedWidget->SetVisibility(ESlateVisibility::Hidden);
 	}
-	
-	Player->GetCharacter()->TeleportTo(ShootingBoxTriggerActor->GetActorLocation(), 
-		Player->TargetViewRotation);
 }

@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -10,12 +10,6 @@
 #include <Interfaces/GTWInteractionGimmicksInterface.h>
 
 #include "GTWPlayerCharacter.generated.h"
-
-enum class ELevelClear : uint8;
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnTimerChangedDelegate, double /*CurrentTime*/);
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnClearLevelChangedDelegate, ELevelClear /*ClearType*/, double /*ClearTime*/)
-
-
 
 UCLASS()
 class GTW_API AGTWPlayerCharacter : public ACharacter
@@ -62,8 +56,6 @@ protected:
 protected:
 	// 위젯과 상호작용할 인터페이스
 	virtual void SetSpeedWidget(class UGTWSpeedWidget* InSpeedWidget) override;
-	virtual void SetTimerWidget(class UGTWTimerWidget* InTimerWidget) override;
-	virtual void SetPauseMenuWidget(class UGTWPauseMenuWidget* InSpeedWidget) override;
 	
 	// Hit 객체와 상호작용할  인터페이스
 	virtual void HitKnockbackObject(FVector HitDirection, float power) override;
@@ -87,23 +79,9 @@ private:
 	
 	// 델리게이트 
 protected:
-	// 시간 변경 시 갱신
-	FOnTimerChangedDelegate OnTimeChanged;
-
-	UPROPERTY()
-	float ElapsedTime;
-
-	// 클리어 레벨 갱신
-	FOnClearLevelChangedDelegate OnClearLevelChanged;
-
-
-	// 캐릭터 무브먼트 컴포넌트 
-	// 만약 베이스로 나뉘어야 한다면 이 부분은 자손클래스로 이전
-protected:
 	// 사운드 컴포넌트
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Audio)
 	TObjectPtr<class UGTWPlayerAudioComponent> SkateAudioComponent;
-
 	// 이동 컴포넌트
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
 	TObjectPtr<class UGTWSkateMovementComponent> SkateCharacterMovementComponent;
@@ -170,9 +148,6 @@ protected:
 	UPROPERTY()
 	bool bIsRagdoll;
 
-	// 클리어위젯 재진입 방지 
-	UPROPERTY()
-	bool bSecondFloorClear;
 
 	// 클리어위젯 재진입 방지 
 	UPROPERTY()
