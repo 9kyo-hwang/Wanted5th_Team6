@@ -25,5 +25,6 @@ public:
 	// Speed 위젯 함수
 	virtual void SetSpeedWidget(class UGTWSpeedWidget* InSpeedWidget) = 0;
 	virtual void SetTimerWidget(class UGTWTimerWidget* InSpeedWidget) = 0;
+	virtual void SetPauseMenuWidget(class UGTWPauseMenuWidget* InSpeedWidget) = 0;
 
 };

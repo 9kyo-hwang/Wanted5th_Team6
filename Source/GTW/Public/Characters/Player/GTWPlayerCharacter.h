@@ -38,6 +38,8 @@ public:
 
 	virtual void Landed(const FHitResult& Hit) override;
 
+	void PlayerWallImpact(int Speed);
+
 protected:
 	// 틱에 호출될 경사 이동 함수
 	void MoveSlope(const FVector& Normal);
@@ -61,6 +63,7 @@ protected:
 	// 위젯과 상호작용할 인터페이스
 	virtual void SetSpeedWidget(class UGTWSpeedWidget* InSpeedWidget) override;
 	virtual void SetTimerWidget(class UGTWTimerWidget* InTimerWidget) override;
+	virtual void SetPauseMenuWidget(class UGTWPauseMenuWidget* InSpeedWidget) override;
 	
 	// Hit 객체와 상호작용할  인터페이스
 	virtual void HitKnockbackObject(FVector HitDirection, float power) override;
@@ -97,6 +100,10 @@ protected:
 	// 캐릭터 무브먼트 컴포넌트 
 	// 만약 베이스로 나뉘어야 한다면 이 부분은 자손클래스로 이전
 protected:
+	// 사운드 컴포넌트
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Audio)
+	TObjectPtr<class UGTWPlayerAudioComponent> SkateAudioComponent;
+
 	// 이동 컴포넌트
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
 	TObjectPtr<class UGTWSkateMovementComponent> SkateCharacterMovementComponent;
@@ -170,4 +177,13 @@ protected:
 	// 클리어위젯 재진입 방지 
 	UPROPERTY()
 	bool bSokobanClear;
+
+	// 충돌 소리나는 역치 값
+	UPROPERTY()
+	int HitThreshold;
+
+	// 충돌 소리나는 역치 값
+	UPROPERTY()
+	int StrongHitThreshold;
+
 };
