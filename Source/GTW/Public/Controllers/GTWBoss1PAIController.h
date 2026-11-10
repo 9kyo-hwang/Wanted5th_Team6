@@ -7,7 +7,7 @@
 /**
  * P1 보스가 사용하는 AIController.
  * BB/BT 에셋은 BP_Boss1PAIController에서 선택하고, C++은 초기화와 실행/중지를 담당
- * 추격 요청은 BP Service, 공격 요청은 BT Task, 실제 이동/공격은 GTWBoss1에서 처리
+ * 추격 요청은 BP Service, 공격 요청은 BT Task, 실제 이동/공격은 GTWBossPhase1Character에서 처리
  */
 UCLASS()
 class GTW_API AGTWBoss1PAIController : public AAIController

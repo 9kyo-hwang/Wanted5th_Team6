@@ -1,5 +1,5 @@
 ﻿#include "Controllers/GTWBoss1PAIController.h"
-#include "Characters/Boss/GTWBoss1.h"
+#include "Characters/Boss/GTWBossPhase1Character.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "BehaviorTree/BlackboardData.h"
 #include "BehaviorTree/BehaviorTree.h"
@@ -8,11 +8,11 @@
 bool AGTWBoss1PAIController::RunAI()
 {
 	// 1. 조종 중인 보스 확인. BT 실행 시점은 보스 StartEncounter에서 결정한다.
-	AGTWBoss1* Boss = Cast<AGTWBoss1>(GetPawn());
+	AGTWBossPhase1Character* Boss = Cast<AGTWBossPhase1Character>(GetPawn());
 	const bool bHasBoss = Boss != nullptr;
 	if (!bHasBoss)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("P1 AI: 조종 중인 Pawn이 GTWBoss1이 아닙니다."));
+		UE_LOG(LogTemp, Warning, TEXT("P1 AI: 조종 중인 Pawn이 GTWBossPhase1Character이 아닙니다."));
 		return false;
 	}
 
