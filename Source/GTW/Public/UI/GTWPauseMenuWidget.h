@@ -32,8 +32,6 @@ public:
 	void GoToTitle();
 
 protected:
-	virtual void NativeConstruct() override;
-
 	virtual void NativeOnInitialized() override;
 
 protected:
