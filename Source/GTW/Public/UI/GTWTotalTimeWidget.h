@@ -14,7 +14,7 @@ class GTW_API UGTWTotalTimeWidget : public UUserWidget
 {
 	GENERATED_BODY()
 public:
-	UGTWTotalTimeWidget() = default;
+	UGTWTotalTimeWidget(const FObjectInitializer& ObjectInitializer);
 
 	virtual FReply NativeOnKeyDown(
 		const FGeometry& InGeometry,

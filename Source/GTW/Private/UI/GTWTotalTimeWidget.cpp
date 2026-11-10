@@ -4,6 +4,16 @@
 #include "UI/GTWTotalTimeWidget.h"
 #include <Components/TextBlock.h>
 
+UGTWTotalTimeWidget::UGTWTotalTimeWidget(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+}
+
+FReply UGTWTotalTimeWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+{
+	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+}
+
 void UGTWTotalTimeWidget::BindTimerToText()
 {
 	SecondGTW = Cast<UTextBlock>(GetWidgetFromName(TEXT("Second")));
