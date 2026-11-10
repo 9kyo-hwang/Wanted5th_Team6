@@ -5,7 +5,7 @@
 
 #include <GTWGameInstance.h>
 #include <GTWDebugHelper.h>
-#include <Characters/Boss/GTWBoss1.h>
+#include <Characters/Boss/GTWBossPhase1Character.h>
 #include <Kismet/GameplayStatics.h>
 
 /*
@@ -27,12 +27,12 @@ void AGTWBossPhase1GameMode::Fail()
 
 UClass* AGTWBossPhase1GameMode::GetBossClass() const
 {
-	return AGTWBoss1::StaticClass();
+	return AGTWBossPhase1Character::StaticClass();
 }
 
 bool AGTWBossPhase1GameMode::BindBossEvents()
 {
-	AGTWBoss1* Phase1Boss = Cast<AGTWBoss1>(GetBoss());
+	AGTWBossPhase1Character* Phase1Boss = Cast<AGTWBossPhase1Character>(GetBoss());
 	if (!Phase1Boss)
 	{
 		Debug::Print(TEXT("[P1 GM : BindBossEvents] 1페이즈 보스 인스턴스가 아니네?"));
@@ -57,7 +57,7 @@ void AGTWBossPhase1GameMode::UnbindBossEvents()
 		return;
 	}
 
-	if (AGTWBoss1* Phase1Boss = Cast<AGTWBoss1>(GetBoss()))
+	if (AGTWBossPhase1Character* Phase1Boss = Cast<AGTWBossPhase1Character>(GetBoss()))
 	{
 		Phase1Boss->OnObjectHit.Remove(BossHitDelegateHandle);
 	}

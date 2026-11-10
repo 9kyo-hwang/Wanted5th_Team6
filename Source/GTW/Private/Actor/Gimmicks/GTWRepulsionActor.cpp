@@ -6,8 +6,12 @@
 #include <Interfaces/GTWInteractionGimmicksInterface.h>
 #include <Components/CapsuleComponent.h>
 #include <Components/StaticMeshComponent.h>
+#include "UObject/ConstructorHelpers.h"
+#include "Sound/SoundBase.h"
+#include "Kismet/GameplayStatics.h"
 
 #include <cassert>
+
 
 // Sets default values
 AGTWRepulsionActor::AGTWRepulsionActor()
@@ -43,6 +47,16 @@ AGTWRepulsionActor::AGTWRepulsionActor()
 	{
 		RepulsionMesh->SetStaticMesh(RepulsionRef.Object);
 	}
+
+	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(
+		TEXT("/Game/Assets/Sounds/Repulse.Repulse")
+	);
+
+	if (SoundAsset.Succeeded())
+	{
+		RepulsionSound = SoundAsset.Object;
+	}
+
 
 	// 반발체 힘
 	RepulsionPower = 1000.0f;
@@ -83,7 +97,18 @@ void AGTWRepulsionActor::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent
 
 	if (OverlappingPawn)
 	{
+		// 액터 밀어내기 
 		OverlappingPawn->ApplyRepulsion(PulseDirecion, RepulsionPower);
+
+		// 사운드 재생
+		if (RepulsionSound)
+		{
+			UGameplayStatics::PlaySoundAtLocation(
+				this,
+				RepulsionSound,
+				GetActorLocation()
+			);
+		}
 	}
 
 	// 펌핑 시간 && 복원 시간 
