@@ -2,7 +2,9 @@
 
 #include <Characters/Player/GTWPlayerCharacter.h>
 #include <Components/Player/GTWSkateMovementComponent.h>
+#include "Components/Player/GTWPlayerAudioComponent.h"
 #include <UI/GTWSpeedWidget.h>
+#include <UI/GTWPauseMenuWidget.h>
 
 #include <Components/CapsuleComponent.h>
 #include <cassert>
@@ -18,6 +20,10 @@ AGTWPlayerCharacter::AGTWPlayerCharacter(
 
 	SkateCharacterMovementComponent =
 		Cast<UGTWSkateMovementComponent>(GetCharacterMovement());
+
+	SkateAudioComponent =
+		CreateDefaultSubobject<UGTWPlayerAudioComponent>(
+			TEXT("PlayerSoundComponent"));
 
 	assert(SkateCharacterMovementComponent);
 
@@ -44,12 +50,16 @@ AGTWPlayerCharacter::AGTWPlayerCharacter(
 
 	bIsRagdoll = false;
 
+	HitThreshold = 15;
+	StrongHitThreshold = 50;
 }
 
 // Called when the game starts or when spawned
 void AGTWPlayerCharacter::BeginPlay()
 {
 	Super::BeginPlay();
+
+	//SkateCharacterMovementComponent->OnSpeedChanged.AddUObject(SkateAudioComponent, &UGTWPlayerAudioComponent::PlaySkateStart);
 }
 
 // Called every frame
@@ -73,6 +83,34 @@ void AGTWPlayerCharacter::Tick(float DeltaTime)
 	// 중력 적용
 	ActiveGravity(bIsGround, NormalVector);
 
+		SkateCharacterMovementComponent->IsMovingOnGround()
+
+	// 사운드 섹션
+	bool bStartSkating =
+		&& SkateCharacterMovementComponent->StartSkate();
+	
+
+	if (!SkateCharacterMovementComponent->WasSkate()
+		&& bStartSkating)
+	{
+		if (SkateAudioComponent)
+		{
+			// 여기에서 Loop를 자동 실행
+			SkateAudioComponent->PlaySkateStart();
+	SkateCharacterMovementComponent->SetWasSkate();
+	}
+		}
+
+	if (SkateCharacterMovementComponent->IsMovingOnGround()
+
+		&& !SkateCharacterMovementComponent->IsStop())
+	{
+		SkateAudioComponent->PlaySkateLoop();
+	}
+	{
+	else
+		SkateAudioComponent->EndSkateLoop();
+	}
 
 }
 
@@ -97,6 +135,25 @@ void AGTWPlayerCharacter::Landed(const FHitResult& Hit)
 			BeginRagdoll(FallingRagdollTime);
 		}
 	}
+}
+
+void AGTWPlayerCharacter::PlayerWallImpact(int Speed)
+{
+	// 일정 이상 속력이 아니라면
+	if (Speed < HitThreshold)
+	{
+		return;
+	}
+	
+	// 강한 충격을 받을 때.
+	if (Speed > StrongHitThreshold)
+	{
+		SkateAudioComponent->PlayStrongHitSound();
+		return;
+	}
+
+	SkateAudioComponent->PlayHitSound();
+
 }
 
 
@@ -181,6 +238,8 @@ void AGTWPlayerCharacter::BeginRagdoll(float RagdollTime)
 		return;
 	}
 	// 모두 검증되었을 때 랙돌 시작.
+
+	SkateAudioComponent->PlayImpactVoiceSound();
 
 	// 랙돌 플래그
 	bIsRagdoll = true;

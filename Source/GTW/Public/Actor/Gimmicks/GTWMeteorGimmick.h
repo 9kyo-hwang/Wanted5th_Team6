@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GTWBossGimmickBase.h"
 #include "GTWMeteorGimmick.generated.h"
 
 UENUM(BlueprintType)
@@ -17,7 +18,7 @@ enum class EMeteorState : uint8
 };
 
 UCLASS()
-class GTW_API AGTWMeteorGimmick : public AActor
+class GTW_API AGTWMeteorGimmick : public AGTWBossGimmickBase
 {
 	GENERATED_BODY()
 	
@@ -29,11 +30,9 @@ protected:
 	virtual void Tick(float DeltaTime) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-public:
+private:
 	void Falling();
 	void Grounded();
-
-private:
 	void Knockback();
 	void Finish();
 
@@ -41,16 +40,8 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|Meteor", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USceneComponent> Root;
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|FX", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UNiagaraComponent> WarningFX;
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|Meteor", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USphereComponent> MeteorCollision;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|FX", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UNiagaraComponent> MeteorBodyFX;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|FX", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UNiagaraComponent> MeteorExplosionFX;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|Meteor", meta = (AllowPrivateAccess = "true"))
 	float WarningDuration;

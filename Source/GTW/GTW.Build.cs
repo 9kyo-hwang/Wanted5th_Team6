@@ -18,6 +18,8 @@ public class GTW : ModuleRules
             "EnhancedInput", 
             "UMG",
             "GeometryCollectionEngine",
+            "Slate", 
+            "SlateCore",
             "Niagara"
         });
 

@@ -5,7 +5,6 @@
 
 #include <Components/SphereComponent.h>
 #include <GameFramework/PlayerController.h>
-#include <NiagaraComponent.h>
 
 AGTWBossHitObject::AGTWBossHitObject()
 	: FlightSpeed(1000.0f)
@@ -19,12 +18,6 @@ AGTWBossHitObject::AGTWBossHitObject()
 	ContactSphere->SetGenerateOverlapEvents(true);	// 오버랩 이벤트 ON
 	
 	SetRootComponent(ContactSphere);
-
-	ObjectBodyFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ObjectBodyFX"));
-	ObjectBodyFX->SetVisibility(false);
-	ObjectBodyFX->SetAutoActivate(false);
-	ObjectBodyFX->SetAutoDestroy(false);
-	ObjectBodyFX->SetupAttachment(ContactSphere);
 }
 
 bool AGTWBossHitObject::SetTarget(AActor* InTarget)
@@ -54,8 +47,7 @@ void AGTWBossHitObject::BeginPlay()
 		&ThisClass::OnPlayerContact
 	);
 
-	ObjectBodyFX->SetVisibility(true);
-	ObjectBodyFX->Activate();
+	StartLoopingFX(EGimmickFXTypes::Body, ContactSphere);
 
 	ContactSphere->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 }
@@ -120,13 +112,14 @@ void AGTWBossHitObject::OnHitTarget()
 {
 	SetActorTickEnabled(false);
 
+	PlayBurstFX(EGimmickFXTypes::Impact, ContactSphere->GetComponentTransform());
+
 	// 보스 적중했음을 알림(맞춘 오브젝트 == 나)
 	OnHitBoss.ExecuteIfBound(this);
 
 	if (!IsActorBeingDestroyed())
 	{
-		ObjectBodyFX->Deactivate();
-		ObjectBodyFX->SetVisibility(false);
+		StopLoopingFX(EGimmickFXTypes::Body);
 
 		Destroy();
 	}

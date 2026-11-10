@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GTWBossGimmickBase.h"
 #include "GTWRoadblockGimmick.generated.h"
 
 /*
@@ -25,7 +26,7 @@ enum class ERoadblockState : uint8
 };
 
 UCLASS()
-class GTW_API AGTWRoadblockGimmick : public AActor
+class GTW_API AGTWRoadblockGimmick : public AGTWBossGimmickBase
 {
 	GENERATED_BODY()
 	
@@ -67,14 +68,10 @@ private:
 	TObjectPtr<class USceneComponent> LaunchPoint;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UArrowComponent> TargetPoint;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UStaticMeshComponent> WarningMarker;	// 예고 지점 표시할 표식.
 
 	// 길막 액터
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USphereComponent> BlockCollision;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|FX", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UNiagaraComponent> BlockFX;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))
 	float WarningDuration;

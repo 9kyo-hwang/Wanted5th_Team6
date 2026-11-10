@@ -68,5 +68,7 @@ private:
 	UPROPERTY()
 	float VolumeDelta;
 
-
+	// 사운드
+	UPROPERTY(EditAnywhere, Category = "Audio")
+	TObjectPtr<class USoundBase> RepulsionSound;
 };

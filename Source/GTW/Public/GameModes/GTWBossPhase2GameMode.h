@@ -18,8 +18,6 @@ enum class EBossPhase2FailReason : uint8
 	BossContact,
 };
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnPhase2OutroRequestedDelegate, EBossPhase2OutroTypes, OutroType);
-
 UCLASS()
 class GTW_API AGTWBossPhase2GameMode : public AGTWBaseBossGameMode
 {
@@ -28,31 +26,16 @@ class GTW_API AGTWBossPhase2GameMode : public AGTWBaseBossGameMode
 public:
 	AGTWBossPhase2GameMode();
 
-	// 플레이어가 목표 지점에 도달했을 때(Trigger Overlap) 호출할 함수
-	UFUNCTION(BlueprintCallable, Category="Boss|Phase")
-	void OnGoalReached();
+	// Clear()에다가 다이렉트로 Overlap 연결
 
 	// 2페이즈는 실패 종류가 2가지라 Enum을 받음
 	UFUNCTION(BlueprintCallable, Category="Boss|Phase")
-	void FailPhase(EBossPhase2FailReason InFailReason);
-
-	// 보스 아웃트로 요청
-	UPROPERTY(BlueprintAssignable, Category = "Boss|Phase")
-	FOnPhase2OutroRequestedDelegate OnOutroRequested;
+	void Fail(EBossPhase2FailReason InFailReason);
 
 protected:
-	virtual bool BindBossEvents() override;
-	virtual void UnbindBossEvents() override;
-	virtual void HandlePhaseResult(EBossGameModeState Result) override;
-	virtual bool RequestPhaseOutro(EBossGameModeState Result) override;
-	virtual bool HandlePhaseCompletion(EBossGameModeState Result) override;
+	virtual UClass* GetBossClass() const override;
+	virtual void RecordCombatResult(EBossGameModeState Result) override;
 
 private:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Level", meta = (AllowPrivateAccess = "true"))
-	TSoftObjectPtr<UWorld> Phase1Level;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Level", meta = (AllowPrivateAccess = "true"))
-	TSoftObjectPtr<UWorld> ClearLevel;
-
 	EBossPhase2FailReason FailReason;
 };

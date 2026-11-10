@@ -32,6 +32,8 @@ public:
 
 	virtual void Landed(const FHitResult& Hit) override;
 
+	void PlayerWallImpact(int Speed);
+
 protected:
 	// 틱에 호출될 경사 이동 함수
 	void MoveSlope(const FVector& Normal);
@@ -77,6 +79,9 @@ private:
 	
 	// 델리게이트 
 protected:
+	// 사운드 컴포넌트
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Audio)
+	TObjectPtr<class UGTWPlayerAudioComponent> SkateAudioComponent;
 	// 이동 컴포넌트
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = Movement)
 	TObjectPtr<class UGTWSkateMovementComponent> SkateCharacterMovementComponent;
@@ -147,4 +152,13 @@ protected:
 	// 클리어위젯 재진입 방지 
 	UPROPERTY()
 	bool bSokobanClear;
+
+	// 충돌 소리나는 역치 값
+	UPROPERTY()
+	int HitThreshold;
+
+	// 충돌 소리나는 역치 값
+	UPROPERTY()
+	int StrongHitThreshold;
+
 };
