@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "GTWBossGimmickBase.h"
 #include "GTWBossHitObject.generated.h"
 
 class AGTWBossHitObject;
@@ -14,7 +15,7 @@ DECLARE_DELEGATE_OneParam(FOnHitBossDelegate, AGTWBossHitObject* /*this*/);
 * 보스 1페이즈에서, 플레이어와 부딪히면 보스에게 날아가 유효타를 입히는 오브젝트
 */
 UCLASS()
-class GTW_API AGTWBossHitObject : public AActor
+class GTW_API AGTWBossHitObject : public AGTWBossGimmickBase
 {
 	GENERATED_BODY()
 	
@@ -42,9 +43,6 @@ private:
 	// RootComponent 겸 Player 접촉 감지 역할
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Components", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USphereComponent> ContactSphere;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Gimmick|FX", meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UNiagaraComponent> ObjectBodyFX;
 
 	// 날아가는 속도
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Gimmick", meta = (AllowPrivateAccess = "true"))

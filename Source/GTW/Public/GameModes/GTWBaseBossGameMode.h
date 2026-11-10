@@ -21,53 +21,54 @@ class GTW_API AGTWBaseBossGameMode : public AGameModeBase
 public:
 	AGTWBaseBossGameMode();
 
-	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
-	void InitPhase(AActor* InBoss);
-
-	// 인트로 재생 후 호출
-	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
-	void BeginPhase();
-
-	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
-	void ClearPhase();
-
-	// Fail은 각 페이즈 별 GameMode에서 정의
-
-	// 아웃트로 재생 후 호출
-	UFUNCTION(BlueprintCallable, Category = "Boss|Phase")
-	void CompletePhase();
-
-	// 보스 인트로 요청
-	UPROPERTY(BlueprintAssignable, Category = "Boss|Phase")
-	FOnIntroRequestedDelegate OnIntroRequested;
-
 protected:
 	virtual void StartPlay() override;
 	virtual void EndPlay(EEndPlayReason::Type EndPlayReason) override;
+	
+public:
+	UFUNCTION(BlueprintCallable, Category = "Boss|State")
+	void Clear();
+	
+	UFUNCTION(BlueprintCallable, Category = "Boss|Setup", meta=(BlueprintProtected = "true"))
+	void CompleteSetup_BeforeCombat();
 
-	void EndPhase(EBossGameModeState Result);
+	UFUNCTION(BlueprintCallable, Category = "Boss|Setup", meta = (BlueprintProtected = "true"))
+	void CompleteSetup_AfterCombat();
+
+protected:
+	UFUNCTION(BlueprintImplementableEvent, Category = "Boss|Setup", meta = (BlueprintProtected = "true", DisplayName = "Begin Setup Before Combat"))
+	void BP_BeginSetup_BeforeCombat();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Boss|Setup", meta = (BlueprintProtected = "true", DisplayName = "Begin Setup After Combat"))
+	void BP_BeginSetup_AfterCombat(EBossGameModeState Result);
+
+	void EndCombat(EBossGameModeState Result);
 
 	FORCEINLINE AActor* GetBoss() const { return Boss.Get(); }
+	virtual UClass* GetBossClass() const PURE_VIRTUAL(AGTWBaseBossGameMode::GetBossClass, return nullptr;);
 	FORCEINLINE bool IsPhasePlaying() const { return CurrentState == EBossGameModeState::Play; }
-
-	// Delegate 연결이나 추가 값 세팅 등, 자식 GameMode에서 각자 보스에 맞게 재정의
 	virtual bool BindBossEvents() { return true; }
 	virtual void UnbindBossEvents() {}
-	virtual void HandlePhaseResult(EBossGameModeState Result) {}	// 보스 멈추고 연출 실행 전
-	virtual bool RequestPhaseOutro(EBossGameModeState Result) { return false; }	// 요청 있으면 발행, 
-	virtual bool HandlePhaseCompletion(EBossGameModeState Result)	
-		PURE_VIRTUAL(AGTWBaseBossGameMode::HandlePhaseCompletion, return false;);	// 연출 실행도 다 끝난 시점. 성공하면 true, 설정 누락 등으로 실행 안하면 false
-
-	// 혹시 BP에서 추가로 더 해야할 게 생기면 여기 통해서 가능
-	UFUNCTION(BlueprintImplementableEvent, Category = "Boss|Phase", meta = (DisplayName = "On Phase Started"))
-	void K2_OnPhaseStarted();
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "Boss|Phase", meta = (DisplayName = "On Phase Ended"))
-	void K2_OnPhaseEnded();
+	virtual void RecordCombatResult(EBossGameModeState Result) {}	// 연출 전 기록
 
 private:
+	bool SetupBoss();
+	void BeginCombat();
+	
+	void NativeBeginSetup_BeforeCombat();
+	void NativeBeginSetup_AfterCombat();
+
 	void SetIgnorePlayerInput(bool bNewInput);
 	void StopBoss();
+
+	bool OpenNextLevelByResult(EBossGameModeState Result);
+
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Level", meta = (AllowPrivateAccess = "true"))
+	TSoftObjectPtr<UWorld> FailLevel;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Boss|Level", meta = (AllowPrivateAccess = "true"))
+	TSoftObjectPtr<UWorld> ClearLevel;
 
 private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Boss|Phase", meta = (AllowPrivateAccess = "true"))
@@ -76,5 +77,8 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Boss", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<AActor> Boss;
 
-	bool bPhaseCompletionRequested = false;
+	bool bWaitingForBeforeCombatSetup = false;
+	bool bWaitingForAfterCombatSetup = false;
+
+	bool bPlayerInputIgnored = false;
 };

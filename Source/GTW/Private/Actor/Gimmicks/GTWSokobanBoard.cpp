@@ -3,7 +3,7 @@
 
 #include <Actor/Gimmicks//GTWSokobanBoard.h>
 #include <Actor/Gimmicks//GTWSokobanBox.h>
-
+#include <GTWGameInstance.h>
 #include <Misc/FileHelper.h>
 #include <Misc/Paths.h>
 #include <Engine/StaticMesh.h>
@@ -101,6 +101,7 @@ bool AGTWSokobanBoard::TryPushBox(AGTWSokobanBox* Box, const FIntPoint& Directio
 void AGTWSokobanBoard::BeginPlay()
 {
 	Super::BeginPlay();
+	GameInstance = GetGameInstance<UGTWGameInstance>();
 	if (LoadMapFileData())
 	{
 		InitializeMap();
@@ -468,7 +469,6 @@ void AGTWSokobanBoard::GameClear()
 {
 	bIsSokobanClear = true;
 	bIsSokobanFieldTelePort = false;
-	int32 SokobanClearTime = ElapsedTime;
-	UE_LOG(LogTemp, Error, TEXT("SokobanGame Clear! elaspTime : %d"), SokobanClearTime);
+	GameInstance->SetMinigameClearTime(EMinigameType::Sokoban, ElapsedTime);
 	ShowClearViewWidget();
 }

@@ -6,7 +6,7 @@
 #include <GTWDebugHelper.h>
 
 #include <GeometryCollection/GeometryCollectionComponent.h>
-#include <Characters/Boss/GTWBoss.h>
+#include <Characters/Boss/GTWBossPhase2Character.h>
 
 void AGTWGeometryCollectionTable::Tick(float deltaTime)
 {

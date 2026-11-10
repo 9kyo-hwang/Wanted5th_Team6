@@ -11,6 +11,7 @@ class UStaticMeshComponent;
 class AGTWSokobanBox;
 class UCameraComponent;
 class UUserWidget;
+class UGTWGameInstance;
 
 UCLASS()
 class GTW_API AGTWSokobanBoard : public AActor
@@ -129,4 +130,5 @@ private:
 	float ElapsedTime = 0.0f;
 	int32 MaxGoalCount = 3;
 	bool bIsSokobanClear = false;
+	UGTWGameInstance* GameInstance;
 };

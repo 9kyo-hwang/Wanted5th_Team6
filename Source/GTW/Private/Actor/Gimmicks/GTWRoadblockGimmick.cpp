@@ -9,7 +9,6 @@
 #include <Components/StaticMeshComponent.h>
 #include <Components/ArrowComponent.h>
 #include <Components/SphereComponent.h>
-#include <NiagaraComponent.h>
 #include <GameFramework/PlayerController.h>
 
 // Sets default values
@@ -39,20 +38,9 @@ AGTWRoadblockGimmick::AGTWRoadblockGimmick()
 	TargetPoint = CreateDefaultSubobject<UArrowComponent>(TEXT("TargetPoint"));
 	TargetPoint->SetupAttachment(Root);
 
-	WarningMarker = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WarningMarker"));
-	WarningMarker->SetCollisionEnabled(ECollisionEnabled::NoCollision);		// 메시는 충돌 X
-	WarningMarker->SetVisibility(false);									// 메시는 처음에 표시 X
-	WarningMarker->SetupAttachment(TargetPoint);
-
 	BlockCollision = CreateDefaultSubobject<USphereComponent>(TEXT("BlockCollision"));
 	BlockCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);	// 처음에 충돌 없고, 타겟 위치에 도달하면 ON
 	BlockCollision->SetupAttachment(Root);
-
-	BlockFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("BlockFX"));
-	BlockFX->SetAutoActivate(false);
-	BlockFX->SetAutoDestroy(false);
-	BlockFX->SetVisibility(false);
-	BlockFX->SetupAttachment(BlockCollision);
 }
 
 // Overlap 연결
@@ -97,8 +85,7 @@ void AGTWRoadblockGimmick::Warning()
 		return;
 	}
 
-	// 마커 표시(이미 TargetPoint 자손으로 세팅해둬서 위치는 그대로)
-	WarningMarker->SetVisibility(true);
+	StartLoopingFX(EGimmickFXTypes::Warning, TargetPoint);
 
 	// WarningDuration 동안 표시한 후, 발사 수행
 	GetWorldTimerManager().SetTimer(WarningTimerHandle, this, &ThisClass::Launch, WarningDuration);
@@ -115,8 +102,7 @@ void AGTWRoadblockGimmick::Launch()
 	// 충돌체 세팅
 	BlockCollision->SetWorldLocation(FlightStartLocation);
 
-	BlockFX->SetVisibility(true);
-	BlockFX->Activate(true);
+	StartLoopingFX(EGimmickFXTypes::Body, BlockCollision);
 	
 	FlightElapsedTime = 0.f;
 
@@ -159,7 +145,9 @@ void AGTWRoadblockGimmick::Finish()
 	BlockCollision->SetWorldLocation(FlightTargetLocation);
 	SetActorTickEnabled(false);
 	CurrentState = ERoadblockState::Blocked;
-	WarningMarker->SetVisibility(false);
+
+	StopLoopingFX(EGimmickFXTypes::Warning);
+	
 	BlockCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);	// 무슨 타입이 맞을까
 }
 
