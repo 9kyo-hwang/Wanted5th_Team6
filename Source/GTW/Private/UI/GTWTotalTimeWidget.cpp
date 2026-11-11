@@ -3,8 +3,7 @@
 
 #include "UI/GTWTotalTimeWidget.h"
 #include <GTWGameInstance.h>
-#include "UI/GTWTimerWidget.h"
-#include <Components/TextBlock.h>
+#include <Components/EditableTextBox.h>
 
 
 UGTWTotalTimeWidget::UGTWTotalTimeWidget(const FObjectInitializer& ObjectInitializer)
@@ -12,54 +11,94 @@ UGTWTotalTimeWidget::UGTWTotalTimeWidget(const FObjectInitializer& ObjectInitial
 {
 }
 
-FReply UGTWTotalTimeWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)
+void UGTWTotalTimeWidget::NativeConstruct()
 {
-	return Super::NativeOnKeyDown(InGeometry, InKeyEvent);
+	Super::NativeConstruct();
+
+	BindTimerToText();
 }
 
 void UGTWTotalTimeWidget::BindTimerToText()
 {
 	GameInstanceRef = GetGameInstance<UGTWGameInstance>();
 	UGTWGameInstance* Ins = GameInstanceRef.Get();
-	// 2층
-	SecondGTW = Cast<UTextBlock>(GetWidgetFromName(TEXT("Second")));
-	if (Ins->LevelClearTimes.Contains(ELevelClear::SecondFloorClear))
+
+	if (!IsValid(Ins))
 	{
-		SecondGTW->SetText(FText::AsNumber(*Ins->LevelClearTimes.Find(ELevelClear::SecondFloorClear)));
-		TotalTime += *Ins->LevelClearTimes.Find(ELevelClear::SecondFloorClear);
+		UE_LOG(LogTemp, Error,
+			TEXT("TotalTimeWidget: GTWGameInstance를 가져오지 못했습니다."));
+		return;
 	}
+
+	// 타이머 초기화(중복 호출 방지)
+	TotalTime = 0;
+
+	// 2층
+	SecondGTW = Cast<UEditableTextBox>(GetWidgetFromName(TEXT("Second")));
+	if (IsValid(SecondGTW))
+	{
+		if (Ins->LevelClearTimes.Contains(ELevelClear::SecondFloorClear))
+		{
+			SecondGTW->SetText(FText::AsNumber(*Ins->LevelClearTimes.Find(ELevelClear::SecondFloorClear)));
+			TotalTime += *Ins->LevelClearTimes.Find(ELevelClear::SecondFloorClear);
+		}
+	}
+
 
 	// 4층소코반
-	FourthSokoban = Cast<UTextBlock>(GetWidgetFromName(TEXT("Sokoban")));
-	if (Ins->LevelClearTimes.Contains(ELevelClear::SokobanClear))
+	FourthSokoban = Cast<UEditableTextBox>(GetWidgetFromName(TEXT("Sokoban")));
+	if (IsValid(FourthSokoban))
 	{
-		FourthSokoban->SetText(FText::AsNumber(*Ins->LevelClearTimes.Find(ELevelClear::SokobanClear)));
+		if (Ins->LevelClearTimes.Contains(ELevelClear::SokobanClear))
+		{
+			FourthSokoban->SetText(FText::AsNumber(*Ins->LevelClearTimes.Find(ELevelClear::SokobanClear)));
+			TotalTime += *Ins->LevelClearTimes.Find(ELevelClear::SokobanClear);
+		}
 	}
+
 
 	// 4층 슈팅게임
-	FourthShooting = Cast<UTextBlock>(GetWidgetFromName(TEXT("Shooting")));
-	if (Ins->LevelClearTimes.Contains(ELevelClear::ShootingGameClear))
+	FourthShooting = Cast<UEditableTextBox>(GetWidgetFromName(TEXT("Shooting")));
+	if (IsValid(FourthShooting))
 	{
-		FourthShooting->SetText(FText::AsNumber(*Ins->LevelClearTimes.Find(ELevelClear::ShootingGameClear)));
+		if (Ins->LevelClearTimes.Contains(ELevelClear::ShootingGameClear))
+		{
+			FourthShooting->SetText(FText::AsNumber(*Ins->LevelClearTimes.Find(ELevelClear::ShootingGameClear)));
+			TotalTime += *Ins->LevelClearTimes.Find(ELevelClear::ShootingGameClear);
+		}
 	}
+
 
 	// 6층 1페
-	SixthFirstPhase = Cast<UTextBlock>(GetWidgetFromName(TEXT("FirstPhase")));
-	if (Ins->LevelClearTimes.Contains(ELevelClear::BossFirstPhaseGameClear))
+	SixthFirstPhase = Cast<UEditableTextBox>(GetWidgetFromName(TEXT("FirstPhase")));
+	if (IsValid(SixthFirstPhase))
 	{
-		SixthFirstPhase->SetText(FText::AsNumber(*Ins->LevelClearTimes.Find(ELevelClear::BossFirstPhaseGameClear)));
+		if (Ins->LevelClearTimes.Contains(ELevelClear::BossFirstPhaseGameClear))
+		{
+			SixthFirstPhase->SetText(FText::AsNumber(*Ins->LevelClearTimes.Find(ELevelClear::BossFirstPhaseGameClear)));
+			TotalTime += *Ins->LevelClearTimes.Find(ELevelClear::BossFirstPhaseGameClear);
+		}
 	}
+
 
 	// 6층 2페
-	SixthSecondPhase = Cast<UTextBlock>(GetWidgetFromName(TEXT("SecondPhase")));
-	if (Ins->LevelClearTimes.Contains(ELevelClear::BossSecondPhaseGameClear))
+	SixthSecondPhase = Cast<UEditableTextBox>(GetWidgetFromName(TEXT("SecondPhase")));
+	if (IsValid(SixthSecondPhase))
 	{
-		SixthSecondPhase->SetText(FText::AsNumber(*Ins->LevelClearTimes.Find(ELevelClear::BossSecondPhaseGameClear)));
+		if (Ins->LevelClearTimes.Contains(ELevelClear::BossSecondPhaseGameClear))
+		{
+			SixthSecondPhase->SetText(FText::AsNumber(*Ins->LevelClearTimes.Find(ELevelClear::BossSecondPhaseGameClear)));
+			TotalTime += *Ins->LevelClearTimes.Find(ELevelClear::BossSecondPhaseGameClear);
+		}
 	}
 
+
 	// 총합
-	TotalText = Cast<UTextBlock>(GetWidgetFromName(TEXT("SecondPhase")));
-	TotalText->SetText(FText::AsNumber()));
+	TotalText = Cast<UEditableTextBox>(GetWidgetFromName(TEXT("Total")));
+	if (IsValid(TotalText))
+	{
+		TotalText->SetText(FText::AsNumber(TotalTime));
+	}
 
 
 }
