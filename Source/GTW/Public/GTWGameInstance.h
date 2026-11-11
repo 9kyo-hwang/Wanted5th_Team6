@@ -7,9 +7,18 @@
 #include <Tickable.h> // FTickableGameObject를 사용하기 위해 필수
 #include "GTWGameInstance.generated.h"
 
-enum class ELevelClear : uint8;
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnTimerChangedDelegate, double);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnClearLevelChangedDelegate, ELevelClear, double);
+
+UENUM()
+enum class ELevelClear : uint8
+{
+	SecondFloorClear = 0,
+	SokobanClear,
+	ShootingGameClear,
+	BossFirstPhaseGameClear,
+	BossSecondPhaseGameClear,
+};
 
 UENUM(BlueprintType)
 enum class EMinigameType : uint8
