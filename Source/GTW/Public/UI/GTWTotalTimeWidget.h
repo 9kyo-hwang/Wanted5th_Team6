@@ -47,7 +47,14 @@ private:
 	UPROPERTY()
 	TObjectPtr<class UTextBlock> SixthSecondPhase;
 
-	// 총합
+	// 총합 
 	UPROPERTY()
 	float TotalTime;
+
+	UPROPERTY()
+	TObjectPtr<class UTextBlock> TotalText;
+
+	// 게임인스턴스 가져오기
+	UPROPERTY()
+	TWeakObjectPtr<class UGTWGameInstance> GameInstanceRef;
 };

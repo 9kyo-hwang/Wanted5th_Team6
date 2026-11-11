@@ -61,6 +61,8 @@ public:
 	void RecordLevelClear(ELevelClear Level);
 	void RecordMiniGameClear(ELevelClear Level, double ClearTime);
 	void InitializeTimerWidget(class UGTWTimerWidget* Widget) const;
+public:
+	TMap<ELevelClear, double> LevelClearTimes;
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -100,5 +102,4 @@ private:
 	double TotalPlayTime = 0.0;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Time", meta = (AllowPrivateAccess = "true"))
 	double CurrentFloorTime = 0.0;
-	TMap<ELevelClear, double> LevelClearTimes;
 };
