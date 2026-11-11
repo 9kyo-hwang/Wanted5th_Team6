@@ -94,7 +94,6 @@ public:
 	FORCEINLINE void ResetBossPhase1Cleared() { bIsBossPhase1Cleared = false; }
 
 private:
-	void InitClearHistory();
 	bool SaveClearHistory();
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -116,5 +115,5 @@ private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Time", meta = (AllowPrivateAccess = "true"))
 	double CurrentFloorTime = 0.0;
 	TMap<ELevelClear, double> LevelClearTimes;
-	TArray<FString> CasingSaveDataKeyvalue;
+	TArray<FString> CachingSaveDataKeyvalue;
 };

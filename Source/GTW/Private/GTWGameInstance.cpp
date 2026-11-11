@@ -10,11 +10,8 @@
 
 #include <Kismet/GameplayStatics.h>
 
-// 이거 개노가다임 내일 key값 저장해서 들어있는거에 대해서 반복문돌려서 DoesSaveGameExist 체크해서
-// 코드 줄이기 안줄이면 복사 코드로 개많이 줄수만 늘어남
 namespace
 {
-    //const FString ClearHistorySlotName = TEXT("ClearHistory");
     const FString ProgressLevelSlotName = TEXT("ProgressLevel");
     const FString TotalPlayTimeSlotName = TEXT("TotalPlayTime");
     const FString ClearSecondLevelSlotName = TEXT("SecondFloorClear");
@@ -27,7 +24,7 @@ namespace
 
 UGTWGameInstance::UGTWGameInstance()
 {
-    CasingSaveDataKeyvalue = { ProgressLevelSlotName,TotalPlayTimeSlotName,
+    CachingSaveDataKeyvalue = { ProgressLevelSlotName,TotalPlayTimeSlotName,
     ClearSecondLevelSlotName,ClearSokobanSlotName,ClearShootingSlotName,
     ClearBossPhase1LevelSlotName, ClearBossPhase2LevelSlotName };
 }
@@ -40,15 +37,13 @@ UGTWGameInstance::UGTWGameInstance()
 void UGTWGameInstance::Init()
 {
     Super::Init();
-
-    InitClearHistory();
 }
 
 // 게임플레이 새로할 때마다 호출(값 초기화같은...)
 void UGTWGameInstance::StartNewGame()
 {
     // 1. 기존 SaveGame 파일 삭제
-    for (const FString& SlotName : CasingSaveDataKeyvalue)
+    for (const FString& SlotName : CachingSaveDataKeyvalue)
     {
         if (!UGameplayStatics::DoesSaveGameExist(
             SlotName, SaveGameInfoUserIndex))
@@ -236,7 +231,7 @@ bool UGTWGameInstance::IsLevelCleared(ELevelClear Level) const
 void UGTWGameInstance::CompleteGame()
 {
     bIsTickable = false;
-
+    
     if (!IsValid(ClearHistorySaveGame.Get()))
     {
         Debug::Print(TEXT("[GameInstance::CompleteGame] 클리어 시간은 확정됐으나 SaveGame 객체가 없어 저장 불가"));
@@ -611,53 +606,6 @@ void UGTWGameInstance::RecordMiniGameClear(ELevelClear Level, double ClearTime)
     }
 }
 
-//void UGTWGameInstance::RecordProgressGameTime()
-//{
-//    UGTWProgressLevelSaveGame* ProgressSaveGameInstance = nullptr;
-//
-//    if (UGameplayStatics::DoesSaveGameExist(
-//        ProgressLevelSlotName,
-//        SaveGameInfoUserIndex))
-//    {
-//        ProgressSaveGameInstance =
-//            Cast<UGTWProgressLevelSaveGame>(
-//                UGameplayStatics::LoadGameFromSlot(
-//                    ProgressLevelSlotName,
-//                    SaveGameInfoUserIndex));
-//    }
-//    else
-//    {
-//        ProgressSaveGameInstance =
-//            Cast<UGTWProgressLevelSaveGame>(
-//                UGameplayStatics::CreateSaveGameObject(
-//                    UGTWProgressLevelSaveGame::StaticClass()));
-//    }
-//
-//    if (!IsValid(ProgressSaveGameInstance))
-//    {
-//        Debug::Print(TEXT("ProgressSaveGameInstance 생성/로드 실패"));
-//        return;
-//    }
-//
-//    // 기존 ProgressLevel 값은 유지하고 시간만 갱신
-//    ProgressSaveGameInstance->ProgressPlayTime = TotalPlayTime;
-//
-//    ProgressSaveGame = ProgressSaveGameInstance;
-//
-//    if (!UGameplayStatics::SaveGameToSlot(
-//        ProgressSaveGame,
-//        ProgressLevelSlotName,
-//        SaveGameInfoUserIndex))
-//    {
-//        Debug::Print(TEXT("ProgressGameTime 저장 실패"));
-//        return;
-//    }
-//
-//    Debug::Print(FString::Printf(
-//        TEXT("ProgressGameTime 저장 성공 : %.2f"),
-//        ProgressSaveGame->ProgressPlayTime));
-//}
-
 void UGTWGameInstance::InitializeTimerWidget(UGTWTimerWidget* Widget) const
 {
     if (!IsValid(Widget))
@@ -752,34 +700,6 @@ double UGTWGameInstance::GetPlaytimeSeconds() const
     return 0.0;
 }
 
-void UGTWGameInstance::InitClearHistory()
-{
-  /*  if (UGameplayStatics::DoesSaveGameExist(ClearHistorySlotName, SaveGameInfoUserIndex))
-    {
-        if (UGTWClearHistorySaveGame* ClearHistorySaveGameInstance = Cast<UGTWClearHistorySaveGame>(UGameplayStatics::LoadGameFromSlot(ClearHistorySlotName, SaveGameInfoUserIndex)))
-        {
-            ClearHistorySaveGame = ClearHistorySaveGameInstance;
-        }
-        else
-        {
-            Debug::Print(TEXT("[GameInstance::Init] 기존 클리어 로드 실패"));
-            return;
-        }
-    }
-    else
-    {
-        if (UGTWClearHistorySaveGame* ClearHistorySaveGameInstance = Cast<UGTWClearHistorySaveGame>(UGameplayStatics::CreateSaveGameObject(UGTWClearHistorySaveGame::StaticClass())))
-        {
-            ClearHistorySaveGame = ClearHistorySaveGameInstance;
-        }
-        else
-        {
-            Debug::Print(TEXT("[GameInstance::Init] SaveGame 객체 생성 실패"));
-            return;
-        }
-    }*/
-}
-
 // return: 저장 성공 시 true, 실패했거나 SaveGame이 Invalid 하면 false
 bool UGTWGameInstance::SaveClearHistory()
 {
@@ -789,6 +709,4 @@ bool UGTWGameInstance::SaveClearHistory()
     }
 
     return false;
-    // SlotName이랑 UserIndex는 확인 필요
-    //return UGameplayStatics::SaveGameToSlot(ClearHistorySaveGame, ClearHistorySlotName, SaveGameInfoUserIndex);
 }
