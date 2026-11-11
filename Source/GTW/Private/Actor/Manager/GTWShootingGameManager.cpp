@@ -35,6 +35,15 @@ void AGTWShootingGameManager::BeginPlay()
 	{
 		StartForwardMovingLocation = ForwardMovingTriggerActor->GetActorLocation();
 	}
+
+	UGTWGameInstance* GameInst = Cast<UGTWGameInstance>(GetGameInstance());
+
+	if (!IsValid(GameInst))
+	{
+		return;
+	}
+
+	bIsShootingClear = GameInst->IsLevelCleared(ELevelClear::ShootingGameClear);
 }
 
 void AGTWShootingGameManager::ShowElapsedWidget()

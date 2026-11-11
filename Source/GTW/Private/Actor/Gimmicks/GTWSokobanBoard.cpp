@@ -9,8 +9,8 @@
 #include <Engine/StaticMesh.h>
 #include "Camera/CameraComponent.h"
 #include <Components/StaticMeshComponent.h>
+#include <GTWGameInstance.h>
 #include "Blueprint/UserWidget.h"
-
 // 3인칭 프로젝트때문에 일단 가져온거 나중에 캐릭붙으면 삭제 및 정리
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
@@ -107,6 +107,15 @@ void AGTWSokobanBoard::BeginPlay()
 		InitializeMap();
 		GetMapCenterLocation();
 	}
+
+	UGTWGameInstance* GameInst = Cast<UGTWGameInstance>(GetGameInstance());
+
+	if (!IsValid(GameInst))
+	{
+		return;
+	}
+
+	bIsSokobanClear = GameInst->IsLevelCleared(ELevelClear::SokobanClear);
 }
 
 // Called every frame
