@@ -44,7 +44,14 @@ void AGTWMeteorGimmick::BeginPlay()
 
 	StartLoopingFX(EGimmickFXTypes::Warning, Root);
 
-	GetWorldTimerManager().SetTimer(WarningTimerHandle, this, &ThisClass::Falling, WarningDuration);
+	if (WarningDuration <= 0.f)
+	{
+		Falling();
+	}
+	else
+	{
+		GetWorldTimerManager().SetTimer(WarningTimerHandle, this, &ThisClass::Falling, WarningDuration);
+	}
 }
 
 void AGTWMeteorGimmick::Falling()
