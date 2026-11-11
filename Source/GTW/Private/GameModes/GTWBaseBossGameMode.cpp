@@ -262,6 +262,17 @@ bool AGTWBaseBossGameMode::OpenNextLevelByResult(EBossGameModeState Result)
 		return false;
 	}
 
+	// 화면 전환 시 현재 레벨의 모습을 보이지 않게 하기 위해 까맣게 처리. 
+	APlayerCameraManager* manager = UGameplayStatics::GetPlayerCameraManager(this, 0);
+	if (IsValid(manager))
+	{
+		manager->SetManualCameraFade(
+			1.0f,				// 완~저니 검정
+			FLinearColor::Black,// 페이드 색
+			false				// 페이드 오디오
+		);
+	}
+
 	UGameplayStatics::OpenLevelBySoftObjectPtr(this, LevelToOpen);
 	return true;
 }
