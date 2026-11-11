@@ -4,6 +4,7 @@
 #include "Components/Player/GTWPlayerAudioComponent.h"
 #include <Characters/Player/GTWPlayerCharacter.h>
 
+
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Actor.h"
 #include "Sound/SoundBase.h"
@@ -12,6 +13,62 @@ UGTWPlayerAudioComponent::UGTWPlayerAudioComponent()
 {
     bAutoActivate = false;
     bWantsInitializeComponent = true;
+
+    static ConstructorHelpers::FObjectFinder<USoundBase> WeakHitSoundAsset(
+        TEXT("/Game/Assets/Sounds/Weak.Weak")
+    );
+    if (WeakHitSoundAsset.Succeeded())
+    {
+        WeakHitSound = WeakHitSoundAsset.Object;
+    }
+
+    static ConstructorHelpers::FObjectFinder<USoundBase> StrongHitSoundAsset(
+        TEXT("/Game/Assets/Sounds/Strong.Strong")
+    );
+    if (StrongHitSoundAsset.Succeeded())
+    {
+        StrongHitSound = StrongHitSoundAsset.Object;
+    }
+
+    static ConstructorHelpers::FObjectFinder<USoundBase> HitSoundAsset(
+        TEXT("/Game/Assets/Sounds/Hit.Hit")
+    );
+    if (HitSoundAsset.Succeeded())
+    {
+        HitSound = HitSoundAsset.Object;
+    }
+
+    static ConstructorHelpers::FObjectFinder<USoundBase> SkateStartSoundAsset(
+        TEXT("/Game/Assets/Sounds/skate_start.skate_start")
+    );
+    if (SkateStartSoundAsset.Succeeded())
+    {
+        SkateStartSound = SkateStartSoundAsset.Object;
+    }
+
+    static ConstructorHelpers::FObjectFinder<USoundBase> SkateLoopSoundAsset(
+        TEXT("/Game/Assets/Sounds/skate_loop.skate_loop")
+    );
+    if (SkateLoopSoundAsset.Succeeded())
+    {
+        SkateLoopSound = SkateLoopSoundAsset.Object;
+    }
+
+    static ConstructorHelpers::FObjectFinder<USoundBase> SkateEndSoundAsset(
+        TEXT("/Game/Assets/Sounds/skate_stop.skate_stop")
+    );
+    if (SkateEndSoundAsset.Succeeded())
+    {
+        SkateEndSound = SkateEndSoundAsset.Object;
+    }
+
+    static ConstructorHelpers::FObjectFinder<USoundBase> HardImpactVoiceSoundAsset(
+        TEXT("/Game/Assets/Sounds/HardImpactVoice.HardImpactVoice")
+    );
+    if (HardImpactVoiceSoundAsset.Succeeded())
+    {
+        HardImpactVoiceSound = HardImpactVoiceSoundAsset.Object;
+    }
 }
 
 void UGTWPlayerAudioComponent::InitializeComponent()
@@ -19,9 +76,6 @@ void UGTWPlayerAudioComponent::InitializeComponent()
     Super::InitializeComponent();
 
 	GTWPlayerCharacter = Cast<AGTWPlayerCharacter>(GetOwner());
-
-
-    
 }
 
 void UGTWPlayerAudioComponent::PlaySkateStart()
