@@ -13,11 +13,6 @@
  * - 성공: 보스 유효타 3회 / 실패: 맵 밖으로 떨어져서 바닥에 깔린 TriggerBox에 플레이어가 닿으면
  */
 
-/*
-* 1페 보스쪽에 필요한 것
-* OnObjectHit: C++ 멀티캐스트(인자 없음)
-*/
-
 UCLASS()
 class GTW_API AGTWBossPhase1GameMode : public AGTWBaseBossGameMode
 {
