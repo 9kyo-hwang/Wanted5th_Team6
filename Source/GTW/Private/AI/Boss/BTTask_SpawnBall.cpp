@@ -22,8 +22,9 @@ EBTNodeResult::Type UBTTask_SpawnBall::ExecuteTask(UBehaviorTreeComponent& Owner
 	}
 
 	// 함수 실행
-	BossPawn->PlayMeteorMontage();
+	BossPawn->PlaySpawnBall();
 
 	// 태스크 실행 후 결과 반환
+	//UE_LOG(LogTemp, Log, TEXT("Start SpawnBall"));
 	return EBTNodeResult::Succeeded;
 }

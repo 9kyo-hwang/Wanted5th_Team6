@@ -21,7 +21,7 @@ EBTNodeResult::Type UBTTask_SwordWave::ExecuteTask(UBehaviorTreeComponent& Owner
 	}
 
 	// 함수 실행
-	BossPawn->PlaySwordWaveMontage();
+	BossPawn->PlaySwordWave();
 
 	return EBTNodeResult::Succeeded;
 }

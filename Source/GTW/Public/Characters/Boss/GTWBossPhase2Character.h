@@ -7,27 +7,6 @@
 #include <Interfaces/GTWBossAIInterface.h>
 #include "GTWBossPhase2Character.generated.h"
 
-class UAnimInstance;
-class UAnimMontage;
-class AGTWStartMoveSplineActor;
-class AGTWMeteorGimmick;
-class AGTWLightningGimmick;
-class AGTWSwordWaveGimmick;
-class UBoxComponent;
-
-USTRUCT(BlueprintType)
-struct FGTWBossGimmickSpawnSettings
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere, Category="Gimmick|Spawn", meta=(ClampMin="0.0", Units = "cm"))
-	float ForwardDistance = 0.f;
-
-	UPROPERTY(EditAnywhere, Category = "Gimmick|Spawn", meta = (ClampMin = "0.0", ClampMax = "450.0", Units = "cm"))
-	float HorizontalRandomRange = 0.f;
-};
-
 UCLASS()
 class GTW_API AGTWBossPhase2Character : public ACharacter, public IGTWBossAIInterface
 {
@@ -41,9 +20,13 @@ public:
 	virtual void StopCombat() override;
 
 public:
-	void PlaySwordWaveMontage();
-	void PlayMeteorMontage();
-	void PlayLightningMontage();
+	// 검기 실행 함수
+	UFUNCTION()
+	void PlaySwordWave();
+	// 공 실행 함수
+	void PlaySpawnBall();
+	// 번개 실행 함수
+	void PlayLightning();
 
 	// 스플라인 갱신 함수(오버랩 트리거 BP에 할당)
 	// 다음 스플라인 이동 시에만 호출. 
@@ -54,62 +37,49 @@ public:
 	UFUNCTION(BlueprintCallable, Category = Spline)
 	void StartSpline();
 
-private:
-	// 어택 몽타주 실행
-	void PlayAttackMontage(UAnimMontage* Montage);
-	void OnAttackMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-
-	void SpawnSwordWaveGimmick();
-	void SpawnMeteorGimmick();
-	void SpawnLightningGimmick();
-
-	FVector CalculateGimmickSpawnLocation(const FGTWBossGimmickSpawnSettings& Settings) const;
+public:
+	// 게임 오버 처리할 박스 콜리전 추가. 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Arrow)
+	class UBoxComponent* DeathBox;
 
 protected:
 	// 몽타주
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
-	TObjectPtr<UAnimMontage> SwordWaveAttack;
+	TObjectPtr<class UAnimMontage> SwordAttack;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
-	TObjectPtr<UAnimMontage> LightningAttack;
+	TObjectPtr<class UAnimMontage> LightningAttack;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
-	TObjectPtr<UAnimMontage> MeteorAttack;
+	TObjectPtr<class UAnimMontage> BallAttack;
 
 	// 스플라인 3개 설정
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Spline)
-	TArray<TObjectPtr<AGTWStartMoveSplineActor>> BossSplines;
+	TArray<TObjectPtr<class AGTWStartMoveSplineActor>> BossSplines;
 	
 	// 투사체 액터 
 	// 운석
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = GimmickActor)
-	TSubclassOf<AGTWMeteorGimmick> MeteorClass;
-
-	UPROPERTY(EditAnywhere, Category="Gimmick|Spawn")
-	FGTWBossGimmickSpawnSettings MeteorSpawnSettings;
+	TSubclassOf<class AGTWMeteorGimmick> MeteorClass;
 
 	// 번개
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = GimmickActor)
-	TSubclassOf<AGTWLightningGimmick> LightningClass;
-	UPROPERTY(EditAnywhere, Category = "Gimmick|Spawn")
-	FGTWBossGimmickSpawnSettings LightningSpawnSettings;
+	TSubclassOf<class AGTWLightningGimmick> LightningClass;
 
 	// 검기
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = GimmickActor)
-	TSubclassOf<AGTWSwordWaveGimmick> SwordWaveClass;
-	UPROPERTY(EditAnywhere, Category = "Gimmick|Spawn")
-	FGTWBossGimmickSpawnSettings SwordWaveSpawnSettings;
+	TSubclassOf<class AGTWSwordWaveGimmick> SwordWaveClass;
 
-	// 게임 오버 처리할 박스 콜리전 추가. 
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = Arrow)
-	TObjectPtr<UBoxComponent> DeathBox;
 
 private:
-	bool bCombatActive = false;
+	// 어택 몽타주 실행
+	void PlayAttackAnim(UAnimMontage* AttackMontage);
 
+private:
 	// 현재 스플라인 번호
-	int32 CurrentSplineNum = 0;
+	int CurrentSplineNum = 0;
 
 	// ABP 클래스
-	TSubclassOf<UAnimInstance> ABPClass;
+	TSubclassOf<class UAnimInstance> ABPClass;
+
 };

@@ -1,4 +1,4 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -34,8 +34,6 @@ public:
 
 	void PlayerWallImpact(int Speed);
 
-	UFUNCTION(BlueprintCallable, Category = Hit)
-	void ApplyKnockback(FVector HitDirection, float Power);
 protected:
 	// 틱에 호출될 경사 이동 함수
 	void MoveSlope(const FVector& Normal);

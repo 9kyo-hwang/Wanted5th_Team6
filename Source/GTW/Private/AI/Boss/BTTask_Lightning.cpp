@@ -23,6 +23,6 @@ EBTNodeResult::Type UBTTask_Lightning::ExecuteTask(UBehaviorTreeComponent& Owner
 	}
 
 	// 함수 실행
-	BossPawn->PlayLightningMontage();
+	BossPawn->PlayLightning();
 	return EBTNodeResult::Succeeded;
 }

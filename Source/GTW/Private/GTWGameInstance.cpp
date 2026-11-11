@@ -223,11 +223,6 @@ bool UGTWGameInstance::LoadProgressGame()
     return OpenGameLevel(ProgressSaveGameInstance->ProgressLevel);
 }
 
-void UGTWGameInstance::ResetCurrentFloorTime()
-{
-    CurrentFloorTime = 0.0f;
-}
-
 bool UGTWGameInstance::IsLevelCleared(ELevelClear Level) const
 {
     return LevelClearTimes.Contains(Level);
@@ -278,7 +273,7 @@ void UGTWGameInstance::RecordLevelClear(ELevelClear Level)
     {
         return;
     }
-
+    // 여기다가 Switch 만들어서 층별로 저장
     switch (Level)
     {
     case ELevelClear::SecondFloorClear:
@@ -593,6 +588,7 @@ void UGTWGameInstance::RecordMiniGameClear(ELevelClear Level, double ClearTime)
 
         // 로드 또는 생성 이후 값을 설정
         ClearHistorySaveGame->LevelClearTime.Add(Level, ClearTime);
+
         // 실제 파일 저장
         if (!UGameplayStatics::SaveGameToSlot(
             ClearHistorySaveGame,

@@ -24,14 +24,7 @@ void AGTWLightningGimmick::BeginPlay()
 	
 	StartLoopingFX(EGimmickFXTypes::Warning, Root);
 
-	if (WarningDuration <= 0.f)
-	{
-		Strike();
-	}
-	else
-	{
-		GetWorldTimerManager().SetTimer(WarningTimerHandle, this, &ThisClass::Strike, WarningDuration);
-	}
+	GetWorldTimerManager().SetTimer(WarningTimerHandle, this, &ThisClass::Strike, WarningDuration);
 }
 
 // Warning 마커 지우고 -> 번개 표시하고 -> 판정

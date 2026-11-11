@@ -37,15 +37,7 @@ void AGTWSwordWaveGimmick::BeginPlay()
 	Super::BeginPlay();
 	
 	WaveCollision->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnPlayerEnter);
-
-	if (WarningDuration <= 0.f)
-	{
-		OnEndWarning();
-	}
-	else
-	{
-		GetWorldTimerManager().SetTimer(WarningTimerHandle, this, &ThisClass::OnEndWarning, WarningDuration);
-	}	
+	GetWorldTimerManager().SetTimer(WarningTimerHandle, this, &ThisClass::OnEndWarning, WarningDuration);
 }
 
 void AGTWSwordWaveGimmick::OnEndWarning()

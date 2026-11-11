@@ -58,8 +58,6 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Game|Progress")
 	bool LoadProgressGame();
 
-	UFUNCTION(BlueprintCallable, Category = "Game|Progress")
-	void ResetCurrentFloorTime();
 	UFUNCTION(BlueprintCallable)
 	bool IsLevelCleared(ELevelClear Level) const;
 

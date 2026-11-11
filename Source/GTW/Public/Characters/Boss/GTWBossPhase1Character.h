@@ -185,10 +185,6 @@ public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|TornadoKick")
 	float TornadoKickPower = 0.f;
 
-	/** BossPhase1.ini의 킥 차례 실행 확률(0~1). 선택하지 않은 차례는 기존 Wait로 넘어간다. */
-	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|TornadoKick")
-	float TornadoKickChance = 1.f;
-
 	/** 2층 점프 발판을 상속한 P1 BP. 점프/사운드는 원본, 제자리 뜀 보정은 자식 BP가 담당한다. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|TornadoKick|Escape")
 	TSubclassOf<AGTWP1TornadoJumpPad> TornadoEscapePadClass;
@@ -365,9 +361,7 @@ private:
 	bool bTornadoDamageActive = false;
 	bool bTornadoPlayerHit = false;
 	FVector TornadoMeshBaseLocation = FVector::ZeroVector;
-	/** 왼쪽 무릎·발, 오른쪽 무릎·발, 왼쪽·오른쪽 허벅지의 이전 프레임 위치. */
-	FVector PreviousKickBones[6];
-	void SweepTornadoKickLeg(const FVector& PreviousStart, const FVector& PreviousEnd, const FVector& Start, const FVector& End);
+	FVector PreviousKickBones[4];
 	void TraceTornadoKick(const FVector& Start, const FVector& End);
 
 	/** 중복 시작과 종료 후 공격을 막기 위한 전투 진행 상태. */
