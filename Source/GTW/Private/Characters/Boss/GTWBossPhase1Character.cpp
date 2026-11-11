@@ -14,6 +14,88 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Interfaces/GTWHitReactionReceiver.h"
+#include "UI/GTWP1TornadoPresentationWidget.h"
+#include "UI/GTWP1BossHitWidget.h"
+#include "GTWGameInstance.h"
+#include "HAL/FileManager.h"
+#include "Misc/ConfigCacheIni.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+
+void AGTWBossPhase1Character::LoadDifficultySettings()
+{
+	// 파일 오류 시 임의의 보너스를 주지 않고 기존 생성량을 유지한다.
+	FastClearTimeThreshold = 0.f;
+	FastClearObstacleRatio = 1.f;
+	const FString DefaultFile = FPaths::Combine(FPaths::ProjectContentDir(), TEXT("GTW/GameData/BossPhase1.ini"));
+	const FString ExternalFile = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Config/BossPhase1.ini"));
+	FString SettingsFile = ExternalFile;
+
+	// GameData는 기존 UFS 패키징 대상이다. 원본을 읽어 수정 가능한 Saved 위치에 최초 한 번만 복사한다.
+	if (!IFileManager::Get().FileExists(*ExternalFile))
+	{
+		FString Defaults;
+		const bool bCopied = FFileHelper::LoadFileToString(Defaults, *DefaultFile)
+			&& IFileManager::Get().MakeDirectory(*FPaths::GetPath(ExternalFile), true)
+			&& FFileHelper::SaveStringToFile(Defaults, *ExternalFile, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
+		if (!bCopied)
+		{
+			// 저장 폴더에 쓸 수 없어도 패키지 기본값으로 동작한다.
+			SettingsFile = DefaultFile;
+			UE_LOG(LogTemp, Warning, TEXT("P1: 외부 INI를 생성하지 못해 패키지 기본 INI를 사용합니다: %s"), *ExternalFile);
+		}
+	}
+
+	// GConfig 캐시를 사용하지 않아 다음 P1 진입 때 파일 변경을 다시 읽는다.
+	FConfigFile Settings;
+	Settings.Read(SettingsFile);
+	FString ThresholdText;
+	FString RatioText;
+	float Threshold = 0.f;
+	float Ratio = 1.f;
+	const bool bValid = Settings.GetString(TEXT("BossPhase1"), TEXT("FastClearTimeThreshold"), ThresholdText)
+		&& Settings.GetString(TEXT("BossPhase1"), TEXT("FastClearObstacleRatio"), RatioText)
+		&& LexTryParseString(Threshold, *ThresholdText) && LexTryParseString(Ratio, *RatioText)
+		&& FMath::IsFinite(Threshold) && Threshold >= 0.f
+		&& FMath::IsFinite(Ratio) && Ratio >= 0.f && Ratio <= 1.f;
+	if (!bValid)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("P1: INI 값이 없거나 잘못되었습니다. 장애물 생성량을 보정하지 않습니다: %s"), *SettingsFile);
+		return;
+	}
+	FastClearTimeThreshold = Threshold;
+	FastClearObstacleRatio = Ratio;
+	UE_LOG(LogTemp, Display, TEXT("P1 INI: %s (Threshold=%.2f, Ratio=%.2f)"),
+		*FPaths::ConvertRelativePathToFull(SettingsFile), Threshold, Ratio);
+}
+
+void AGTWBossPhase1Character::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	if (!GetWorld()->IsGameWorld())
+	{
+		return;
+	}
+
+	LoadDifficultySettings();
+	// BP의 원래 개수는 보존한다. 레벨 재시작 시에도 비율이 중복으로 적용되지 않는다.
+	AdjustedAttackActorCount = FMath::Clamp(AttackActorCount, 1, 32);
+	FourthFloorClearTime = -1.0;
+	bHasFastClearBenefit = false;
+	const UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>();
+	if (!GameInstance || !GameInstance->TryGetMinigameClearTime(EMinigameType::Shooting, FourthFloorClearTime))
+	{
+		return;
+	}
+
+	// 수치는 INI가 관리하고 C++은 기존 4층 기록 조회와 생성량 계산만 담당한다.
+	bHasFastClearBenefit = FMath::IsFinite(FourthFloorClearTime)
+		&& FastClearTimeThreshold > 0.f && FourthFloorClearTime < FastClearTimeThreshold;
+	if (bHasFastClearBenefit)
+	{
+		AdjustedAttackActorCount = FMath::RoundToInt(AdjustedAttackActorCount * FMath::Clamp(FastClearObstacleRatio, 0.f, 1.f));
+	}
+}
 
 void AGTWBossPhase1Character::StartCombat()
 {
@@ -114,7 +196,7 @@ FVector AGTWBossPhase1Character::GetChaseLocation(const FVector& PlayerPosition)
 
 void AGTWBossPhase1Character::UpdatePursuit(APawn* TargetPlayer, const FVector& ChaseLocation, float DeltaSeconds)
 {
-	if (!IsValid(MovementBoundsActor) || !IsEncounterRunning() || !IsValid(TargetPlayer))
+	if (bReactingToHit || !IsValid(MovementBoundsActor) || !IsEncounterRunning() || !IsValid(TargetPlayer))
 	{
 		return;
 	}
@@ -138,7 +220,7 @@ void AGTWBossPhase1Character::UpdatePursuit(APawn* TargetPlayer, const FVector& 
 void AGTWBossPhase1Character::PlayDropObstacles(APawn* Player)
 {
 	// 공격 가능 여부는 보스 한 곳에서 판단한다. Task는 대상 전달만 담당한다.
-	if (!bRunning || !IsValid(MovementBoundsActor) || !IsValid(Player) || IsPreparingAttack())
+	if (!bRunning || bReactingToHit || !IsValid(MovementBoundsActor) || !IsValid(Player) || IsPreparingAttack())
 	{
 		return;
 	}
@@ -151,7 +233,7 @@ void AGTWBossPhase1Character::PlayDropObstacles(APawn* Player)
 
 bool AGTWBossPhase1Character::PlayTornadoKick()
 {
-	if (!bRunning || !IsValid(MovementBoundsActor) || IsPreparingAttack() || !TornadoKick)
+	if (!bRunning || bReactingToHit || !IsValid(MovementBoundsActor) || IsPreparingAttack() || !TornadoKick)
 	{
 		return false;
 	}
@@ -164,6 +246,16 @@ bool AGTWBossPhase1Character::PlayTornadoKick()
 	bTornadoKickPlaying = true;
 	TornadoMeshBaseLocation = GetMesh()->GetRelativeLocation();
 	bTornadoPlayerHit = false;
+	if (APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0))
+	{
+		UClass* PresentationClass = TornadoPresentationClass ? TornadoPresentationClass.Get() : UGTWP1TornadoPresentationWidget::StaticClass();
+		if (UGTWP1TornadoPresentationWidget* Presentation = CreateWidget<UGTWP1TornadoPresentationWidget>(PlayerController, PresentationClass))
+		{
+			TornadoPresentation = Presentation;
+			Presentation->SetBoss(this);
+			Presentation->AddToViewport(20);
+		}
+	}
 	return true;
 }
 
@@ -199,6 +291,11 @@ void AGTWBossPhase1Character::UpdateTornadoKickMotion()
 
 void AGTWBossPhase1Character::ResetTornadoKickMotion()
 {
+	if (TornadoPresentation)
+	{
+		TornadoPresentation->RemoveFromParent();
+		TornadoPresentation = nullptr;
+	}
 	GetMesh()->SetRelativeLocation(TornadoMeshBaseLocation);
 	if (UAnimInstance* Instance = GetMesh()->GetAnimInstance())
 	{
@@ -224,6 +321,12 @@ void AGTWBossPhase1Character::BeginTornadoKickDamage()
 		PreviousKickBones[Index] = GetMesh()->GetSocketLocation(Bones[Index]);
 	}
 	bTornadoDamageActive = true;
+	if (!KickPoseFinalizedHandle.IsValid())
+	{
+		// Notify 시점뿐 아니라 최종 애니메이션 포즈가 확정된 뒤에도 실제 다리를 검사한다.
+		KickPoseFinalizedHandle = GetMesh()->RegisterOnBoneTransformsFinalizedDelegate(
+			FOnBoneTransformsFinalizedMultiCast::FDelegate::CreateUObject(this, &ThisClass::UpdateTornadoKickDamage));
+	}
 }
 
 void AGTWBossPhase1Character::UpdateTornadoKickDamage()
@@ -276,30 +379,58 @@ void AGTWBossPhase1Character::TraceTornadoKick(const FVector& Start, const FVect
 		return;
 	}
 
-	TArray<FHitResult> Hits;
-	FCollisionObjectQueryParams Objects(ECC_Pawn);
-	FCollisionQueryParams Query(SCENE_QUERY_STAT(P1TornadoKick), false, this);
-	GetWorld()->SweepMultiByObjectType(Hits, Start, End, FQuat::Identity, Objects, FCollisionShape::MakeSphere(Radius), Query);
-	for (const FHitResult& Hit : Hits)
+	const ACharacter* PlayerCharacter = Cast<ACharacter>(Player);
+	if (!PlayerCharacter)
 	{
-		if (Hit.GetActor() != Player)
+		return;
+	}
+
+	// 단일 플레이어의 캡슐과 다리 구간을 직접 비교한다.
+	// 래그돌 등으로 메시의 충돌 채널이 바뀌어도 동일한 접촉 범위를 사용한다.
+	const UCapsuleComponent* Capsule = PlayerCharacter->GetCapsuleComponent();
+	const float CapsuleRadius = Capsule->GetScaledCapsuleRadius();
+	const float HalfSegment = FMath::Max(0.f, Capsule->GetScaledCapsuleHalfHeight() - CapsuleRadius);
+	const FVector CapsuleOffset = Capsule->GetUpVector() * HalfSegment;
+	const FVector CapsuleCenter = Capsule->GetComponentLocation();
+	FVector LegPoint;
+	FVector PlayerPoint;
+	FMath::SegmentDistToSegmentSafe(Start, End, CapsuleCenter - CapsuleOffset, CapsuleCenter + CapsuleOffset, LegPoint, PlayerPoint);
+	const float ContactRadius = Radius + CapsuleRadius;
+	const bool bTouchesPlayer = FVector::DistSquared(LegPoint, PlayerPoint) <= FMath::Square(ContactRadius);
+	if (!bTouchesPlayer)
+	{
+		return;
+	}
+
+	if (IGTWHitReactionReceiver* Receiver = Cast<IGTWHitReactionReceiver>(Player))
+	{
+		FVector Direction = (CapsuleCenter - GetActorLocation()).GetSafeNormal2D();
+		if (Direction.IsNearlyZero())
 		{
-			continue;
+			Direction = GetActorForwardVector().GetSafeNormal2D();
 		}
-		if (IGTWHitReactionReceiver* Receiver = Cast<IGTWHitReactionReceiver>(Player))
+		// 지면에서 수평 충격이 바로 감쇠되지 않도록 약간 들어 올린다.
+		// 기존 인터페이스가 충격·래그돌·무적 시간을 처리한다. 공격당 한 번만 전달한다.
+		Direction.Z = 0.35f;
+		bTornadoPlayerHit = true;
+		Receiver->HitKnockbackObject(Direction.GetSafeNormal(), TornadoKickPower);
+		// P1 직접 타격은 지면 마찰과 스케이트 이동 상태에 관계없이 밀려나게 한다.
+		// 기존 인터페이스의 피격 반응을 재사용하고, 이동 속도만 Character API로 확정한다.
+		if (ACharacter* HitCharacter = Cast<ACharacter>(Player))
 		{
-			// 공격 하나에서 한 번만 전달한다. 무적/래그돌 처리는 기존 플레이어가 담당한다.
-			bTornadoPlayerHit = true;
-			const FVector Direction = (Player->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
-			Receiver->HitKnockbackObject(Direction.IsNearlyZero() ? GetActorForwardVector() : Direction, TornadoKickPower);
+			HitCharacter->LaunchCharacter(Direction.GetSafeNormal() * TornadoKickPower, true, true);
 		}
-		break;
 	}
 }
 
 void AGTWBossPhase1Character::EndTornadoKickDamage()
 {
 	bTornadoDamageActive = false;
+	if (KickPoseFinalizedHandle.IsValid())
+	{
+		GetMesh()->UnregisterOnBoneTransformsFinalizedDelegate(KickPoseFinalizedHandle);
+		KickPoseFinalizedHandle.Reset();
+	}
 }
 
 void AGTWBossPhase1Character::CancelTornadoKick()
@@ -378,7 +509,12 @@ void AGTWBossPhase1Character::SpawnAttackActors(APawn* Player)
 		return;
 	}
 	AttackSpawnTarget = Player;
-	RemainingAttackActors = FMath::Clamp(AttackActorCount, 1, 32);
+	RemainingAttackActors = AdjustedAttackActorCount;
+	if (RemainingAttackActors <= 0)
+	{
+		AttackSpawnTarget.Reset();
+		return;
+	}
 	SpawnNextAttackActor();
 	if (RemainingAttackActors > 0)
 	{
@@ -540,11 +676,53 @@ void AGTWBossPhase1Character::OnHitObjectReachedBoss(AGTWBossHitObject* HitObjec
 	}
 	// 먼저 목록에서 제거해 같은 액터의 중복 알림과 종료 시 중복 정리를 막는다.
 	SpawnedHitObjects.Remove(HitObject);
-	OnObjectHit.Broadcast(); // 기존 GameMode: 1회 누적, 3회면 ClearPhase.
+	DisplayedHitCount = FMath::Min(DisplayedHitCount + 1, 3);
+	++PendingHitNotifications;
+	if (AGTWBoss1PAIController* AI = Cast<AGTWBoss1PAIController>(GetController()))
+	{
+		AI->StopAI();
+	}
+	CancelPreparedAttack();
+	bReactingToHit = true;
+	GetWorldTimerManager().PauseTimer(AttackSpawnTimer);
+	if (UAnimInstance* Anim = GetMesh()->GetAnimInstance(); Anim && HitReaction)
+	{
+		const float Rate = HitReaction->GetPlayLength() / FMath::Max(0.1f, HitReactionDuration);
+		if (Anim->Montage_Play(HitReaction, Rate) > 0.f)
+		{
+			HitReactionMontage = HitReaction;
+		}
+	}
+	// 연속 적중은 HUD에 즉시 표시하되 마지막 반응까지 보여준 뒤 기존 카운트에 전달한다.
+	GetWorldTimerManager().SetTimer(HitReactionTimer, this, &ThisClass::FinishHitReaction, FMath::Max(0.1f, HitReactionDuration), false);
+}
+
+void AGTWBossPhase1Character::FinishHitReaction()
+{
+	bReactingToHit = false;
+	HitReactionMontage = nullptr;
+	const int32 Notifications = PendingHitNotifications;
+	PendingHitNotifications = 0;
+	for (int32 Index = 0; Index < Notifications && bRunning; ++Index)
+	{
+		OnObjectHit.Broadcast();
+	}
+	if (bRunning)
+	{
+		GetWorldTimerManager().UnPauseTimer(AttackSpawnTimer);
+		if (AGTWBoss1PAIController* AI = Cast<AGTWBoss1PAIController>(GetController()))
+		{
+			AI->RunAI();
+		}
+	}
 }
 
 bool AGTWBossPhase1Character::PlayAttackAnim(UAnimMontage* Montage, APawn* Player)
 {
+	if (bReactingToHit)
+	{
+		return false;
+	}
 	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
 	if (!Montage || !AnimInstance)
 	{
@@ -621,6 +799,22 @@ void AGTWBossPhase1Character::StopEncounter()
 	}
 	// 늦게 도착한 몽타주 종료 콜백도 공격할 수 없도록 먼저 종료 상태로 바꾼다.
 	bRunning = false;
+	GetWorldTimerManager().ClearTimer(HitReactionTimer);
+	bReactingToHit = false;
+	PendingHitNotifications = 0;
+	if (HitReactionMontage)
+	{
+		if (UAnimInstance* Anim = GetMesh()->GetAnimInstance())
+		{
+			Anim->Montage_Stop(0.1f, HitReactionMontage);
+		}
+		HitReactionMontage = nullptr;
+	}
+	if (HitWidget)
+	{
+		HitWidget->RemoveFromParent();
+		HitWidget = nullptr;
+	}
 	if (AGTWBoss1PAIController* AI = Cast<AGTWBoss1PAIController>(GetController()))
 	{
 		AI->StopAI();
@@ -684,6 +878,14 @@ void AGTWBossPhase1Character::StartEncounter()
 		return;
 	}
 
+	// 시퀀서 미리보기의 Custom Mode가 PIE에 복사될 수 있다.
+	// 인트로가 끝난 뒤에는 BP에서 지정한 Anim Class로 제어를 돌려 공격 Slot이 평가되게 한다.
+	USkeletalMeshComponent* BossMesh = GetMesh();
+	if (BossMesh->GetAnimationMode() != EAnimationMode::AnimationBlueprint)
+	{
+		BossMesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	}
+
 	// 이동 주체는 UpdatePursuit 한 곳이다. CharacterMovement와 동시에 이동하지 않게 한다.
 	UCharacterMovementComponent* Movement = GetCharacterMovement();
 	PreviousMovementMode = Movement->MovementMode;
@@ -691,6 +893,17 @@ void AGTWBossPhase1Character::StartEncounter()
 	Movement->StopMovementImmediately();
 	Movement->DisableMovement();
 	bRunning = true;
+	DisplayedHitCount = 0;
+	PendingHitNotifications = 0;
+	if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
+	{
+		HitWidget = HitStatusWidgetClass ? CreateWidget<UGTWP1BossHitWidget>(PC, HitStatusWidgetClass) : nullptr;
+		if (HitWidget)
+		{
+			HitWidget->SetBoss(this);
+			HitWidget->AddToViewport(15);
+		}
+	}
 	if (!AI->RunAI())
 	{
 		StopEncounter();

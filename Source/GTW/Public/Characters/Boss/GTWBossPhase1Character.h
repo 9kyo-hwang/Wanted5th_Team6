@@ -10,6 +10,8 @@ class ATriggerBox;
 class UBoxComponent;
 class UAnimMontage;
 class AGTWBossHitObject;
+class UGTWP1TornadoPresentationWidget;
+class UGTWP1BossHitWidget;
 struct FCollisionQueryParams;
 
 DECLARE_MULTICAST_DELEGATE(FOnObjectHitDelegate);
@@ -25,6 +27,17 @@ class GTW_API AGTWBossPhase1Character : public ACharacter, public IGTWBossAIInte
 
 public:
 	virtual void Tick(float DeltaSeconds) override;
+	/** HUD 표시용 적중 횟수. 페이즈 전환은 기존 GameMode가 판단한다. */
+	UFUNCTION(BlueprintPure, Category = "Boss|HitReaction")
+	FORCEINLINE int32 GetDisplayedHitCount() const
+	{
+		return DisplayedHitCount;
+	}
+	UFUNCTION(BlueprintPure, Category = "Boss|HitReaction")
+	FORCEINLINE bool IsReactingToHit() const
+	{
+		return bReactingToHit;
+	}
 
 	// Begin IGTWBossAIInterface: GameMode가 보스 행동 시작/종료를 컨트롤하기 위한 Interface
 	virtual void StartCombat() override;
@@ -34,6 +47,9 @@ public:
 	FOnObjectHitDelegate OnObjectHit;
 
 protected:
+	/** 인트로/BeginPlay 전에 4층 기록을 읽고 이번 레벨의 장애물 생성량을 결정한다. */
+	virtual void PostInitializeComponents() override;
+
 	/** 레벨 종료나 보스 제거 시에도 전투 정리가 실행. */
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 public:
@@ -133,6 +149,20 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|TornadoKick")
 	TObjectPtr<UAnimMontage> TornadoKick;
 
+	/** 말풍선/바람 연출만 담당하는 P1 위젯. BP 자식으로 문구와 색상을 바꿀 수 있다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|TornadoKick")
+	TSubclassOf<UGTWP1TornadoPresentationWidget> TornadoPresentationClass;
+
+	/** 피격 모션과 슬롯은 AM_P1HitReaction 에셋에서 편집한다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|HitReaction")
+	TObjectPtr<UAnimMontage> HitReaction;
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|HitReaction", meta = (ClampMin = "0.1", Units = "s"))
+	float HitReactionDuration = 2.f;
+
+	/** HUD 모양과 표시 그래프는 이 위젯 BP에서 편집한다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|HitReaction")
+	TSubclassOf<UGTWP1BossHitWidget> HitStatusWidgetClass;
+
 	/** 점프/착지에 부드럽게 적용하는 추가 높이(월드 cm). 기본 메시 위치는 종료 시 복구한다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|TornadoKick", meta = (ClampMin = "0", Units = "cm"))
 	float TornadoKickExtraHeight = 600.f;
@@ -170,6 +200,26 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Attack", meta = (ClampMin = "1", ClampMax = "32"))
 	int32 AttackActorCount = 3;
 
+	/** INI에서 읽은 시간 기준. 수치 편집은 Saved/Config/BossPhase1.ini에서만 한다. 0이면 보정하지 않는다. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|Difficulty", meta = (Units = "s"))
+	float FastClearTimeThreshold = 0.f;
+
+	/** INI에서 읽은 장애물 생성 비율(0~1). BP에서는 적용 값만 확인한다. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|Difficulty")
+	float FastClearObstacleRatio = 1.f;
+
+	/** 적용에 사용한 4층 슈팅 클리어 시간. -1은 기록 없음이며 기존 생성량을 유지한다. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|Difficulty")
+	double FourthFloorClearTime = -1.0;
+
+	/** 한 공격의 실제 생성 횟수. 기본 개수 × 비율을 반올림하며 타격 액터 개수는 바꾸지 않는다. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|Difficulty")
+	int32 AdjustedAttackActorCount = 0;
+
+	/** 인트로 BP는 이 판별 결과만 읽는다. 시간 기준 비교를 대사 그래프에 중복 작성하지 않는다. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|Difficulty")
+	bool bHasFastClearBenefit = false;
+
 	/** 장애물이 한 프레임에 몰리지 않도록 생성 사이에 두는 간격(초). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Attack", meta = (ClampMin = "0.05", Units = "s"))
 	float AttackSpawnInterval = 0.35f;
@@ -196,6 +246,23 @@ public:
 	float HitObjectLifeSpan = 30.f;
 
 private:
+	/** 패키지 기본 INI로 외부 설정을 처음 만들고, 이후에는 외부 파일만 읽는다. */
+	void LoadDifficultySettings();
+
+	UPROPERTY(Transient)
+	TObjectPtr<UGTWP1BossHitWidget> HitWidget;
+	UPROPERTY(Transient)
+	TObjectPtr<UAnimMontage> HitReactionMontage;
+	int32 DisplayedHitCount = 0;
+	int32 PendingHitNotifications = 0;
+	bool bReactingToHit = false;
+	FTimerHandle HitReactionTimer;
+	FDelegateHandle KickPoseFinalizedHandle;
+	void FinishHitReaction();
+	/** 공격 종료 시 보스가 직접 제거한다. 화면 밖에서도 연출이 남지 않는다. */
+	UPROPERTY(Transient)
+	TObjectPtr<UGTWP1TornadoPresentationWidget> TornadoPresentation;
+
 	/** 기존 바닥 검색을 재사용해 플레이어 주변 발판에 타격 액터를 생성한다. */
 	void SpawnHitObject();
 
