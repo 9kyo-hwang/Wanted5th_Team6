@@ -17,5 +17,8 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "ProgressLevel")
 	FString ProgressLevel;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "ProgressLevel")
-	double ProgressPlayTime;
+	double ProgressTotalPlayTime;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "ProgressLevel")
+	double ProgressCurrentFloorPlayTime;
 };

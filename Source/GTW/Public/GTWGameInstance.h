@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -7,18 +7,20 @@
 #include <Tickable.h> // FTickableGameObject를 사용하기 위해 필수
 #include "GTWGameInstance.generated.h"
 
-DECLARE_MULTICAST_DELEGATE_OneParam(FOnTimerChangedDelegate, double);
-DECLARE_MULTICAST_DELEGATE_TwoParams(FOnClearLevelChangedDelegate, ELevelClear, double);
-
-UENUM()
+// 레벨 클리어를 알릴 열거형
+UENUM(BlueprintType)
 enum class ELevelClear : uint8
 {
-	SecondFloorClear = 0,
-	SokobanClear,
-	ShootingGameClear,
-	BossFirstPhaseGameClear,
-	BossSecondPhaseGameClear,
+	SecondFloorClear         UMETA(DisplayName = "Second Floor Clear"),
+	SokobanClear             UMETA(DisplayName = "Sokoban Clear"),
+	ShootingGameClear        UMETA(DisplayName = "Shooting Game Clear"),
+	BossFirstPhaseGameClear  UMETA(DisplayName = "Boss First Phase Clear"),
+	BossSecondPhaseGameClear UMETA(DisplayName = "Boss Second Phase Clear"),
 };
+
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnTimerChangedDelegate, double);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnClearLevelChangedDelegate, ELevelClear, double);
 
 UENUM(BlueprintType)
 enum class EMinigameType : uint8
@@ -39,6 +41,7 @@ class GTW_API UGTWGameInstance : public UGameInstance, public FTickableGameObjec
 	GENERATED_BODY()
 
 public:
+	UGTWGameInstance();
 	// 기존에 클리어한 이력이 있다면 Load
 	virtual void Init() override;
 	
@@ -53,7 +56,10 @@ public:
 
 	// 진행했던 Level부터 게임 시작
 	UFUNCTION(BlueprintCallable, Category = "Game|Progress")
-	bool StartProgressGame();
+	bool LoadProgressGame();
+
+	UFUNCTION(BlueprintCallable)
+	bool IsLevelCleared(ELevelClear Level) const;
 
 	// 게임 최종 클리어 시 SaveGame에 클리어타임 기록
 	void CompleteGame();
@@ -67,15 +73,16 @@ public:
 
 	FOnTimerChangedDelegate OnTimeChanged;
 	FOnClearLevelChangedDelegate OnClearLevelChanged;
+	UFUNCTION(BlueprintCallable, Category = "Game|Progress")
 	void RecordLevelClear(ELevelClear Level);
 	void RecordMiniGameClear(ELevelClear Level, double ClearTime);
+	void RecordProgressGameTime();
 	void InitializeTimerWidget(class UGTWTimerWidget* Widget) const;
-public:
-	TMap<ELevelClear, double> LevelClearTimes;
 
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsTickable = false;
+	bool OpenGameLevel(FString LevelName);
 	bool SetMinigameClearTime(EMinigameType Type, double InClearTimeSeconds);
 	bool TryGetMinigameClearTime(EMinigameType Type, double& OutClearTimeSeconds) const;
 	
@@ -87,7 +94,6 @@ public:
 	FORCEINLINE void ResetBossPhase1Cleared() { bIsBossPhase1Cleared = false; }
 
 private:
-	void InitClearHistory();
 	bool SaveClearHistory();
 private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -99,9 +105,6 @@ private:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	uint8 bIsBossPhase1Cleared : 1;
 
-	double GameStartTimeSeconds = -1;
-	double GameClearTimeSeconds = -1;
-
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UGTWClearHistorySaveGame> ClearHistorySaveGame;
 	UPROPERTY()
@@ -111,4 +114,6 @@ private:
 	double TotalPlayTime = 0.0;
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Time", meta = (AllowPrivateAccess = "true"))
 	double CurrentFloorTime = 0.0;
+	TMap<ELevelClear, double> LevelClearTimes;
+	TArray<FString> CachingSaveDataKeyvalue;
 };

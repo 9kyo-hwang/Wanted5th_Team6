@@ -6,6 +6,7 @@
 #include <GTWGameInstance.h>
 
 #include "GameFramework/PlayerController.h"
+#include <GTWGameInstance.h>
 #include "Framework/Application/SlateApplication.h"
 #include <Components/CanvasPanel.h>
 #include <Components/Button.h>
@@ -60,7 +61,8 @@ bool UGTWPauseMenuWidget::ToggleMenu()
         PlayerController->SetPause(false);
         
         // TODO: 게임 인스턴스가 관리하는 시간 측정 다시 시작하는 곳
-
+        UGTWGameInstance* GTWGameInst = GetGameInstance<UGTWGameInstance>();
+        GTWGameInst->bIsTickable = true;
         // 마우스 커서 숨기기
         PlayerController->bShowMouseCursor = false;
 
@@ -77,7 +79,8 @@ bool UGTWPauseMenuWidget::ToggleMenu()
         PlayerController->SetPause(true);
 
         // TODO: 게임 인스턴스가 관리하는 시간 측정 멈추는 곳
-               
+        UGTWGameInstance* GTWGameInst = GetGameInstance<UGTWGameInstance>();
+        GTWGameInst->bIsTickable = false;
         // 마우스 커서 표시
         PlayerController->bShowMouseCursor = true;
 
@@ -97,10 +100,8 @@ bool UGTWPauseMenuWidget::ToggleMenu()
 void UGTWPauseMenuWidget::GoToTitle()
 {
     // 타이틀로 돌아가는 로직
-    UGameplayStatics::OpenLevel(
-        this,
-        FName(TEXT("Title"))
-    );
+    UGTWGameInstance* GTWGameInst = GetGameInstance<UGTWGameInstance>();
+    GTWGameInst->OpenGameLevel("Title");
 }
 
 
