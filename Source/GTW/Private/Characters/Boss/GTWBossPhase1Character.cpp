@@ -43,29 +43,37 @@ AGTWBossPhase1Character::AGTWBossPhase1Character()
 	}
 }
 
+namespace
+{
+	// 처음에만 배포 INI를 Saved로 복사한다. 이후 레벨 진입부터는 사용자가 편집한 파일을 읽는다.
+	FString GetP1SettingsFile(const TCHAR* FileName)
+	{
+		const FString DefaultFile = FPaths::Combine(FPaths::ProjectContentDir(), TEXT("GTW/GameData"), FileName);
+		const FString ExternalFile = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Config"), FileName);
+		if (IFileManager::Get().FileExists(*ExternalFile))
+		{
+			return ExternalFile;
+		}
+		FString Contents;
+		const bool bCopied = FFileHelper::LoadFileToString(Contents, *DefaultFile)
+			&& IFileManager::Get().MakeDirectory(*FPaths::GetPath(ExternalFile), true)
+			&& FFileHelper::SaveStringToFile(Contents, *ExternalFile, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
+		if (bCopied)
+		{
+			return ExternalFile;
+		}
+		UE_LOG(LogTemp, Warning, TEXT("P1: %s를 복사하지 못해 배포 기본값을 사용합니다."), FileName);
+		return DefaultFile;
+	}
+}
+
 void AGTWBossPhase1Character::LoadBossSettings()
 {
 	// 보너스 기준과 제출 목표는 INI에서만 관리한다. 장애물 생성량에는 영향을 주지 않는다.
 	FastClearTimeThreshold = 0.f;
 	FastClearSubmissionReduction = 0.f;
 	const FString DefaultFile = FPaths::Combine(FPaths::ProjectContentDir(), TEXT("GTW/GameData/BossPhase1.ini"));
-	const FString ExternalFile = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Config/BossPhase1.ini"));
-	FString SettingsFile = ExternalFile;
-
-	// GameData는 기존 UFS 패키징 대상이다. 원본을 읽어 수정 가능한 Saved 위치에 최초 한 번만 복사한다.
-	if (!IFileManager::Get().FileExists(*ExternalFile))
-	{
-		FString Defaults;
-		const bool bCopied = FFileHelper::LoadFileToString(Defaults, *DefaultFile)
-			&& IFileManager::Get().MakeDirectory(*FPaths::GetPath(ExternalFile), true)
-			&& FFileHelper::SaveStringToFile(Defaults, *ExternalFile, FFileHelper::EEncodingOptions::ForceUTF8WithoutBOM);
-		if (!bCopied)
-		{
-			// 저장 폴더에 쓸 수 없어도 패키지 기본값으로 동작한다.
-			SettingsFile = DefaultFile;
-			UE_LOG(LogTemp, Warning, TEXT("P1: 외부 INI를 생성하지 못해 패키지 기본 INI를 사용합니다: %s"), *ExternalFile);
-		}
-	}
+	const FString SettingsFile = GetP1SettingsFile(TEXT("BossPhase1.ini"));
 
 	// GConfig 캐시를 사용하지 않아 다음 P1 진입 때 파일 변경을 다시 읽는다.
 	FConfigFile Settings;
@@ -97,6 +105,8 @@ void AGTWBossPhase1Character::LoadBossSettings()
 	FastClearTimeThreshold = ReadNumber(TEXT("FastClearTimeThreshold"), 0.f, 86400.f, 0.f);
 	BaseRequiredSubmissionCount = FMath::RoundToInt(ReadNumber(TEXT("BaseRequiredSubmissionCount"), 1.f, 1000.f, 10.f));
 	FastClearSubmissionReduction = ReadNumber(TEXT("FastClearSubmissionReduction"), 0.f, 1.f, 0.f);
+
+	TornadoKickChance = ReadNumber(TEXT("TornadoKickChance"), 0.f, 1.f, 1.f);
 }
 
 void AGTWBossPhase1Character::PostInitializeComponents()
@@ -352,6 +362,16 @@ void AGTWBossPhase1Character::BeginTornadoKickDamage()
 		}
 		PreviousKickBones[Index] = GetMesh()->GetSocketLocation(Bones[Index]);
 	}
+	for (const int32 KneeIndex : { 0, 2 })
+	{
+		const FName Thigh = GetMesh()->GetParentBone(Bones[KneeIndex]);
+		if (Thigh.IsNone())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("P1 TornadoKick: missing thigh for %s"), *Bones[KneeIndex].ToString());
+			return;
+		}
+		PreviousKickBones[4 + KneeIndex / 2] = GetMesh()->GetSocketLocation(Thigh);
+	}
 	bTornadoDamageActive = true;
 	if (!KickPoseFinalizedHandle.IsValid())
 	{
@@ -369,28 +389,30 @@ void AGTWBossPhase1Character::UpdateTornadoKickDamage()
 	}
 
 	const FName Bones[] = { LeftKickKnee, LeftKickFoot, RightKickKnee, RightKickFoot };
-	FVector CurrentBones[4];
+	FVector CurrentBones[6];
 	for (int32 Index = 0; Index < UE_ARRAY_COUNT(Bones); ++Index)
 	{
 		CurrentBones[Index] = GetMesh()->GetSocketLocation(Bones[Index]);
-		// 고속 회전 중 프레임 사이로 지나간 무릎/발의 경로도 검사한다.
-		TraceTornadoKick(PreviousKickBones[Index], CurrentBones[Index]);
-		PreviousKickBones[Index] = CurrentBones[Index];
 	}
-	TraceTornadoKick(CurrentBones[0], CurrentBones[1]);
-	TraceTornadoKick(CurrentBones[2], CurrentBones[3]);
-	// 무릎의 부모 뼈(허벅지)까지 포함해 다리 전체에 판정을 둔다.
 	for (const int32 KneeIndex : { 0, 2 })
 	{
 		const FName Thigh = GetMesh()->GetParentBone(Bones[KneeIndex]);
-		if (!Thigh.IsNone())
-		{
-			TraceTornadoKick(GetMesh()->GetSocketLocation(Thigh), CurrentBones[KneeIndex]);
-		}
+		CurrentBones[4 + KneeIndex / 2] = GetMesh()->GetSocketLocation(Thigh);
+	}
+	// 관절뿐 아니라 허벅지·정강이 전체가 이전 포즈에서 현재 포즈로 지나간 영역을 검사한다.
+	for (const int32 KneeIndex : { 0, 2 })
+	{
+		const int32 ThighIndex = 4 + KneeIndex / 2;
+		SweepTornadoKickLeg(PreviousKickBones[ThighIndex], PreviousKickBones[KneeIndex], CurrentBones[ThighIndex], CurrentBones[KneeIndex]);
+		SweepTornadoKickLeg(PreviousKickBones[KneeIndex], PreviousKickBones[KneeIndex + 1], CurrentBones[KneeIndex], CurrentBones[KneeIndex + 1]);
+	}
+	for (int32 Index = 0; Index < UE_ARRAY_COUNT(CurrentBones); ++Index)
+	{
+		PreviousKickBones[Index] = CurrentBones[Index];
 	}
 }
 
-void AGTWBossPhase1Character::TraceTornadoKick(const FVector& Start, const FVector& End)
+void AGTWBossPhase1Character::SweepTornadoKickLeg(const FVector& PreviousStart, const FVector& PreviousEnd, const FVector& Start, const FVector& End)
 {
 	const float Radius = FMath::Max(1.f, TornadoKickRadius);
 #if !UE_BUILD_SHIPPING
@@ -401,6 +423,20 @@ void AGTWBossPhase1Character::TraceTornadoKick(const FVector& Start, const FVect
 			FQuat::FindBetweenNormals(FVector::UpVector, Delta.IsNearlyZero() ? FVector::UpVector : Delta.GetSafeNormal()), FColor::Red, false, 0.05f);
 	}
 #endif
+	TraceTornadoKick(Start, End);
+	// 길어진 다리도 판정 사이가 벌어지지 않도록 길이에 맞춰 나눈다. 샘플은 스택 변수만 사용한다.
+	const double Length = FMath::Max(FVector::Dist(PreviousStart, PreviousEnd), FVector::Dist(Start, End));
+	const int32 SampleCount = FMath::Clamp(FMath::CeilToInt(Length / (Radius * 0.5f)), 1, 256);
+	for (int32 Index = 0; Index <= SampleCount && !bTornadoPlayerHit; ++Index)
+	{
+		const float Alpha = static_cast<float>(Index) / SampleCount;
+		TraceTornadoKick(FMath::Lerp(PreviousStart, PreviousEnd, Alpha), FMath::Lerp(Start, End, Alpha));
+	}
+}
+
+void AGTWBossPhase1Character::TraceTornadoKick(const FVector& Start, const FVector& End)
+{
+	const float Radius = FMath::Max(1.f, TornadoKickRadius);
 	if (bTornadoPlayerHit)
 	{
 		return;

@@ -87,8 +87,14 @@ void AGTWRoadblockGimmick::Warning()
 
 	StartLoopingFX(EGimmickFXTypes::Warning, TargetPoint);
 
-	// WarningDuration 동안 표시한 후, 발사 수행
-	GetWorldTimerManager().SetTimer(WarningTimerHandle, this, &ThisClass::Launch, WarningDuration);
+	if (WarningDuration <= 0.f)
+	{
+		Launch();
+	}
+	else
+	{
+		GetWorldTimerManager().SetTimer(WarningTimerHandle, this, &ThisClass::Launch, WarningDuration);
+	}
 }
 
 // 발사
