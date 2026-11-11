@@ -13,7 +13,17 @@ EBTNodeResult::Type UBTTask_TornadoKick::ExecuteTask(UBehaviorTreeComponent& Own
 {
 	AAIController* AI = OwnerComp.GetAIOwner();
 	AGTWBossPhase1Character* Boss = AI ? Cast<AGTWBossPhase1Character>(AI->GetPawn()) : nullptr;
-	return Boss && Boss->PlayTornadoKick() ? EBTNodeResult::InProgress : EBTNodeResult::Failed;
+	if (!Boss || !Boss->IsEncounterRunning())
+	{
+		return EBTNodeResult::Failed;
+	}
+	// 기존 BT의 킥 차례 중 일부만 실행한다. 생략도 성공으로 반환해 다음 Wait 흐름을 유지한다.
+	const bool bSelected = Boss->TornadoKickChance >= 1.f || FMath::FRand() < Boss->TornadoKickChance;
+	if (!bSelected)
+	{
+		return EBTNodeResult::Succeeded;
+	}
+	return Boss->PlayTornadoKick() ? EBTNodeResult::InProgress : EBTNodeResult::Failed;
 }
 
 void UBTTask_TornadoKick::TickTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)

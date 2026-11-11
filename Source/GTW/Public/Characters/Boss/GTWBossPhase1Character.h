@@ -10,6 +10,9 @@ class ATriggerBox;
 class UBoxComponent;
 class UAnimMontage;
 class AGTWBossHitObject;
+class UGTWP1TornadoPresentationWidget;
+class UGTWP1BossHitWidget;
+class AGTWP1TornadoJumpPad;
 struct FCollisionQueryParams;
 
 DECLARE_MULTICAST_DELEGATE(FOnObjectHitDelegate);
@@ -24,7 +27,23 @@ class GTW_API AGTWBossPhase1Character : public ACharacter, public IGTWBossAIInte
 	GENERATED_BODY()
 
 public:
+	AGTWBossPhase1Character();
+
 	virtual void Tick(float DeltaSeconds) override;
+
+	UFUNCTION(BlueprintPure, Category = "Boss|Difficulty")
+	FORCEINLINE int32 GetRequiredSubmissionCount() const { return RequiredSubmissionCount; }
+	/** HUD 표시용 적중 횟수. 페이즈 전환은 기존 GameMode가 판단한다. */
+	UFUNCTION(BlueprintPure, Category = "Boss|HitReaction")
+	FORCEINLINE int32 GetDisplayedHitCount() const
+	{
+		return DisplayedHitCount;
+	}
+	UFUNCTION(BlueprintPure, Category = "Boss|HitReaction")
+	FORCEINLINE bool IsReactingToHit() const
+	{
+		return bReactingToHit;
+	}
 
 	// Begin IGTWBossAIInterface: GameMode가 보스 행동 시작/종료를 컨트롤하기 위한 Interface
 	virtual void StartCombat() override;
@@ -34,6 +53,9 @@ public:
 	FOnObjectHitDelegate OnObjectHit;
 
 protected:
+	/** 인트로/BeginPlay 전에 4층 기록을 읽고 이번 레벨의 장애물 생성량을 결정한다. */
+	virtual void PostInitializeComponents() override;
+
 	/** 레벨 종료나 보스 제거 시에도 전투 정리가 실행. */
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 public:
@@ -133,21 +155,54 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|TornadoKick")
 	TObjectPtr<UAnimMontage> TornadoKick;
 
+	/** 말풍선/바람 연출만 담당하는 P1 위젯. BP 자식으로 문구와 색상을 바꿀 수 있다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|TornadoKick")
+	TSubclassOf<UGTWP1TornadoPresentationWidget> TornadoPresentationClass;
+
+	/** 피격 모션과 슬롯은 AM_P1HitReaction 에셋에서 편집한다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|HitReaction")
+	TObjectPtr<UAnimMontage> HitReaction;
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|HitReaction", meta = (ClampMin = "0.1", Units = "s"))
+	float HitReactionDuration = 2.f;
+
+	/** HUD 모양과 표시 그래프는 이 위젯 BP에서 편집한다. */
+	UPROPERTY(EditDefaultsOnly, Category = "Boss|HitReaction")
+	TSubclassOf<UGTWP1BossHitWidget> HitStatusWidgetClass;
+
 	/** 점프/착지에 부드럽게 적용하는 추가 높이(월드 cm). 기본 메시 위치는 종료 시 복구한다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|TornadoKick", meta = (ClampMin = "0", Units = "cm"))
 	float TornadoKickExtraHeight = 600.f;
 
-	/** AirKick 구간에만 적용하는 재생 배율. 점프/착지와 Notify 타이밍은 그대로 유지한다. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|TornadoKick", meta = (ClampMin = "0.1", ClampMax = "5"))
+	/** INI의 AirKick 재생 배율. 작을수록 느리며 점프/착지는 원래 속도를 유지한다. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|TornadoKick")
 	float TornadoKickPlayRate = 1.f;
 
 	/** 다리 판정의 월드 반경(cm). 보스의 액터 스케일을 다시 곱하지 않는다. */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|TornadoKick", meta = (ClampMin = "1", Units = "cm"))
 	float TornadoKickRadius = 100.f;
 
-	/** 기존 플레이어 넉백 인터페이스에 전달하는 힘. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boss|TornadoKick", meta = (ClampMin = "0"))
-	float TornadoKickPower = 1200.f;
+	/** INI의 넉백 강도. 기존 플레이어 인터페이스에서 무적 여부를 검사한다. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|TornadoKick")
+	float TornadoKickPower = 0.f;
+
+	/** BossPhase1.ini의 킥 차례 실행 확률(0~1). 선택하지 않은 차례는 기존 Wait로 넘어간다. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|TornadoKick")
+	float TornadoKickChance = 1.f;
+
+	/** 2층 점프 발판을 상속한 P1 BP. 점프/사운드는 원본, 제자리 뜀 보정은 자식 BP가 담당한다. */
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|TornadoKick|Escape")
+	TSubclassOf<AGTWP1TornadoJumpPad> TornadoEscapePadClass;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|TornadoKick|Escape")
+	int32 TornadoEscapePadCount = 0;
+
+	/** INI의 랜덤 배치 최대 반경(cm). 플레이어 공격 반경보다 바깥에는 생성하지 않는다. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|TornadoKick|Escape", meta = (Units = "cm"))
+	float TornadoEscapePadDistance = 0.f;
+
+	/** INI에서 읽은 점프 강도. P1 발판이 부모의 JumpPower에 적용한다. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|TornadoKick|Escape")
+	float TornadoEscapePadJumpPower = 0.f;
 
 	/** 현재 SK_Boss의 무릎/발 뼈. 다른 메시를 쓰면 BP에서 해당 뼈 이름으로 바꾼다. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|TornadoKick")
@@ -169,6 +224,30 @@ public:
 	/** 한 공격에서 순차적으로 생성할 기믹 개수. */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Attack", meta = (ClampMin = "1", ClampMax = "32"))
 	int32 AttackActorCount = 3;
+
+	/** INI에서 읽은 시간 기준. 수치 편집은 Saved/Config/BossPhase1.ini에서만 한다. 0이면 보정하지 않는다. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|Difficulty", meta = (Units = "s"))
+	float FastClearTimeThreshold = 0.f;
+
+	/** INI에서 읽은 제출 목표 감소 비율(0~1). 0.25이면 1/4 감소한다. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|Difficulty")
+	float FastClearSubmissionReduction = 0.f;
+
+	/** 적용에 사용한 4층 슈팅 클리어 시간. -1은 기록 없음이며 기본 제출 목표를 사용한다. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|Difficulty")
+	double FourthFloorClearTime = -1.0;
+
+	/** 이번 전투의 실제 QR 제출 목표. GameMode·HUD·인트로가 이 값을 함께 사용한다. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|Difficulty")
+	int32 RequiredSubmissionCount = 1;
+
+	/** INI에서 읽은 혜택 적용 전 제출 목표. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|Difficulty")
+	int32 BaseRequiredSubmissionCount = 1;
+
+	/** 인트로 BP는 이 판별 결과만 읽는다. 시간 기준 비교를 대사 그래프에 중복 작성하지 않는다. */
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|Difficulty")
+	bool bHasFastClearBenefit = false;
 
 	/** 장애물이 한 프레임에 몰리지 않도록 생성 사이에 두는 간격(초). */
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Boss|Attack", meta = (ClampMin = "0.05", Units = "s"))
@@ -196,6 +275,33 @@ public:
 	float HitObjectLifeSpan = 30.f;
 
 private:
+	/** P1에서 생성하는 타격 액터에만 적용한다. 원본 기믹/BP 머티리얼은 변경하지 않는다. */
+	UPROPERTY()
+	TObjectPtr<class UMaterialInterface> HitObjectMaterial;
+	/** 메시 없이 Niagara만 사용하는 타격 BP의 QR 표시용 기본 도형. */
+	UPROPERTY()
+	TObjectPtr<class UStaticMesh> HitObjectDisplayMesh;
+
+	/** 패키지 기본 INI로 외부 설정을 처음 만들고, 이후에는 외부 파일만 읽는다. */
+	void LoadBossSettings();
+	void SpawnTornadoEscapePads();
+	void ClearTornadoEscapePads();
+	TArray<TWeakObjectPtr<AActor>> TornadoEscapePads;
+
+	UPROPERTY(Transient)
+	TObjectPtr<UGTWP1BossHitWidget> HitWidget;
+	UPROPERTY(Transient)
+	TObjectPtr<UAnimMontage> HitReactionMontage;
+	int32 DisplayedHitCount = 0;
+	int32 PendingHitNotifications = 0;
+	bool bReactingToHit = false;
+	FTimerHandle HitReactionTimer;
+	FDelegateHandle KickPoseFinalizedHandle;
+	void FinishHitReaction();
+	/** 공격 종료 시 보스가 직접 제거한다. 화면 밖에서도 연출이 남지 않는다. */
+	UPROPERTY(Transient)
+	TObjectPtr<UGTWP1TornadoPresentationWidget> TornadoPresentation;
+
 	/** 기존 바닥 검색을 재사용해 플레이어 주변 발판에 타격 액터를 생성한다. */
 	void SpawnHitObject();
 
@@ -245,6 +351,7 @@ private:
 
 	/** 반경 안의 후보 한 곳을 바닥 검사한다. 성공 시 OutLocation에 생성 위치를 기록 */
 	bool FindAttackSpawnLocation(APawn* TargetPlayer, const FCollisionQueryParams& GroundQuery, FVector& OutLocation) const;
+	bool FindGroundLocation(const FVector& CandidateLocation, APawn* TargetPlayer, const FCollisionQueryParams& GroundQuery, FVector& OutLocation) const;
 
 private:
 	/** 준비 모션 시작 당시의 공격 대상. */
@@ -258,7 +365,9 @@ private:
 	bool bTornadoDamageActive = false;
 	bool bTornadoPlayerHit = false;
 	FVector TornadoMeshBaseLocation = FVector::ZeroVector;
-	FVector PreviousKickBones[4];
+	/** 왼쪽 무릎·발, 오른쪽 무릎·발, 왼쪽·오른쪽 허벅지의 이전 프레임 위치. */
+	FVector PreviousKickBones[6];
+	void SweepTornadoKickLeg(const FVector& PreviousStart, const FVector& PreviousEnd, const FVector& Start, const FVector& End);
 	void TraceTornadoKick(const FVector& Start, const FVector& End);
 
 	/** 중복 시작과 종료 후 공격을 막기 위한 전투 진행 상태. */
