@@ -2,12 +2,18 @@
 
 
 #include "UI/GTWPauseMenuWidget.h"
+#include <Interfaces/GTWWidgetInterface.h>
+#include <GTWGameInstance.h>
+
 #include "GameFramework/PlayerController.h"
 #include "Framework/Application/SlateApplication.h"
-#include <Interfaces/GTWWidgetInterface.h>
 #include <Components/CanvasPanel.h>
 #include <Components/Button.h>
+#include "Components/Slider.h"
+#include "Sound/SoundMix.h"
+#include "Sound/SoundClass.h"
 #include "Kismet/GameplayStatics.h"
+
 
 
 UGTWPauseMenuWidget::UGTWPauseMenuWidget(const FObjectInitializer& ObjectInitializer)
@@ -52,6 +58,8 @@ bool UGTWPauseMenuWidget::ToggleMenu()
 
         // 게임 재개
         PlayerController->SetPause(false);
+        
+        // TODO: 게임 인스턴스가 관리하는 시간 측정 다시 시작하는 곳
 
         // 마우스 커서 숨기기
         PlayerController->bShowMouseCursor = false;
@@ -68,6 +76,8 @@ bool UGTWPauseMenuWidget::ToggleMenu()
         // 게임 일시정지
         PlayerController->SetPause(true);
 
+        // TODO: 게임 인스턴스가 관리하는 시간 측정 멈추는 곳
+               
         // 마우스 커서 표시
         PlayerController->bShowMouseCursor = true;
 
@@ -87,28 +97,19 @@ bool UGTWPauseMenuWidget::ToggleMenu()
 void UGTWPauseMenuWidget::GoToTitle()
 {
     // 타이틀로 돌아가는 로직
-    //UGameplayStatics::OpenLevel(
-    //    this,
-    //    FName(*ProgressSaveGameInstance->Title));
+    UGameplayStatics::OpenLevel(
+        this,
+        FName(TEXT("Title"))
+    );
 }
 
-void UGTWPauseMenuWidget::NativeConstruct()
-{
-    Super::NativeConstruct();
-
-    // 세팅
-    IGTWWidgetInterface* HUDPawn = GetOwningPlayerPawn<IGTWWidgetInterface>();
-    if (nullptr != HUDPawn)
-    {
-        HUDPawn->SetPauseMenuWidget(this);
-    }
-}
 
 
 void UGTWPauseMenuWidget::NativeOnInitialized()
 {
     Super::NativeOnInitialized();
 
+    // 포커스를 잃었을 때 기능을 사용하기 위한 이닛
     if (FSlateApplication::IsInitialized())
     {
         FSlateApplication::Get()
@@ -119,6 +120,10 @@ void UGTWPauseMenuWidget::NativeOnInitialized()
             );
     }
 
+    ProgressSaveGameInstance =
+        Cast<UGTWGameInstance>(GetGameInstance());
+
+    // 버튼에 델리게이트 등록
     if (ResumeGame)
     {
         ResumeGame->OnClicked.AddDynamic(
@@ -142,6 +147,17 @@ void UGTWPauseMenuWidget::NativeOnInitialized()
             &UGTWPauseMenuWidget::TitleClicked
         );
     }
+
+    // 볼륨 델리게이트 등록
+    BGMSlider->OnValueChanged.AddDynamic(
+        this,
+        &UGTWPauseMenuWidget::OnBGMVolumeChanged
+    );
+
+    SFXSlider->OnValueChanged.AddDynamic(
+        this,
+        &UGTWPauseMenuWidget::OnSFXVolumeChanged
+    );
 }
 
 void UGTWPauseMenuWidget::ResumeClicked()
@@ -171,4 +187,50 @@ void UGTWPauseMenuWidget::SettingClicked()
 void UGTWPauseMenuWidget::TitleClicked()
 {
     GoToTitle();
+}
+
+void UGTWPauseMenuWidget::OnBGMVolumeChanged(float Value)
+{
+    if (!SettingsSoundMix) 
+    {
+        return;
+    }
+
+    if (!BGMSoundClass)
+    {
+        return;
+    }
+
+    UGameplayStatics::SetSoundMixClassOverride(
+        this,
+        SettingsSoundMix,
+        BGMSoundClass,
+        FMath::Clamp(Value, 0.0f, 1.0f),
+        1.0f,
+        0.1f,
+        true
+    );
+}
+
+void UGTWPauseMenuWidget::OnSFXVolumeChanged(float Value)
+{
+    if (!SettingsSoundMix)
+    {
+        return;
+    }
+
+    if (!SFXSoundClass)
+    {
+        return;
+    }
+
+    UGameplayStatics::SetSoundMixClassOverride(
+        this,
+        SettingsSoundMix,
+        SFXSoundClass,
+        FMath::Clamp(Value, 0.0f, 1.0f),
+        1.0f,
+        0.1f,
+        true
+    );
 }

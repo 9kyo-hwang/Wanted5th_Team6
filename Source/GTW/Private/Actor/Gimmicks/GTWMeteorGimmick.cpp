@@ -8,7 +8,6 @@
 
 #include <Components/SphereComponent.h>
 #include <Engine/OverlapResult.h>
-#include <NiagaraComponent.h>
 
 AGTWMeteorGimmick::AGTWMeteorGimmick()
 	: WarningDuration(1.f)

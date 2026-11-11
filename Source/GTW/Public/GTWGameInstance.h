@@ -1,10 +1,24 @@
-﻿// Fill out your copyright notice in the Description page of Project Settings.
+// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "Engine/GameInstance.h"
+#include <Tickable.h> // FTickableGameObject를 사용하기 위해 필수
 #include "GTWGameInstance.generated.h"
+
+DECLARE_MULTICAST_DELEGATE_OneParam(FOnTimerChangedDelegate, double);
+DECLARE_MULTICAST_DELEGATE_TwoParams(FOnClearLevelChangedDelegate, ELevelClear, double);
+
+UENUM()
+enum class ELevelClear : uint8
+{
+	SecondFloorClear = 0,
+	SokobanClear,
+	ShootingGameClear,
+	BossFirstPhaseGameClear,
+	BossSecondPhaseGameClear,
+};
 
 UENUM(BlueprintType)
 enum class EMinigameType : uint8
@@ -20,7 +34,7 @@ enum class EMinigameType : uint8
  * - SaveGame 통해서 저장 요청
  */
 UCLASS()
-class GTW_API UGTWGameInstance : public UGameInstance
+class GTW_API UGTWGameInstance : public UGameInstance, public FTickableGameObject
 {
 	GENERATED_BODY()
 
@@ -38,13 +52,28 @@ public:
 	void SaveProgressGame();
 
 	// 진행했던 Level부터 게임 시작
-	UFUNCTION(BLueprintCallable, Category = "Game|Progress")
+	UFUNCTION(BlueprintCallable, Category = "Game|Progress")
 	bool StartProgressGame();
 
 	// 게임 최종 클리어 시 SaveGame에 클리어타임 기록
 	void CompleteGame();
 
+	// --- FTickableGameObject 인터페이스 오버라이드 ---
+	virtual void Tick(float DeltaTime) override;
+	virtual ETickableTickType GetTickableTickType() const override { return ETickableTickType::Conditional; }
+	virtual bool IsTickable() const override;
+	virtual TStatId GetStatId() const override;
+	virtual UWorld* GetTickableGameObjectWorld() const override { return GetWorld(); }
+
+	FOnTimerChangedDelegate OnTimeChanged;
+	FOnClearLevelChangedDelegate OnClearLevelChanged;
+	void RecordLevelClear(ELevelClear Level);
+	void RecordMiniGameClear(ELevelClear Level, double ClearTime);
+	void InitializeTimerWidget(class UGTWTimerWidget* Widget) const;
+
 public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsTickable = false;
 	bool SetMinigameClearTime(EMinigameType Type, double InClearTimeSeconds);
 	bool TryGetMinigameClearTime(EMinigameType Type, double& OutClearTimeSeconds) const;
 	
@@ -73,5 +102,12 @@ private:
 
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UGTWClearHistorySaveGame> ClearHistorySaveGame;
+	UPROPERTY()
 	TObjectPtr<class UGTWProgressLevelSaveGame> ProgressSaveGame;
+
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Time", meta = (AllowPrivateAccess = "true"))
+	double TotalPlayTime = 0.0;
+	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Time", meta = (AllowPrivateAccess = "true"))
+	double CurrentFloorTime = 0.0;
+	TMap<ELevelClear, double> LevelClearTimes;
 };

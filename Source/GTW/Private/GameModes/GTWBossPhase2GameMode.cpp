@@ -25,7 +25,7 @@ AGTWBossPhase2GameMode::AGTWBossPhase2GameMode()
 	}
 
 	FailLevel = FSoftObjectPath(TEXT("/Game/GTW/Maps/BossSecondPhase.BossSecondPhase"));
-	//ClearLevel = FSoftObjectPath(TEXT("/Game/GTW/Maps/BossSecondPhase.BossSecondPhase"));
+	ClearLevel = FSoftObjectPath(TEXT("/Game/GTW/Maps/Title.Title"));
 }
 
 void AGTWBossPhase2GameMode::Fail(EBossPhase2FailReason InFailReason)
@@ -51,11 +51,6 @@ void AGTWBossPhase2GameMode::RecordCombatResult(EBossGameModeState Result)
 
 	if (Result == EBossGameModeState::Clear)
 	{
-		// 클리어 기록만 남기자
-		GI->CompleteGame();
-	}
-	else
-	{
-		GI->ResetBossPhase1Cleared();
+		GI->RecordLevelClear(ELevelClear::BossSecondPhaseGameClear);
 	}
 }

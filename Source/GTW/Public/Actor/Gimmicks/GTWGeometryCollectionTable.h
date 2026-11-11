@@ -16,7 +16,7 @@ class GTW_API AGTWGeometryCollectionTable : public AGeometryCollectionActor
 {
 	GENERATED_BODY()
 public:
-	AGTWGeometryCollectionTable() = default;
+	AGTWGeometryCollectionTable();
 
 	virtual void Tick(float deltaTime) override;
 	//void OnActorOverlap();
