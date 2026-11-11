@@ -25,7 +25,7 @@ AGTWBossPhase2GameMode::AGTWBossPhase2GameMode()
 	}
 
 	FailLevel = FSoftObjectPath(TEXT("/Game/GTW/Maps/BossSecondPhase.BossSecondPhase"));
-	ClearLevel = FSoftObjectPath(TEXT("/Game/GTW/Maps/BossSecondPhase.Title"));
+	ClearLevel = FSoftObjectPath(TEXT("/Game/GTW/Maps/Title.Title"));
 }
 
 void AGTWBossPhase2GameMode::Fail(EBossPhase2FailReason InFailReason)
