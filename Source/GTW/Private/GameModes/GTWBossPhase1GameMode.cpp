@@ -8,12 +8,6 @@
 #include <Characters/Boss/GTWBossPhase1Character.h>
 #include <Kismet/GameplayStatics.h>
 
-/*
-* [x] 보스 참조 저장
-* [x] 보스 명중 델리게이트 구독
-* [ ] 연출 세팅은 Level BP에서??
-*/
-
 AGTWBossPhase1GameMode::AGTWBossPhase1GameMode()
 {
 	FailLevel = FSoftObjectPath(TEXT("/Game/GTW/Maps/BossFirstPhase.BossFirstPhase"));
@@ -77,11 +71,7 @@ void AGTWBossPhase1GameMode::RecordCombatResult(EBossGameModeState Result)
 
 	if (Result == EBossGameModeState::Clear)
 	{
-		GameInstance->SetBossPhase1Cleared();
-	}
-	else
-	{
-		GameInstance->ResetBossPhase1Cleared();
+		GameInstance->RecordLevelClear(ELevelClear::BossFirstPhaseGameClear);
 	}
 }
 
