@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "GTWP1BossHitWidget.generated.h"
@@ -16,7 +16,7 @@ protected:
 
 	/** BP는 이 이벤트 하나에서 숫자·남은 칸·반응 문구만 갱신한다. */
 	UFUNCTION(BlueprintImplementableEvent, Category = "P1|Display")
-	void UpdateHitDisplay(int32 HitCount, bool bReacting);
+	void UpdateHitDisplay(int32 HitCount, int32 RequiredCount, bool bReacting);
 private:
 	TWeakObjectPtr<AGTWBossPhase1Character> Boss;
 	int32 LastHitCount = INDEX_NONE;

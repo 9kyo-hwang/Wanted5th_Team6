@@ -1,16 +1,19 @@
 ﻿#include "Characters/Boss/GTWBossPhase1Character.h"
 
 #include "Actor/Gimmicks/GTWBossHitObject.h"
+#include "Actor/Gimmicks/GTWP1TornadoJumpPad.h"
 #include "TimerManager.h"
 #include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Controllers/GTWBoss1PAIController.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/TriggerBox.h"
 #include "Engine/World.h"
+#include "Engine/StaticMesh.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Interfaces/GTWHitReactionReceiver.h"
@@ -21,12 +24,30 @@
 #include "Misc/ConfigCacheIni.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Materials/MaterialInterface.h"
+#include "UObject/ConstructorHelpers.h"
 
-void AGTWBossPhase1Character::LoadDifficultySettings()
+AGTWBossPhase1Character::AGTWBossPhase1Character()
 {
-	// 파일 오류 시 임의의 보너스를 주지 않고 기존 생성량을 유지한다.
+	// CDO에 에셋 참조를 보관해 패키징에도 포함하고, 생성할 때마다 다시 로드하지 않는다.
+	static ConstructorHelpers::FObjectFinder<UMaterialInterface> MaterialRef(
+		TEXT("/Game/Assets/QRCode/QRCode_Mat.QRCode_Mat"));
+	if (MaterialRef.Succeeded())
+	{
+		HitObjectMaterial = MaterialRef.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UStaticMesh> DisplayMeshRef(TEXT("/Engine/BasicShapes/Cube.Cube"));
+	if (DisplayMeshRef.Succeeded())
+	{
+		HitObjectDisplayMesh = DisplayMeshRef.Object;
+	}
+}
+
+void AGTWBossPhase1Character::LoadBossSettings()
+{
+	// 보너스 기준과 제출 목표는 INI에서만 관리한다. 장애물 생성량에는 영향을 주지 않는다.
 	FastClearTimeThreshold = 0.f;
-	FastClearObstacleRatio = 1.f;
+	FastClearSubmissionReduction = 0.f;
 	const FString DefaultFile = FPaths::Combine(FPaths::ProjectContentDir(), TEXT("GTW/GameData/BossPhase1.ini"));
 	const FString ExternalFile = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Config/BossPhase1.ini"));
 	FString SettingsFile = ExternalFile;
@@ -49,24 +70,33 @@ void AGTWBossPhase1Character::LoadDifficultySettings()
 	// GConfig 캐시를 사용하지 않아 다음 P1 진입 때 파일 변경을 다시 읽는다.
 	FConfigFile Settings;
 	Settings.Read(SettingsFile);
-	FString ThresholdText;
-	FString RatioText;
-	float Threshold = 0.f;
-	float Ratio = 1.f;
-	const bool bValid = Settings.GetString(TEXT("BossPhase1"), TEXT("FastClearTimeThreshold"), ThresholdText)
-		&& Settings.GetString(TEXT("BossPhase1"), TEXT("FastClearObstacleRatio"), RatioText)
-		&& LexTryParseString(Threshold, *ThresholdText) && LexTryParseString(Ratio, *RatioText)
-		&& FMath::IsFinite(Threshold) && Threshold >= 0.f
-		&& FMath::IsFinite(Ratio) && Ratio >= 0.f && Ratio <= 1.f;
-	if (!bValid)
+	FConfigFile Defaults;
+	Defaults.Read(DefaultFile);
+	// 예전 외부 INI에 새 항목이 없으면 배포 기본 INI를 사용한다. BP 수치는 읽지 않는다.
+	auto ReadNumber = [&](const TCHAR* Key, float Minimum, float Maximum, float SafeValue)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("P1: INI 값이 없거나 잘못되었습니다. 장애물 생성량을 보정하지 않습니다: %s"), *SettingsFile);
-		return;
-	}
-	FastClearTimeThreshold = Threshold;
-	FastClearObstacleRatio = Ratio;
-	UE_LOG(LogTemp, Display, TEXT("P1 INI: %s (Threshold=%.2f, Ratio=%.2f)"),
-		*FPaths::ConvertRelativePathToFull(SettingsFile), Threshold, Ratio);
+		FString Text;
+		if (!Settings.GetString(TEXT("BossPhase1"), Key, Text))
+		{
+			Defaults.GetString(TEXT("BossPhase1"), Key, Text);
+		}
+		float Value = SafeValue;
+		if (!LexTryParseString(Value, *Text) || !FMath::IsFinite(Value) || Value < Minimum || Value > Maximum)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("P1 INI: %s 값이 잘못되어 안전값 %.2f를 적용합니다."), Key, SafeValue);
+			return SafeValue;
+		}
+		return Value;
+	};
+	const float PadCount = ReadNumber(TEXT("TornadoEscapePadCount"), 0.f, 8.f, 0.f);
+	TornadoEscapePadCount = FMath::IsNearlyEqual(PadCount, FMath::RoundToFloat(PadCount)) ? FMath::RoundToInt(PadCount) : 0;
+	TornadoEscapePadDistance = ReadNumber(TEXT("TornadoEscapePadDistance"), 0.f, 100000.f, 0.f);
+	TornadoEscapePadJumpPower = ReadNumber(TEXT("TornadoEscapePadJumpPower"), 0.f, 100000.f, 0.f);
+	TornadoKickPower = ReadNumber(TEXT("TornadoKickPower"), 0.f, 100000.f, 0.f);
+	TornadoKickPlayRate = ReadNumber(TEXT("TornadoKickPlayRate"), 0.1f, 5.f, 1.f);
+	FastClearTimeThreshold = ReadNumber(TEXT("FastClearTimeThreshold"), 0.f, 86400.f, 0.f);
+	BaseRequiredSubmissionCount = FMath::RoundToInt(ReadNumber(TEXT("BaseRequiredSubmissionCount"), 1.f, 1000.f, 10.f));
+	FastClearSubmissionReduction = ReadNumber(TEXT("FastClearSubmissionReduction"), 0.f, 1.f, 0.f);
 }
 
 void AGTWBossPhase1Character::PostInitializeComponents()
@@ -77,9 +107,9 @@ void AGTWBossPhase1Character::PostInitializeComponents()
 		return;
 	}
 
-	LoadDifficultySettings();
-	// BP의 원래 개수는 보존한다. 레벨 재시작 시에도 비율이 중복으로 적용되지 않는다.
-	AdjustedAttackActorCount = FMath::Clamp(AttackActorCount, 1, 32);
+	LoadBossSettings();
+	// 기록이 없거나 조건 미충족이면 기본 제출 목표를 사용한다.
+	RequiredSubmissionCount = BaseRequiredSubmissionCount;
 	FourthFloorClearTime = -1.0;
 	bHasFastClearBenefit = false;
 	const UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>();
@@ -88,12 +118,13 @@ void AGTWBossPhase1Character::PostInitializeComponents()
 		return;
 	}
 
-	// 수치는 INI가 관리하고 C++은 기존 4층 기록 조회와 생성량 계산만 담당한다.
-	bHasFastClearBenefit = FMath::IsFinite(FourthFloorClearTime)
+	// 4층을 기준 시간 미만에 클리어한 경우에만 제출 목표를 줄인다.
+	bHasFastClearBenefit = FMath::IsFinite(FourthFloorClearTime) && FourthFloorClearTime >= 0.0
 		&& FastClearTimeThreshold > 0.f && FourthFloorClearTime < FastClearTimeThreshold;
 	if (bHasFastClearBenefit)
 	{
-		AdjustedAttackActorCount = FMath::RoundToInt(AdjustedAttackActorCount * FMath::Clamp(FastClearObstacleRatio, 0.f, 1.f));
+		// 개수는 정수로 반올림한다. 기본 10개에서 25% 감소하면 8개다.
+		RequiredSubmissionCount = FMath::Max(1, FMath::RoundToInt(BaseRequiredSubmissionCount * (1.f - FastClearSubmissionReduction)));
 	}
 }
 
@@ -246,6 +277,7 @@ bool AGTWBossPhase1Character::PlayTornadoKick()
 	bTornadoKickPlaying = true;
 	TornadoMeshBaseLocation = GetMesh()->GetRelativeLocation();
 	bTornadoPlayerHit = false;
+	SpawnTornadoEscapePads();
 	if (APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0))
 	{
 		UClass* PresentationClass = TornadoPresentationClass ? TornadoPresentationClass.Get() : UGTWP1TornadoPresentationWidget::StaticClass();
@@ -414,18 +446,15 @@ void AGTWBossPhase1Character::TraceTornadoKick(const FVector& Start, const FVect
 		Direction.Z = 0.35f;
 		bTornadoPlayerHit = true;
 		Receiver->HitKnockbackObject(Direction.GetSafeNormal(), TornadoKickPower);
-		// P1 직접 타격은 지면 마찰과 스케이트 이동 상태에 관계없이 밀려나게 한다.
-		// 기존 인터페이스의 피격 반응을 재사용하고, 이동 속도만 Character API로 확정한다.
-		if (ACharacter* HitCharacter = Cast<ACharacter>(Player))
-		{
-			HitCharacter->LaunchCharacter(Direction.GetSafeNormal() * TornadoKickPower, true, true);
-		}
+		// 인터페이스가 무적으로 거절했을 때는 아무 이동도 덧붙이지 않는다.
+		// 힘·래그돌·무적 시간 적용은 기존 플레이어의 수락된 넉백 경로 한 곳에 맡긴다.
 	}
 }
 
 void AGTWBossPhase1Character::EndTornadoKickDamage()
 {
 	bTornadoDamageActive = false;
+	ClearTornadoEscapePads();
 	if (KickPoseFinalizedHandle.IsValid())
 	{
 		GetMesh()->UnregisterOnBoneTransformsFinalizedDelegate(KickPoseFinalizedHandle);
@@ -465,6 +494,12 @@ bool AGTWBossPhase1Character::FindAttackSpawnLocation(APawn* Player, const FColl
 	const FVector PlayerLocation = Player->GetActorLocation();
 	const FVector2D RandomOffset = FMath::RandPointInCircle(FMath::Max(1.f, PlayerRadius));
 	const FVector CandidateLocation = PlayerLocation + FVector(RandomOffset.X, RandomOffset.Y, 0.f);
+	return FindGroundLocation(CandidateLocation, Player, GroundQuery, OutLocation);
+}
+
+bool AGTWBossPhase1Character::FindGroundLocation(const FVector& CandidateLocation, APawn* Player, const FCollisionQueryParams& GroundQuery, FVector& OutLocation) const
+{
+	const FVector PlayerLocation = Player->GetActorLocation();
 
 	// 2. 후보 지점의 위에서 플레이어 발밑 근처까지 바닥을 검사
 	constexpr float TraceStartHeight = 100.f;
@@ -501,6 +536,88 @@ bool AGTWBossPhase1Character::FindAttackSpawnLocation(APawn* Player, const FColl
 	return true;
 }
 
+void AGTWBossPhase1Character::SpawnTornadoEscapePads()
+{
+	ClearTornadoEscapePads();
+	APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0);
+	if (!TornadoEscapePadClass || !IsValid(Player))
+	{
+		return;
+	}
+	FCollisionQueryParams Query(SCENE_QUERY_STAT(P1EscapePadGround), true, this);
+	Query.AddIgnoredActor(Player);
+	for (const auto& Actor : SpawnedAttackActors)
+	{
+		if (Actor.IsValid())
+		{
+			Query.AddIgnoredActor(Actor.Get());
+		}
+	}
+	for (const auto& Actor : SpawnedHitObjects)
+	{
+		if (Actor.IsValid())
+		{
+			Query.AddIgnoredActor(Actor.Get());
+		}
+	}
+	FActorSpawnParameters Params;
+	Params.Owner = this;
+	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	const int32 Count = FMath::Clamp(TornadoEscapePadCount, 0, 8);
+	const float Distance = FMath::Min(FMath::Max(0.f, TornadoEscapePadDistance), FMath::Max(0.f, PlayerRadius));
+	const AActor* PadDefaults = TornadoEscapePadClass->GetDefaultObject<AActor>();
+	const UBoxComponent* Trigger = Cast<UBoxComponent>(PadDefaults->GetRootComponent());
+	const float PadRadius = Trigger ? Trigger->GetScaledBoxExtent().Size2D() : 0.f;
+	const ACharacter* Character = Cast<ACharacter>(Player);
+	const float PlayerBodyRadius = Character ? Character->GetCapsuleComponent()->GetScaledCapsuleRadius() : 0.f;
+	const float MinimumDistance = PadRadius + PlayerBodyRadius + 1.f;
+	if (Count == 0 || Distance < MinimumDistance)
+	{
+		return;
+	}
+	for (int32 Index = 0; Index < Count; ++Index)
+	{
+		// 원 안에서 균일하게 랜덤 추출한다. 플레이어 바로 밑·구멍·겹치는 발판은 제외한다.
+		for (int32 Attempt = 0; Attempt < 32; ++Attempt)
+		{
+			const float Angle = FMath::FRandRange(0.f, 2.f * PI);
+			const float Radius = FMath::Sqrt(FMath::FRandRange(FMath::Square(MinimumDistance), FMath::Square(Distance)));
+			const FVector Candidate = Player->GetActorLocation() + FVector(FMath::Cos(Angle), FMath::Sin(Angle), 0.f) * Radius;
+			FVector Location;
+			if (!FindGroundLocation(Candidate, Player, Query, Location))
+			{
+				continue;
+			}
+			const bool bTooClose = TornadoEscapePads.ContainsByPredicate([&](const TWeakObjectPtr<AActor>& Pad)
+			{
+				return Pad.IsValid() && FVector::DistSquared2D(Pad->GetActorLocation(), Location) < FMath::Square(PadRadius * 2.f);
+			});
+			if (bTooClose)
+			{
+				continue;
+			}
+			if (AActor* Pad = GetWorld()->SpawnActor<AActor>(TornadoEscapePadClass, Location, FRotator::ZeroRotator, Params))
+			{
+				TornadoEscapePads.Add(Pad);
+				Query.AddIgnoredActor(Pad);
+			}
+			break;
+		}
+	}
+}
+
+void AGTWBossPhase1Character::ClearTornadoEscapePads()
+{
+	for (const auto& Pad : TornadoEscapePads)
+	{
+		if (Pad.IsValid())
+		{
+			Pad->Destroy();
+		}
+	}
+	TornadoEscapePads.Reset();
+}
+
 // 수치는 BP_P1Boss에서 편집하고, C++은 순차 생성과 종료 정리만 담당한다.
 void AGTWBossPhase1Character::SpawnAttackActors(APawn* Player)
 {
@@ -509,7 +626,7 @@ void AGTWBossPhase1Character::SpawnAttackActors(APawn* Player)
 		return;
 	}
 	AttackSpawnTarget = Player;
-	RemainingAttackActors = AdjustedAttackActorCount;
+	RemainingAttackActors = FMath::Clamp(AttackActorCount, 1, 32);
 	if (RemainingAttackActors <= 0)
 	{
 		AttackSpawnTarget.Reset();
@@ -564,6 +681,10 @@ void AGTWBossPhase1Character::SpawnNextAttackActor()
 	for (const auto& Object : SpawnedHitObjects)
 	{
 		GroundQuery.AddIgnoredActor(Object.Get());
+	}
+	for (const auto& Pad : TornadoEscapePads)
+	{
+		GroundQuery.AddIgnoredActor(Pad.Get());
 	}
 
 	// 여기서는 클래스 선택과 생성만 처리한다.
@@ -634,6 +755,10 @@ void AGTWBossPhase1Character::SpawnHitObject()
 	{
 		GroundQuery.AddIgnoredActor(Attack.Get());
 	}
+	for (const auto& Pad : TornadoEscapePads)
+	{
+		GroundQuery.AddIgnoredActor(Pad.Get());
+	}
 
 	for (int32 Attempt = 0; Attempt < 20; ++Attempt)
 	{
@@ -662,6 +787,29 @@ void AGTWBossPhase1Character::SpawnHitObject()
 		UGameplayStatics::FinishSpawningActor(Object, Transform);
 		if (IsValid(Object))
 		{
+			// BP Construction Script로 메시가 만들어진 뒤 P1 인스턴스에만 적용한다.
+			if (HitObjectMaterial)
+			{
+				TInlineComponentArray<UStaticMeshComponent*> MeshComponents(Object);
+				// 원본 BP는 Niagara만 사용한다. P1 인스턴스에 충돌 없는 QR 표시 메시를 붙인다.
+				if (MeshComponents.IsEmpty() && HitObjectDisplayMesh)
+				{
+					UStaticMeshComponent* QRMesh = NewObject<UStaticMeshComponent>(Object, TEXT("P1QRCodeMesh"));
+					Object->AddInstanceComponent(QRMesh);
+					QRMesh->SetupAttachment(Object->GetRootComponent());
+					QRMesh->SetStaticMesh(HitObjectDisplayMesh);
+					QRMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+					QRMesh->RegisterComponent();
+					MeshComponents.Add(QRMesh);
+				}
+				for (UStaticMeshComponent* MeshComponent : MeshComponents)
+				{
+					for (int32 SlotIndex = 0; SlotIndex < MeshComponent->GetNumMaterials(); ++SlotIndex)
+					{
+						MeshComponent->SetMaterial(SlotIndex, HitObjectMaterial);
+					}
+				}
+			}
 			Object->SetLifeSpan(FMath::Max(5.f, HitObjectLifeSpan));
 		}
 		return;
@@ -676,7 +824,7 @@ void AGTWBossPhase1Character::OnHitObjectReachedBoss(AGTWBossHitObject* HitObjec
 	}
 	// 먼저 목록에서 제거해 같은 액터의 중복 알림과 종료 시 중복 정리를 막는다.
 	SpawnedHitObjects.Remove(HitObject);
-	DisplayedHitCount = FMath::Min(DisplayedHitCount + 1, 3);
+	DisplayedHitCount = FMath::Min(DisplayedHitCount + 1, RequiredSubmissionCount);
 	++PendingHitNotifications;
 	if (AGTWBoss1PAIController* AI = Cast<AGTWBoss1PAIController>(GetController()))
 	{

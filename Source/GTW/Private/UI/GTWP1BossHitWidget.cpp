@@ -1,4 +1,4 @@
-#include "UI/GTWP1BossHitWidget.h"
+﻿#include "UI/GTWP1BossHitWidget.h"
 
 #include "Characters/Boss/GTWBossPhase1Character.h"
 
@@ -23,6 +23,6 @@ void UGTWP1BossHitWidget::NativeTick(const FGeometry& MyGeometry, float InDeltaT
 	{
 		LastHitCount = HitCount;
 		bLastReacting = bReacting;
-		UpdateHitDisplay(HitCount, bReacting);
+		UpdateHitDisplay(HitCount, Boss->GetRequiredSubmissionCount(), bReacting);
 	}
 }

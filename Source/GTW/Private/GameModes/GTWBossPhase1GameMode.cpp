@@ -82,8 +82,13 @@ void AGTWBossPhase1GameMode::OnHitBoss()
 		return;
 	}
 
-	// 카운트 올렸을 때 횟수 충족했다면 Clear!
-	if (++CurrentHitCount >= ClearHitCount)
+	// P1 보스가 INI와 4층 기록으로 계산한 목표를 클리어 판정에도 사용한다.
+	const AGTWBossPhase1Character* Phase1Boss = Cast<AGTWBossPhase1Character>(GetBoss());
+	if (!Phase1Boss)
+	{
+		return;
+	}
+	if (++CurrentHitCount >= Phase1Boss->GetRequiredSubmissionCount())
 	{
 		Clear();
 	}
