@@ -24,7 +24,7 @@ public:
 	UPROPERTY(EditAnywhere, Category="Gimmick|Spawn", meta=(ClampMin="0.0", Units = "cm"))
 	float ForwardDistance = 0.f;
 
-	UPROPERTY(EditAnywhere, Category = "Gimmick|Spawn", meta = (ClampMin = "0.0", Units = "cm"))
+	UPROPERTY(EditAnywhere, Category = "Gimmick|Spawn", meta = (ClampMin = "0.0", ClampMax = "450.0", Units = "cm"))
 	float HorizontalRandomRange = 0.f;
 };
 
@@ -68,7 +68,7 @@ private:
 protected:
 	// 몽타주
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
-	TObjectPtr<UAnimMontage> SwordAttack;
+	TObjectPtr<UAnimMontage> SwordWaveAttack;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = Attack)
 	TObjectPtr<UAnimMontage> LightningAttack;

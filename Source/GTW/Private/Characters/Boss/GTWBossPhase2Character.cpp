@@ -53,7 +53,7 @@ AGTWBossPhase2Character::AGTWBossPhase2Character()
 
 	if (SwordAttackRef.Succeeded())
 	{
-		SwordAttack = SwordAttackRef.Object;
+		SwordWaveAttack = SwordAttackRef.Object;
 	}
 
 	// 번개 몽타주 연결
@@ -121,6 +121,8 @@ void AGTWBossPhase2Character::StopCombat()
 		return;
 	}
 
+	bCombatActive = false;
+
 	BossController->StopAI();
 	// 현재 스플라인 배열의 Tick을 비활성화
 	if (BossSplines.IsValidIndex(CurrentSplineNum))
@@ -133,8 +135,6 @@ void AGTWBossPhase2Character::StopCombat()
 	
 	// ABP 정리. (시퀀스 시 애니메이션 정지시키기 위해)
 	GetMesh()->SetAnimInstanceClass(nullptr);
-
-	bCombatActive = false;
 }
 
 void AGTWBossPhase2Character::StartSpline()
@@ -167,7 +167,7 @@ void AGTWBossPhase2Character::NextSpline()
 
 void AGTWBossPhase2Character::PlaySwordWaveMontage()
 {
-	PlayAttackMontage(SwordAttack);
+	PlayAttackMontage(SwordWaveAttack);
 
 	SpawnSwordWaveGimmick();
 }
@@ -216,8 +216,8 @@ void AGTWBossPhase2Character::OnAttackMontageEnded(UAnimMontage* Montage, bool b
 		return;
 	}
 
-	// 끝나고 재생하면 WarningDuration이랑 겹쳐서 너무 오래걸리네.
-	//if (Montage == SwordAttack)
+	// 불필요해짐
+	//if (Montage == SwordWaveAttack)
 	//{
 	//	SpawnSwordWaveGimmick();
 	//}
