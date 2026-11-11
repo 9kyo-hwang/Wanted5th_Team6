@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include <Characters/Player/GTWPlayerCharacter.h>
 #include <Components/Player/GTWSkateMovementComponent.h>
@@ -150,6 +150,11 @@ void AGTWPlayerCharacter::PlayerWallImpact(int Speed)
 
 	SkateAudioComponent->PlayHitSound();
 
+}
+
+void AGTWPlayerCharacter::ApplyKnockback(FVector HitDirection, float Power)
+{
+	HitKnockbackObject(HitDirection.GetSafeNormal(), Power);
 }
 
 
