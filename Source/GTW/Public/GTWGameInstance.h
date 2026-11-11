@@ -22,6 +22,16 @@ enum class ELevelClear : uint8
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnTimerChangedDelegate, double);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnClearLevelChangedDelegate, ELevelClear, double);
 
+UENUM()
+enum class ELevelClear : uint8
+{
+	SecondFloorClear = 0,
+	SokobanClear,
+	ShootingGameClear,
+	BossFirstPhaseGameClear,
+	BossSecondPhaseGameClear,
+};
+
 UENUM(BlueprintType)
 enum class EMinigameType : uint8
 {
