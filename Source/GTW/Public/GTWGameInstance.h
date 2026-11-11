@@ -92,6 +92,7 @@ public:
 	FORCEINLINE bool IsBossPhase1Cleared() const { return bIsBossPhase1Cleared; }
 	FORCEINLINE void SetBossPhase1Cleared() { bIsBossPhase1Cleared = true; }
 	FORCEINLINE void ResetBossPhase1Cleared() { bIsBossPhase1Cleared = false; }
+	FORCEINLINE double GetTotalTime() { return TotalPlayTime; }
 
 public:
 	TMap<ELevelClear, double> LevelClearTimes;
