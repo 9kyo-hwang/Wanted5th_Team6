@@ -1,9 +1,10 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
+#include "GTWGameInstance.h"
 #include "GTWClearHistorySaveGame.generated.h"
 
 /**
@@ -16,6 +17,6 @@ class GTW_API UGTWClearHistorySaveGame : public USaveGame
 	
 public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category="Clear History")
-	TMap<FString, double> LevelClearTimes;
+	TMap<ELevelClear, double> LevelClearTime;
 	//TArray<double> ClearTimes;	// 누적된 클리어 기록들
 };

@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -6,16 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "GTWTimerWidget.generated.h"
 
-// 레벨 클리어를 알릴 열거형
-UENUM(BlueprintType)
-enum class ELevelClear : uint8
-{
-	SecondFloorClear         UMETA(DisplayName = "Second Floor Clear"),
-	SokobanClear             UMETA(DisplayName = "Sokoban Clear"),
-	ShootingGameClear        UMETA(DisplayName = "Shooting Game Clear"),
-	BossFirstPhaseGameClear  UMETA(DisplayName = "Boss First Phase Clear"),
-	BossSecondPhaseGameClear UMETA(DisplayName = "Boss Second Phase Clear"),
-};
+enum class ELevelClear : uint8;
 
 /**
  * 

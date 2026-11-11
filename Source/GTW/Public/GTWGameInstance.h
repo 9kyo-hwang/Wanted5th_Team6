@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #pragma once
 
@@ -7,7 +7,18 @@
 #include <Tickable.h> // FTickableGameObject를 사용하기 위해 필수
 #include "GTWGameInstance.generated.h"
 
-enum class ELevelClear : uint8;
+// 레벨 클리어를 알릴 열거형
+UENUM(BlueprintType)
+enum class ELevelClear : uint8
+{
+	SecondFloorClear         UMETA(DisplayName = "Second Floor Clear"),
+	SokobanClear             UMETA(DisplayName = "Sokoban Clear"),
+	ShootingGameClear        UMETA(DisplayName = "Shooting Game Clear"),
+	BossFirstPhaseGameClear  UMETA(DisplayName = "Boss First Phase Clear"),
+	BossSecondPhaseGameClear UMETA(DisplayName = "Boss Second Phase Clear"),
+};
+
+
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnTimerChangedDelegate, double);
 DECLARE_MULTICAST_DELEGATE_TwoParams(FOnClearLevelChangedDelegate, ELevelClear, double);
 
@@ -30,6 +41,7 @@ class GTW_API UGTWGameInstance : public UGameInstance, public FTickableGameObjec
 	GENERATED_BODY()
 
 public:
+	UGTWGameInstance();
 	// 기존에 클리어한 이력이 있다면 Load
 	virtual void Init() override;
 	
@@ -44,7 +56,10 @@ public:
 
 	// 진행했던 Level부터 게임 시작
 	UFUNCTION(BlueprintCallable, Category = "Game|Progress")
-	bool StartProgressGame();
+	bool LoadProgressGame();
+
+	UFUNCTION(BlueprintCallable)
+	bool IsLevelCleared(ELevelClear Level) const;
 
 	// 게임 최종 클리어 시 SaveGame에 클리어타임 기록
 	void CompleteGame();
@@ -101,4 +116,5 @@ private:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Category = "Time", meta = (AllowPrivateAccess = "true"))
 	double CurrentFloorTime = 0.0;
 	TMap<ELevelClear, double> LevelClearTimes;
+	TArray<FString> CasingSaveDataKeyvalue;
 };
