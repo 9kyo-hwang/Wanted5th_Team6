@@ -106,26 +106,7 @@ void AGTWBossPhase1Character::LoadBossSettings()
 	BaseRequiredSubmissionCount = FMath::RoundToInt(ReadNumber(TEXT("BaseRequiredSubmissionCount"), 1.f, 1000.f, 10.f));
 	FastClearSubmissionReduction = ReadNumber(TEXT("FastClearSubmissionReduction"), 0.f, 1.f, 0.f);
 
-	// 공격 선택 비중은 별도 파일로 관리한다. 기존 전투/발판 수치와 BP에 중복 저장하지 않는다.
-	FConfigFile AttackSettings;
-	AttackSettings.Read(GetP1SettingsFile(TEXT("BossPhase1Attacks.ini")));
-	FString ChanceText;
-	if (!AttackSettings.GetString(TEXT("BossPhase1Attacks"), TEXT("TornadoKickChance"), ChanceText))
-	{
-		FConfigFile AttackDefaults;
-		AttackDefaults.Read(FPaths::Combine(FPaths::ProjectContentDir(), TEXT("GTW/GameData/BossPhase1Attacks.ini")));
-		AttackDefaults.GetString(TEXT("BossPhase1Attacks"), TEXT("TornadoKickChance"), ChanceText);
-	}
-	TornadoKickChance = 1.f;
-	float Chance = 1.f;
-	if (LexTryParseString(Chance, *ChanceText) && FMath::IsFinite(Chance) && Chance >= 0.f && Chance <= 1.f)
-	{
-		TornadoKickChance = Chance;
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("P1: TornadoKickChance가 잘못되어 기존 공격 순서(1.0)를 유지합니다."));
-	}
+	TornadoKickChance = ReadNumber(TEXT("TornadoKickChance"), 0.f, 1.f, 1.f);
 }
 
 void AGTWBossPhase1Character::PostInitializeComponents()

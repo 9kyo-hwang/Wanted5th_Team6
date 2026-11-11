@@ -185,7 +185,7 @@ public:
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|TornadoKick")
 	float TornadoKickPower = 0.f;
 
-	/** BossPhase1Attacks.ini의 킥 차례 실행 확률(0~1). 선택하지 않은 차례는 기존 Wait로 넘어간다. */
+	/** BossPhase1.ini의 킥 차례 실행 확률(0~1). 선택하지 않은 차례는 기존 Wait로 넘어간다. */
 	UPROPERTY(VisibleInstanceOnly, BlueprintReadOnly, Transient, Category = "Boss|TornadoKick")
 	float TornadoKickChance = 1.f;
 
