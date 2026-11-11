@@ -54,7 +54,6 @@ void AGTWBoss2PAIController::StopAI()
 void AGTWBoss2PAIController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
-	//RunAI();	
 
 	/*
 	* [교황]: AI 가동 로직을 GM이 컨트롤할 수 있게 StartCombat()으로 통일하려고 합니다

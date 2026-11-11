@@ -14,6 +14,5 @@ public:
 	UBTTask_SpawnBall();
 
 private:
-	virtual EBTNodeResult::Type ExecuteTask(
-		UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
+	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
 };
