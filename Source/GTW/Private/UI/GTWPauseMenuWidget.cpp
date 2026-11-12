@@ -199,46 +199,18 @@ void UGTWPauseMenuWidget::TitleClicked()
 
 void UGTWPauseMenuWidget::OnBGMVolumeChanged(float Value)
 {
-    if (!SettingsSoundMix) 
+    if (UGTWGameInstance* GameInst =
+        Cast<UGTWGameInstance>(GetGameInstance()))
     {
-        return;
+        GameInst->SetBGMVolume(Value);
     }
-
-    if (!BGMSoundClass)
-    {
-        return;
-    }
-
-    UGameplayStatics::SetSoundMixClassOverride(
-        this,
-        SettingsSoundMix,
-        BGMSoundClass,
-        FMath::Clamp(Value, 0.0f, 1.0f),
-        1.0f,
-        0.1f,
-        true
-    );
 }
 
 void UGTWPauseMenuWidget::OnSFXVolumeChanged(float Value)
 {
-    if (!SettingsSoundMix)
+    if (UGTWGameInstance* GameInst =
+        Cast<UGTWGameInstance>(GetGameInstance()))
     {
-        return;
+        GameInst->SetSFXVolume(Value);
     }
-
-    if (!SFXSoundClass)
-    {
-        return;
-    }
-
-    UGameplayStatics::SetSoundMixClassOverride(
-        this,
-        SettingsSoundMix,
-        SFXSoundClass,
-        FMath::Clamp(Value, 0.0f, 1.0f),
-        1.0f,
-        0.1f,
-        true
-    );
 }

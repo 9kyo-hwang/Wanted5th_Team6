@@ -79,9 +79,32 @@ public:
 	void RecordLevelClear(ELevelClear Level);
 	void RecordMiniGameClear(ELevelClear Level, double ClearTime);
 	void RecordProgressGameTime();
-	void InitializeTimerWidget(class UGTWTimerWidget* Widget) const;
+	void InitializeTimerWidget(class UGTWTimerWidget* Widget);
 
 public:
+	// 사운드 믹서
+	UPROPERTY(EditDefaultsOnly, Category = "Audio")
+	TObjectPtr<class USoundMix> SettingsSoundMix;
+
+	// 사운드 클래스 // 사운드 구분을 위한 클래스
+	UPROPERTY(EditDefaultsOnly, Category = "Audio")
+	TObjectPtr<class USoundClass> BGMSoundClass;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Audio")
+	TObjectPtr<USoundClass> SFXSoundClass;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Audio")
+	float BGMVolume = 1.0f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Audio")
+	float SFXVolume = 1.0f;
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	void SetBGMVolume(float Value);
+
+	UFUNCTION(BlueprintCallable, Category = "Audio")
+	void SetSFXVolume(float Value);
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsTickable = false;
 	bool OpenGameLevel(FString LevelName);
@@ -122,4 +145,5 @@ private:
 	double CurrentFloorTime = 0.0;
 	
 	TArray<FString> CachingSaveDataKeyvalue;
+	UGTWTimerWidget* TimerWidget;
 };
