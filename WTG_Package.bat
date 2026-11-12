@@ -3,30 +3,36 @@
 setlocal EnableExtensions
 
 REM ==========================================
-REM WTG Team Packaging - Unreal Engine 5.8
+REM WTG Team Auto Packaging - UE 5.8
 REM ==========================================
 
-REM [1] Find project path automatically
+REM [1] Project Path
 set "PROJECT_DIR=%~dp0"
 set "PROJECT_FILE=%PROJECT_DIR%GTW.uproject"
 
 if not exist "%PROJECT_FILE%" (
     echo [ERROR] GTW.uproject not found.
-    echo Expected: %PROJECT_FILE%
     pause
     exit /b 1
 )
 
-REM [2] Find Unreal Engine installation
+REM [2] Engine Path
 set "ENGINE_DIR="
 set "CONFIG_FILE=%LOCALAPPDATA%\WTG_EnginePath.txt"
 
-REM Load previously saved path
+REM Load saved engine path
 if exist "%CONFIG_FILE%" (
     set /p ENGINE_DIR=<"%CONFIG_FILE%"
 )
 
-REM Search Windows Registry for UE 5.8
+REM Search Epic Games Launcher installation data
+if not exist "%ENGINE_DIR%\Engine\Build\BatchFiles\RunUAT.bat" (
+    set "ENGINE_DIR="
+
+    for /f "usebackq delims=" %%E in (`powershell -NoProfile -Command "$p=Join-Path $env:ProgramData 'Epic\UnrealEngineLauncher\LauncherInstalled.dat'; if(Test-Path $p){$j=Get-Content -Raw $p | ConvertFrom-Json; foreach($x in $j.InstallationList){if($x.AppName -eq 'UE_5.8' -and (Test-Path (Join-Path $x.InstallLocation 'Engine\Build\BatchFiles\RunUAT.bat'))){$x.InstallLocation;break}}}"`) do set "ENGINE_DIR=%%E"
+)
+
+REM Fallback: Windows Registry
 if not exist "%ENGINE_DIR%\Engine\Build\BatchFiles\RunUAT.bat" (
     set "ENGINE_DIR="
 
@@ -37,43 +43,38 @@ if not exist "%ENGINE_DIR%\Engine\Build\BatchFiles\RunUAT.bat" (
     )
 )
 
-REM Manual path fallback
+REM Manual fallback
 :CHECK_ENGINE
 if not exist "%ENGINE_DIR%\Engine\Build\BatchFiles\RunUAT.bat" (
     echo.
-    echo [INFO] Unreal Engine 5.8 not found.
+    echo [INFO] UE 5.8 path not found automatically.
     echo Example: D:\UE_5.8
-    echo.
     set "ENGINE_DIR="
     set /p "ENGINE_DIR=Enter Engine Path: "
-
-    if not defined ENGINE_DIR goto CHECK_ENGINE
-
-    REM Remove quotes if entered
     set "ENGINE_DIR=%ENGINE_DIR:"=%"
     goto CHECK_ENGINE
 )
 
-REM Save engine path for next execution
+REM Save engine path locally
 >"%CONFIG_FILE%" echo(%ENGINE_DIR%
 
-REM [3] Find Windows Desktop path
+REM [3] Desktop Path
 set "DESKTOP_DIR="
 
 for /f "usebackq delims=" %%D in (`powershell -NoProfile -Command "[Environment]::GetFolderPath('Desktop')"`) do set "DESKTOP_DIR=%%D"
 
 if not defined DESKTOP_DIR (
-    echo [ERROR] Desktop folder not found.
+    echo [ERROR] Desktop not found.
     pause
     exit /b 1
 )
 
-REM [4] Create package output folder
+REM [4] Output Path
 set "PACKAGE_DIR=%DESKTOP_DIR%\WTG_Package"
 
 if not exist "%PACKAGE_DIR%" mkdir "%PACKAGE_DIR%"
 
-REM [5] Unreal Automation Tool
+REM [5] Automation Tool
 set "UAT=%ENGINE_DIR%\Engine\Build\BatchFiles\RunUAT.bat"
 
 echo.
@@ -86,7 +87,7 @@ echo Output  : %PACKAGE_DIR%
 echo ==========================================
 echo.
 
-REM [6] BuildCookRun
+REM [6] Run Packaging
 call "%UAT%" ^
  -ScriptsForProject="%PROJECT_FILE%" ^
  -noP4 ^
@@ -110,27 +111,20 @@ call "%UAT%" ^
  -archive ^
  -archivedirectory="%PACKAGE_DIR%"
 
-REM [7] Check packaging result
 set "BUILD_RESULT=%ERRORLEVEL%"
 
-echo.
-
+REM [7] Result
 if not "%BUILD_RESULT%"=="0" (
-    echo ==========================================
-    echo [FAILED] WTG Packaging Failed
-    echo ==========================================
-    echo Check the log above.
+    echo.
+    echo [FAILED] Packaging failed.
     pause
     exit /b %BUILD_RESULT%
 )
 
-echo ==========================================
+echo.
 echo [SUCCESS] WTG Packaging Completed
-echo ==========================================
 echo Output: %PACKAGE_DIR%
 
-REM [8] Open output folder
 explorer "%PACKAGE_DIR%"
-
 pause
 endlocal
