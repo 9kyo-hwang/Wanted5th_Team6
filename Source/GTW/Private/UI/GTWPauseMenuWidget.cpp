@@ -10,6 +10,7 @@
 #include "Framework/Application/SlateApplication.h"
 #include <Components/CanvasPanel.h>
 #include <Components/Button.h>
+#include "Widgets/SWidget.h"
 #include "Components/Slider.h"
 #include "Sound/SoundMix.h"
 #include "Sound/SoundClass.h"
@@ -67,12 +68,16 @@ bool UGTWPauseMenuWidget::ToggleMenu()
         PlayerController->bShowMouseCursor = false;
 
         // 게임 입력으로 복구
-        FInputModeGameOnly InputMode;
+        FInputModeGameAndUI  InputMode;
         PlayerController->SetInputMode(InputMode);
+        
+
     }
     // 메뉴 창이 꺼져 있을 때
     else
     {
+
+
         PauseMenu.Get()->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 
         // 게임 일시정지
