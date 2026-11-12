@@ -47,7 +47,7 @@ AGTWJumpTileActor::AGTWJumpTileActor() : JumpPower(2000.0f)
 	}
 
 	static ConstructorHelpers::FObjectFinder<USoundBase> SoundAsset(
-		TEXT("/Game/Assets/Sounds/jump_pad.jump_pad")
+		TEXT("/Game/Assets/Sounds/Hat.Hat")
 	);
 
 	if (SoundAsset.Succeeded())
