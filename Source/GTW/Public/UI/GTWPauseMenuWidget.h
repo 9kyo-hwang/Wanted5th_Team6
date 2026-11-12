@@ -103,6 +103,4 @@ protected:
 	UPROPERTY()
 	bool bIsVisibleSettingMenu;
 
-private:
-	TWeakPtr<SWidget> PreviousFocusedWidget;
 };

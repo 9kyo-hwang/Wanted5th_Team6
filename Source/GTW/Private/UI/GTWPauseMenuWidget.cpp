@@ -11,7 +11,6 @@
 #include <Controllers/GTWPlayerController.h>
 #include <Components/CanvasPanel.h>
 #include <Components/Button.h>
-#include "Widgets/SWidget.h"
 #include "Components/Slider.h"
 #include "Sound/SoundMix.h"
 #include "Sound/SoundClass.h"
