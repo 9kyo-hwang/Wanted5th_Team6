@@ -52,6 +52,11 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<class UInputAction> PauseAction;
 
+public:
+	UPROPERTY(BlueprintReadWrite, Category = "UI")
+	bool bBlockPauseMenu = false;
+	
+
 
 private:
 	void HandlePauseInput();
