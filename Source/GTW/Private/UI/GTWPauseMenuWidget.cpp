@@ -70,10 +70,8 @@ bool UGTWPauseMenuWidget::ToggleMenu()
         PlayerController->bShowMouseCursor = false;
 
         // 게임 입력으로 복구
-        FInputModeGameAndUI  InputMode;
+        FInputModeGameOnly   InputMode;
         PlayerController->SetInputMode(InputMode);
-        
-
     }
     // 메뉴 창이 꺼져 있을 때
     else
