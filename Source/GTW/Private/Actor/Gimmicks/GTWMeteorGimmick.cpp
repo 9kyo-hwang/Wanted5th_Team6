@@ -80,8 +80,14 @@ void AGTWMeteorGimmick::Falling()
 
 void AGTWMeteorGimmick::Knockback()
 {
+	const bool bUseGroundedStun = GroundedStunDuration > 0.f;
+	if (bUseGroundedStun && CurrentState != EMeteorState::Grounded)
+	{
+		return;
+	}
+
 	UWorld* World = GetWorld();
-	if (!World || KnockbackRadius <= 0.f)
+	if (!World || (!bUseGroundedStun && KnockbackRadius <= 0.f))
 	{
 		Debug::Print(TEXT("[Meteor] World가 없거나 넉백 범위가 유효하지 않음"));
 		return;
@@ -99,6 +105,8 @@ void AGTWMeteorGimmick::Knockback()
 	);
 
 	const FVector MeteorLocation = MeteorCollision->GetComponentLocation();
+	// P1은 실제 운석 콜리전의 크기를 사용한다. 기존 운석의 판정 범위는 유지한다.
+	const float ContactRadius = bUseGroundedStun ? MeteorCollision->GetScaledSphereRadius() : KnockbackRadius;
 
 #if 0
 	DrawDebugSphere(
@@ -119,7 +127,7 @@ void AGTWMeteorGimmick::Knockback()
 		MeteorLocation,
 		FQuat::Identity,
 		ObjectParams,
-		FCollisionShape::MakeSphere(KnockbackRadius),
+		FCollisionShape::MakeSphere(ContactRadius),
 		QueryParams
 	))
 	{
@@ -137,6 +145,12 @@ void AGTWMeteorGimmick::Knockback()
 
 		if (IGTWHitReactionReceiver* Receiver = Cast<IGTWHitReactionReceiver>(Target))
 		{
+			if (bUseGroundedStun)
+			{
+				Receiver->HitStunObject(GroundedStunDuration);
+				return;
+			}
+
 			//Debug::Print(FString::Printf(TEXT("[Meteor | %s] 플레이어 발견!"), *GetName()));
 			
 			// XY축 방향만 계산
@@ -192,6 +206,10 @@ void AGTWMeteorGimmick::Grounded()
 	StopLoopingFX(EGimmickFXTypes::Warning);
 	
 	MeteorCollision->SetWorldLocation(GroundLocation);
+	if (GroundedStunDuration > 0.f)
+	{
+		MeteorCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	}
 	MeteorCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);	// @TODO: Pawn Block으로 설정해줘야 함
 
 	PlayBurstFX(EGimmickFXTypes::Impact, MeteorCollision->GetComponentToWorld());
