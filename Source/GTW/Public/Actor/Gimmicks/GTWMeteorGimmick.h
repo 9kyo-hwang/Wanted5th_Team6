@@ -25,6 +25,10 @@ class GTW_API AGTWMeteorGimmick : public AGTWBossGimmickBase
 public:	
 	AGTWMeteorGimmick();
 
+	/** P1 생성자가 설정하는 착지 후 기절 시간. 0이면 기존 넉백 동작을 유지한다. */
+	UPROPERTY(Transient, VisibleInstanceOnly, BlueprintReadOnly, Category = "Boss|Gimmick|Meteor")
+	float GroundedStunDuration = 0.f;
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;

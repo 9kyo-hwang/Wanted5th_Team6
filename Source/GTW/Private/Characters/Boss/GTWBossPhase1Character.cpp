@@ -1,6 +1,7 @@
-﻿#include "Characters/Boss/GTWBossPhase1Character.h"
+#include "Characters/Boss/GTWBossPhase1Character.h"
 
 #include "Actor/Gimmicks/GTWBossHitObject.h"
+#include "Actor/Gimmicks/GTWMeteorGimmick.h"
 #include "Actor/Gimmicks/GTWP1TornadoJumpPad.h"
 #include "TimerManager.h"
 #include "Animation/AnimInstance.h"
@@ -71,7 +72,7 @@ void AGTWBossPhase1Character::LoadBossSettings()
 {
 	// 보너스 기준과 제출 목표는 INI에서만 관리한다. 장애물 생성량에는 영향을 주지 않는다.
 	FastClearTimeThreshold = 0.f;
-	FastClearSubmissionReduction = 0.f;
+	FastClearSubmissionReductionCount = 0;
 	const FString DefaultFile = FPaths::Combine(FPaths::ProjectContentDir(), TEXT("GTW/GameData/BossPhase1.ini"));
 	const FString SettingsFile = GetP1SettingsFile(TEXT("BossPhase1.ini"));
 
@@ -101,10 +102,15 @@ void AGTWBossPhase1Character::LoadBossSettings()
 	TornadoEscapePadDistance = ReadNumber(TEXT("TornadoEscapePadDistance"), 0.f, 100000.f, 0.f);
 	TornadoEscapePadJumpPower = ReadNumber(TEXT("TornadoEscapePadJumpPower"), 0.f, 100000.f, 0.f);
 	TornadoKickPower = ReadNumber(TEXT("TornadoKickPower"), 0.f, 100000.f, 0.f);
+	TornadoHitInterval = ReadNumber(TEXT("TornadoHitInterval"), 0.1f, 86400.f, 1.f);
 	TornadoKickPlayRate = ReadNumber(TEXT("TornadoKickPlayRate"), 0.1f, 5.f, 1.f);
+	TornadoKickExtraHeight = ReadNumber(TEXT("TornadoKickExtraHeight"), 0.f, 100000.f, 600.f);
+	TornadoLegLengthScale = ReadNumber(TEXT("TornadoLegLengthScale"), 0.1f, 10.f, 1.f);
 	FastClearTimeThreshold = ReadNumber(TEXT("FastClearTimeThreshold"), 0.f, 86400.f, 0.f);
 	BaseRequiredSubmissionCount = FMath::RoundToInt(ReadNumber(TEXT("BaseRequiredSubmissionCount"), 1.f, 1000.f, 10.f));
-	FastClearSubmissionReduction = ReadNumber(TEXT("FastClearSubmissionReduction"), 0.f, 1.f, 0.f);
+	const float ReductionCount = ReadNumber(TEXT("FastClearSubmissionReductionCount"), 0.f, 1000.f, 0.f);
+	FastClearSubmissionReductionCount = FMath::IsNearlyEqual(ReductionCount, FMath::RoundToFloat(ReductionCount))
+		? FMath::RoundToInt(ReductionCount) : 0;
 
 	TornadoKickChance = ReadNumber(TEXT("TornadoKickChance"), 0.f, 1.f, 1.f);
 }
@@ -118,23 +124,40 @@ void AGTWBossPhase1Character::PostInitializeComponents()
 	}
 
 	LoadBossSettings();
+	// INI 배율은 AnimGraph에서 뼈의 위치에만 적용한다. 두께와 발 크기는 늘리지 않는다.
+	if (const USkeletalMesh* SkeletalMesh = GetMesh()->GetSkeletalMeshAsset())
+	{
+		const FReferenceSkeleton& Skeleton = SkeletalMesh->GetRefSkeleton();
+		for (const FName Bone : { FName("LeftLeg"), FName("LeftFoot"), FName("RightLeg"), FName("RightFoot") })
+		{
+			const int32 Index = Skeleton.FindBoneIndex(Bone);
+			if (Index != INDEX_NONE)
+			{
+				TornadoLegReferenceOffsets.Add(Bone, Skeleton.GetRefBonePose()[Index].GetTranslation());
+			}
+		}
+	}
 	// 기록이 없거나 조건 미충족이면 기본 제출 목표를 사용한다.
 	RequiredSubmissionCount = BaseRequiredSubmissionCount;
 	FourthFloorClearTime = -1.0;
 	bHasFastClearBenefit = false;
 	const UGTWGameInstance* GameInstance = GetGameInstance<UGTWGameInstance>();
-	if (!GameInstance || !GameInstance->TryGetMinigameClearTime(EMinigameType::Shooting, FourthFloorClearTime))
+	double SokobanTime = -1.0;
+	double ShootingTime = -1.0;
+	if (!GameInstance
+		|| !GameInstance->TryGetMinigameClearTime(EMinigameType::Sokoban, SokobanTime)
+		|| !GameInstance->TryGetMinigameClearTime(EMinigameType::Shooting, ShootingTime))
 	{
 		return;
 	}
 
-	// 4층을 기준 시간 미만에 클리어한 경우에만 제출 목표를 줄인다.
-	bHasFastClearBenefit = FMath::IsFinite(FourthFloorClearTime) && FourthFloorClearTime >= 0.0
-		&& FastClearTimeThreshold > 0.f && FourthFloorClearTime < FastClearTimeThreshold;
-	if (bHasFastClearBenefit)
+	// 두 미니게임 기록이 모두 있어야 합산한다. 이동 시간은 포함하지 않는다.
+	FourthFloorClearTime = SokobanTime + ShootingTime;
+	if (FMath::IsFinite(FourthFloorClearTime) && FourthFloorClearTime >= 0.0
+		&& FastClearTimeThreshold > 0.f && FourthFloorClearTime < FastClearTimeThreshold)
 	{
-		// 개수는 정수로 반올림한다. 기본 10개에서 25% 감소하면 8개다.
-		RequiredSubmissionCount = FMath::Max(1, FMath::RoundToInt(BaseRequiredSubmissionCount * (1.f - FastClearSubmissionReduction)));
+		RequiredSubmissionCount = FMath::Max(1, BaseRequiredSubmissionCount - FastClearSubmissionReductionCount);
+		bHasFastClearBenefit = RequiredSubmissionCount < BaseRequiredSubmissionCount;
 	}
 }
 
@@ -286,7 +309,6 @@ bool AGTWBossPhase1Character::PlayTornadoKick()
 	}
 	bTornadoKickPlaying = true;
 	TornadoMeshBaseLocation = GetMesh()->GetRelativeLocation();
-	bTornadoPlayerHit = false;
 	SpawnTornadoEscapePads();
 	if (APlayerController* PlayerController = UGameplayStatics::GetPlayerController(this, 0))
 	{
@@ -299,6 +321,14 @@ bool AGTWBossPhase1Character::PlayTornadoKick()
 		}
 	}
 	return true;
+}
+
+FVector AGTWBossPhase1Character::GetTornadoLegOffset(const APawn* PawnOwner, FName BoneName)
+{
+	// 애니메이션 에디터 미리보기에는 보스 Pawn이 없으므로 기본 포즈를 유지한다.
+	const AGTWBossPhase1Character* Boss = Cast<AGTWBossPhase1Character>(PawnOwner);
+	const FVector* Offset = Boss ? Boss->TornadoLegReferenceOffsets.Find(BoneName) : nullptr;
+	return Offset ? *Offset * ((Boss->TornadoLegLengthScale - 1.f) * Boss->TornadoLegExtensionAlpha) : FVector::ZeroVector;
 }
 
 void AGTWBossPhase1Character::UpdateTornadoKickMotion()
@@ -322,6 +352,8 @@ void AGTWBossPhase1Character::UpdateTornadoKickMotion()
 	const float Alpha = FMath::Clamp((Position - StartTime) / FMath::Max(EndTime - StartTime, KINDA_SMALL_NUMBER), 0.f, 1.f);
 	const float SmoothAlpha = FMath::SmoothStep(0.f, 1.f, Alpha);
 	const bool bAirKick = Section == TEXT("AirKick");
+	const float LegBlend = bAirKick ? FMath::Clamp(FMath::Min(Position - StartTime, EndTime - Position) / 0.1f, 0.f, 1.f) : 0.f;
+	TornadoLegExtensionAlpha = FMath::SmoothStep(0.f, 1.f, LegBlend);
 	const float HeightAlpha = bAirKick ? 1.f : (Section == TEXT("Land") ? 1.f - SmoothAlpha : SmoothAlpha);
 
 	// 좌표 제한은 액터가 담당한다. 시각적인 추가 점프 높이는 메시 오프셋으로 분리한다.
@@ -333,6 +365,7 @@ void AGTWBossPhase1Character::UpdateTornadoKickMotion()
 
 void AGTWBossPhase1Character::ResetTornadoKickMotion()
 {
+	TornadoLegExtensionAlpha = 0.f;
 	if (TornadoPresentation)
 	{
 		TornadoPresentation->RemoveFromParent();
@@ -347,155 +380,40 @@ void AGTWBossPhase1Character::ResetTornadoKickMotion()
 
 void AGTWBossPhase1Character::BeginTornadoKickDamage()
 {
-	if (!bRunning || !bTornadoKickPlaying)
+	if (bRunning && bTornadoKickPlaying)
 	{
-		return;
-	}
-
-	const FName Bones[] = { LeftKickKnee, LeftKickFoot, RightKickKnee, RightKickFoot };
-	for (int32 Index = 0; Index < UE_ARRAY_COUNT(Bones); ++Index)
-	{
-		if (!GetMesh()->DoesSocketExist(Bones[Index]))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("P1 TornadoKick: missing leg bone %s"), *Bones[Index].ToString());
-			return;
-		}
-		PreviousKickBones[Index] = GetMesh()->GetSocketLocation(Bones[Index]);
-	}
-	for (const int32 KneeIndex : { 0, 2 })
-	{
-		const FName Thigh = GetMesh()->GetParentBone(Bones[KneeIndex]);
-		if (Thigh.IsNone())
-		{
-			UE_LOG(LogTemp, Warning, TEXT("P1 TornadoKick: missing thigh for %s"), *Bones[KneeIndex].ToString());
-			return;
-		}
-		PreviousKickBones[4 + KneeIndex / 2] = GetMesh()->GetSocketLocation(Thigh);
-	}
-	bTornadoDamageActive = true;
-	if (!KickPoseFinalizedHandle.IsValid())
-	{
-		// Notify 시점뿐 아니라 최종 애니메이션 포즈가 확정된 뒤에도 실제 다리를 검사한다.
-		KickPoseFinalizedHandle = GetMesh()->RegisterOnBoneTransformsFinalizedDelegate(
-			FOnBoneTransformsFinalizedMultiCast::FDelegate::CreateUObject(this, &ThisClass::UpdateTornadoKickDamage));
+		bTornadoDamageActive = true;
+		SetTornadoLegCollision(true);
 	}
 }
 
-void AGTWBossPhase1Character::UpdateTornadoKickDamage()
+void AGTWBossPhase1Character::ApplyTornadoKickContact(AActor* OtherActor)
 {
-	if (!bRunning || !bTornadoKickPlaying || !bTornadoDamageActive)
+	// 접촉 판정은 BP Box가 담당한다. 기존 플레이어의 넉백/무적 경로만 호출한다.
+	if (!bRunning || !bTornadoKickPlaying || !bTornadoDamageActive || GetWorld()->GetTimeSeconds() < NextTornadoHitTime
+		|| OtherActor != UGameplayStatics::GetPlayerPawn(this, 0))
 	{
 		return;
 	}
-
-	const FName Bones[] = { LeftKickKnee, LeftKickFoot, RightKickKnee, RightKickFoot };
-	FVector CurrentBones[6];
-	for (int32 Index = 0; Index < UE_ARRAY_COUNT(Bones); ++Index)
+	if (IGTWHitReactionReceiver* Receiver = Cast<IGTWHitReactionReceiver>(OtherActor))
 	{
-		CurrentBones[Index] = GetMesh()->GetSocketLocation(Bones[Index]);
-	}
-	for (const int32 KneeIndex : { 0, 2 })
-	{
-		const FName Thigh = GetMesh()->GetParentBone(Bones[KneeIndex]);
-		CurrentBones[4 + KneeIndex / 2] = GetMesh()->GetSocketLocation(Thigh);
-	}
-	// 관절뿐 아니라 허벅지·정강이 전체가 이전 포즈에서 현재 포즈로 지나간 영역을 검사한다.
-	for (const int32 KneeIndex : { 0, 2 })
-	{
-		const int32 ThighIndex = 4 + KneeIndex / 2;
-		SweepTornadoKickLeg(PreviousKickBones[ThighIndex], PreviousKickBones[KneeIndex], CurrentBones[ThighIndex], CurrentBones[KneeIndex]);
-		SweepTornadoKickLeg(PreviousKickBones[KneeIndex], PreviousKickBones[KneeIndex + 1], CurrentBones[KneeIndex], CurrentBones[KneeIndex + 1]);
-	}
-	for (int32 Index = 0; Index < UE_ARRAY_COUNT(CurrentBones); ++Index)
-	{
-		PreviousKickBones[Index] = CurrentBones[Index];
-	}
-}
-
-void AGTWBossPhase1Character::SweepTornadoKickLeg(const FVector& PreviousStart, const FVector& PreviousEnd, const FVector& Start, const FVector& End)
-{
-	const float Radius = FMath::Max(1.f, TornadoKickRadius);
-#if !UE_BUILD_SHIPPING
-	if (bDrawDebug)
-	{
-		const FVector Delta = End - Start;
-		DrawDebugCapsule(GetWorld(), (Start + End) * 0.5f, Delta.Size() * 0.5f + Radius, Radius,
-			FQuat::FindBetweenNormals(FVector::UpVector, Delta.IsNearlyZero() ? FVector::UpVector : Delta.GetSafeNormal()), FColor::Red, false, 0.05f);
-	}
-#endif
-	TraceTornadoKick(Start, End);
-	// 길어진 다리도 판정 사이가 벌어지지 않도록 길이에 맞춰 나눈다. 샘플은 스택 변수만 사용한다.
-	const double Length = FMath::Max(FVector::Dist(PreviousStart, PreviousEnd), FVector::Dist(Start, End));
-	const int32 SampleCount = FMath::Clamp(FMath::CeilToInt(Length / (Radius * 0.5f)), 1, 256);
-	for (int32 Index = 0; Index <= SampleCount && !bTornadoPlayerHit; ++Index)
-	{
-		const float Alpha = static_cast<float>(Index) / SampleCount;
-		TraceTornadoKick(FMath::Lerp(PreviousStart, PreviousEnd, Alpha), FMath::Lerp(Start, End, Alpha));
-	}
-}
-
-void AGTWBossPhase1Character::TraceTornadoKick(const FVector& Start, const FVector& End)
-{
-	const float Radius = FMath::Max(1.f, TornadoKickRadius);
-	if (bTornadoPlayerHit)
-	{
-		return;
-	}
-	APawn* Player = UGameplayStatics::GetPlayerPawn(this, 0);
-	if (!IsValid(Player))
-	{
-		return;
-	}
-
-	const ACharacter* PlayerCharacter = Cast<ACharacter>(Player);
-	if (!PlayerCharacter)
-	{
-		return;
-	}
-
-	// 단일 플레이어의 캡슐과 다리 구간을 직접 비교한다.
-	// 래그돌 등으로 메시의 충돌 채널이 바뀌어도 동일한 접촉 범위를 사용한다.
-	const UCapsuleComponent* Capsule = PlayerCharacter->GetCapsuleComponent();
-	const float CapsuleRadius = Capsule->GetScaledCapsuleRadius();
-	const float HalfSegment = FMath::Max(0.f, Capsule->GetScaledCapsuleHalfHeight() - CapsuleRadius);
-	const FVector CapsuleOffset = Capsule->GetUpVector() * HalfSegment;
-	const FVector CapsuleCenter = Capsule->GetComponentLocation();
-	FVector LegPoint;
-	FVector PlayerPoint;
-	FMath::SegmentDistToSegmentSafe(Start, End, CapsuleCenter - CapsuleOffset, CapsuleCenter + CapsuleOffset, LegPoint, PlayerPoint);
-	const float ContactRadius = Radius + CapsuleRadius;
-	const bool bTouchesPlayer = FVector::DistSquared(LegPoint, PlayerPoint) <= FMath::Square(ContactRadius);
-	if (!bTouchesPlayer)
-	{
-		return;
-	}
-
-	if (IGTWHitReactionReceiver* Receiver = Cast<IGTWHitReactionReceiver>(Player))
-	{
-		FVector Direction = (CapsuleCenter - GetActorLocation()).GetSafeNormal2D();
+		FVector Direction = (OtherActor->GetActorLocation() - GetActorLocation()).GetSafeNormal2D();
 		if (Direction.IsNearlyZero())
 		{
 			Direction = GetActorForwardVector().GetSafeNormal2D();
 		}
-		// 지면에서 수평 충격이 바로 감쇠되지 않도록 약간 들어 올린다.
-		// 기존 인터페이스가 충격·래그돌·무적 시간을 처리한다. 공격당 한 번만 전달한다.
 		Direction.Z = 0.35f;
-		bTornadoPlayerHit = true;
+		// 같은 회전 중에도 재피격 간격이 지나면 다시 접촉을 전달한다.
+		NextTornadoHitTime = GetWorld()->GetTimeSeconds() + TornadoHitInterval;
 		Receiver->HitKnockbackObject(Direction.GetSafeNormal(), TornadoKickPower);
-		// 인터페이스가 무적으로 거절했을 때는 아무 이동도 덧붙이지 않는다.
-		// 힘·래그돌·무적 시간 적용은 기존 플레이어의 수락된 넉백 경로 한 곳에 맡긴다.
 	}
 }
 
 void AGTWBossPhase1Character::EndTornadoKickDamage()
 {
 	bTornadoDamageActive = false;
+	SetTornadoLegCollision(false);
 	ClearTornadoEscapePads();
-	if (KickPoseFinalizedHandle.IsValid())
-	{
-		GetMesh()->UnregisterOnBoneTransformsFinalizedDelegate(KickPoseFinalizedHandle);
-		KickPoseFinalizedHandle.Reset();
-	}
 }
 
 void AGTWBossPhase1Character::CancelTornadoKick()
@@ -746,6 +664,11 @@ void AGTWBossPhase1Character::SpawnNextAttackActor()
 		if (!Attack)
 		{
 			continue;
+		}
+		if (AGTWMeteorGimmick* Meteor = Cast<AGTWMeteorGimmick>(Attack))
+		{
+			// 같은 BP_Meteor를 재사용하되, P1에서 생성한 인스턴스만 착지 후 기절시킨다.
+			Meteor->GroundedStunDuration = MeteorStunDuration;
 		}
 		if (Attack->GetLifeSpan() <= 0.f)
 		{
