@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "Controllers/GTWPlayerController.h"
@@ -89,7 +89,7 @@ void AGTWPlayerController::BeginPlay()
 	// 문제 없이 생성됐다면 화면에 추가.
 	if (nullptr != GTWPauseMenuWidget)
 	{
-		GTWPauseMenuWidget->AddToViewport();
+		GTWPauseMenuWidget->AddToViewport(100);
 	}
 
 }
