@@ -1,4 +1,4 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
 #include "GameModes/GTWBaseBossGameMode.h"
@@ -7,8 +7,9 @@
 #include <Interfaces/GTWBossAIInterface.h>
 #include <Controllers/GTWPlayerController.h>
 #include <Characters/Player/GTWPlayerCharacter.h>
-#include <Kismet/GameplayStatics.h>
+#include <GTWGameInstance.h>
 
+#include <Kismet/GameplayStatics.h>
 #include <Engine/World.h>
 
 AGTWBaseBossGameMode::AGTWBaseBossGameMode()
@@ -67,6 +68,16 @@ void AGTWBaseBossGameMode::StartPlay()
 		return;
 	}
 
+	// 해당 레벨에서 [이어하기]를 할 수 있도록
+	UGTWGameInstance* GI = Cast<UGTWGameInstance>(GetGameInstance());
+	if (!GI)
+	{
+		Debug::Print(TEXT("[Base GM::StartPlay] GTWGameInstance 획득 실패"));
+		return;
+	}
+
+	GI->SaveProgressGame();
+
 	NativeBeginSetup_BeforeCombat();
 }
 
@@ -79,12 +90,6 @@ void AGTWBaseBossGameMode::NativeBeginSetup_BeforeCombat()
 	}
 
 	bWaitingForBeforeCombatSetup = true;
-
-	//if (OnIntroRequested.IsBound())
-	//{
-	//	Debug::Print(TEXT("[BaseBossGameMode::StartPlay] 인트로 재생! 종료 시 BeginPhase"));
-	//	OnIntroRequested.Broadcast();
-	//}
 
 	BP_BeginSetup_BeforeCombat();
 }
@@ -166,12 +171,6 @@ void AGTWBaseBossGameMode::EndCombat(EBossGameModeState Result)
 
 void AGTWBaseBossGameMode::NativeBeginSetup_AfterCombat()
 {
-	//if (!RequestPhaseOutro(Result))
-	//{
-	//	Debug::Print(TEXT("[BaseBossGameMode::EndPhase] 아웃트로가 없어서 즉시 완료 처리."));
-	//	CompletePhase();
-	//}
-
 	if (CurrentState != EBossGameModeState::Clear &&
 		CurrentState != EBossGameModeState::Fail)
 	{
@@ -243,8 +242,6 @@ void AGTWBaseBossGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	bWaitingForAfterCombatSetup = false;
 
 	StopBoss();
-	// 여기서는 키 입력 막는 함수 호출 X
-	// OpenLevel에 의해 GM이 내려가는 상황이라, 컨트롤러 접근하면 안됨.
 
 	Super::EndPlay(EndPlayReason);
 }
