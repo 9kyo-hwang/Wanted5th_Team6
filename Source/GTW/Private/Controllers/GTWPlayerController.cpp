@@ -114,5 +114,10 @@ void AGTWPlayerController::SetupInputComponent()
 
 void AGTWPlayerController::HandlePauseInput()
 {
+	if (bBlockPauseMenu || !IsValid(GTWPauseMenuWidget))
+	{
+		return;
+	}
+
 	GTWPauseMenuWidget->ToggleMenu();
 }

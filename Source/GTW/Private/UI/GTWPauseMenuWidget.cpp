@@ -8,6 +8,7 @@
 #include "GameFramework/PlayerController.h"
 #include <GTWGameInstance.h>
 #include "Framework/Application/SlateApplication.h"
+#include <Controllers/GTWPlayerController.h>
 #include <Components/CanvasPanel.h>
 #include <Components/Button.h>
 #include "Components/Slider.h"
@@ -26,7 +27,9 @@ UGTWPauseMenuWidget::UGTWPauseMenuWidget(const FObjectInitializer& ObjectInitial
 
 void UGTWPauseMenuWidget::UnfocusMenu(bool bIsActive)
 {
-    if (!bIsVisiblePauseMenu)
+    AGTWPlayerController* PlayerController = Cast<AGTWPlayerController>(GetOwningPlayer());
+
+    if (!bIsVisiblePauseMenu && !PlayerController->bBlockPauseMenu)
     {
         ToggleMenu();
     }
@@ -67,12 +70,16 @@ bool UGTWPauseMenuWidget::ToggleMenu()
         PlayerController->bShowMouseCursor = false;
 
         // 게임 입력으로 복구
-        FInputModeGameOnly InputMode;
+        FInputModeGameAndUI  InputMode;
         PlayerController->SetInputMode(InputMode);
+        
+
     }
     // 메뉴 창이 꺼져 있을 때
     else
     {
+
+
         PauseMenu.Get()->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 
         // 게임 일시정지
