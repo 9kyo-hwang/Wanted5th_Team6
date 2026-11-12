@@ -8,6 +8,7 @@
 #include "GameFramework/PlayerController.h"
 #include <GTWGameInstance.h>
 #include "Framework/Application/SlateApplication.h"
+#include <Controllers/GTWPlayerController.h>
 #include <Components/CanvasPanel.h>
 #include <Components/Button.h>
 #include "Widgets/SWidget.h"
@@ -27,7 +28,9 @@ UGTWPauseMenuWidget::UGTWPauseMenuWidget(const FObjectInitializer& ObjectInitial
 
 void UGTWPauseMenuWidget::UnfocusMenu(bool bIsActive)
 {
-    if (!bIsVisiblePauseMenu)
+    AGTWPlayerController* PlayerController = Cast<AGTWPlayerController>(GetOwningPlayer());
+
+    if (!bIsVisiblePauseMenu && !PlayerController->bBlockPauseMenu)
     {
         ToggleMenu();
     }
