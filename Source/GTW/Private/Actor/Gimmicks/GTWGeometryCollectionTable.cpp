@@ -38,6 +38,7 @@ void AGTWGeometryCollectionTable::Tick(float deltaTime)
 		CollisionParams						// 츙돌 쿼리 파라미터
 	);
 
+#if ENABLE_DRAW_DEBUG
 	// 디버그용 박스
 	DrawDebugBox(
 		GetWorld(),
@@ -47,6 +48,7 @@ void AGTWGeometryCollectionTable::Tick(float deltaTime)
 		false,
 		-1.f
 	);
+#endif
 
 	if (!TargetClass)
 	{
@@ -78,6 +80,7 @@ void AGTWGeometryCollectionTable::Tick(float deltaTime)
 			Geometry->ApplyKinematicField(ReleaseRadius, TargetCenter);
 		}
 
+#if ENABLE_DRAW_DEBUG
 		// 디버그용 구체 
 		DrawDebugSphere(
 			GetWorld(),
@@ -88,5 +91,6 @@ void AGTWGeometryCollectionTable::Tick(float deltaTime)
 			false,
 			-1.f
 		);
+#endif
 	}
 }

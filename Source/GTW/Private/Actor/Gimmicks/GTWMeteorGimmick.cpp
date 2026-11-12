@@ -108,7 +108,7 @@ void AGTWMeteorGimmick::Knockback()
 	// P1은 실제 운석 콜리전의 크기를 사용한다. 기존 운석의 판정 범위는 유지한다.
 	const float ContactRadius = bUseGroundedStun ? MeteorCollision->GetScaledSphereRadius() : KnockbackRadius;
 
-#if 0
+#if ENABLE_DRAW_DEBUG
 	DrawDebugSphere(
 		World,
 		MeteorLocation,
