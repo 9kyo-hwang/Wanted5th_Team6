@@ -9,6 +9,9 @@
 #include <GTWDebugHelper.h>
 
 #include <Kismet/GameplayStatics.h>
+#include "Sound/SoundMix.h"
+#include "Sound/SoundClass.h"
+#include "UObject/ConstructorHelpers.h"
 
 namespace
 {
@@ -27,6 +30,33 @@ UGTWGameInstance::UGTWGameInstance()
     CachingSaveDataKeyvalue = { ProgressLevelSlotName,TotalPlayTimeSlotName,
     ClearSecondLevelSlotName,ClearSokobanSlotName,ClearShootingSlotName,
     ClearBossPhase1LevelSlotName, ClearBossPhase2LevelSlotName };
+
+    static ConstructorHelpers::FObjectFinder<USoundMix> SoundMixAsset(
+        TEXT("/Game/GTW/Audio/SM_Setting.SM_Setting")
+    );
+
+    if (SoundMixAsset.Succeeded())
+    {
+        SettingsSoundMix = SoundMixAsset.Object;
+    }
+
+    static ConstructorHelpers::FObjectFinder<USoundClass> BGMAsset(
+        TEXT("/Game/GTW/Audio/SC_BGM.SC_BGM")
+    );
+
+    if (BGMAsset.Succeeded())
+    {
+        BGMSoundClass = BGMAsset.Object;
+    }
+
+    static ConstructorHelpers::FObjectFinder<USoundClass> SFXAsset(
+        TEXT("/Game/GTW/Audio/SC_SFX.SC_SFX")
+    );
+
+    if (SFXAsset.Succeeded())
+    {
+        SFXSoundClass = SFXAsset.Object;
+    }
 }
 
 // 엔진 켤 때 한 번 호출됨
@@ -37,6 +67,17 @@ UGTWGameInstance::UGTWGameInstance()
 void UGTWGameInstance::Init()
 {
     Super::Init();
+
+    if (SettingsSoundMix)
+    {
+        UGameplayStatics::PushSoundMixModifier(
+            this,
+            SettingsSoundMix
+        );
+
+        SetBGMVolume(BGMVolume);
+        SetSFXVolume(SFXVolume);
+    }
 }
 
 // 게임플레이 새로할 때마다 호출(값 초기화같은...)
@@ -74,6 +115,11 @@ void UGTWGameInstance::StartNewGame()
     LevelClearTimes.Empty();
     bIsTickable = true;
     OnTimeChanged.Broadcast(TotalPlayTime);
+
+    for (const auto& Entry : LevelClearTimes)
+    {
+        TimerWidget->UpdateClearLevel(Entry.Key, 0.0f);
+    }
 }
 
 void UGTWGameInstance::SaveProgressGame()
@@ -610,17 +656,58 @@ void UGTWGameInstance::RecordMiniGameClear(ELevelClear Level, double ClearTime)
     }
 }
 
-void UGTWGameInstance::InitializeTimerWidget(UGTWTimerWidget* Widget) const
+void UGTWGameInstance::InitializeTimerWidget(UGTWTimerWidget* Widget)
 {
+    TimerWidget = Widget;
     if (!IsValid(Widget))
     {
         return;
     }
-    Widget->UpdateTimer(TotalPlayTime);
+    TimerWidget->UpdateTimer(TotalPlayTime);
     for (const auto& Entry : LevelClearTimes)
     {
-        Widget->UpdateClearLevel(Entry.Key, Entry.Value);
+        TimerWidget->UpdateClearLevel(Entry.Key, Entry.Value);
     }
+}
+
+void UGTWGameInstance::SetBGMVolume(float Value)
+{
+    BGMVolume = FMath::Clamp(Value, 0.0f, 1.0f);
+
+    if (!SettingsSoundMix || !BGMSoundClass)
+    {
+        return;
+    }
+
+    UGameplayStatics::SetSoundMixClassOverride(
+        this,
+        SettingsSoundMix,
+        BGMSoundClass,
+        BGMVolume,
+        1.0f,
+        0.1f,
+        false
+    );
+}
+
+void UGTWGameInstance::SetSFXVolume(float Value)
+{
+    SFXVolume = FMath::Clamp(Value, 0.0f, 1.0f);
+
+    if (!SettingsSoundMix || !SFXSoundClass)
+    {
+        return;
+    }
+
+    UGameplayStatics::SetSoundMixClassOverride(
+        this,
+        SettingsSoundMix,
+        SFXSoundClass,
+        SFXVolume,
+        1.0f,
+        0.1f,
+        false
+    );
 }
 
 bool UGTWGameInstance::OpenGameLevel(FString LevelName)

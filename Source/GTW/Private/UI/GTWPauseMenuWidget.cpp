@@ -70,10 +70,8 @@ bool UGTWPauseMenuWidget::ToggleMenu()
         PlayerController->bShowMouseCursor = false;
 
         // 게임 입력으로 복구
-        FInputModeGameAndUI  InputMode;
+        FInputModeGameOnly   InputMode;
         PlayerController->SetInputMode(InputMode);
-        
-
     }
     // 메뉴 창이 꺼져 있을 때
     else
@@ -199,46 +197,18 @@ void UGTWPauseMenuWidget::TitleClicked()
 
 void UGTWPauseMenuWidget::OnBGMVolumeChanged(float Value)
 {
-    if (!SettingsSoundMix) 
+    if (UGTWGameInstance* GameInst =
+        Cast<UGTWGameInstance>(GetGameInstance()))
     {
-        return;
+        GameInst->SetBGMVolume(Value);
     }
-
-    if (!BGMSoundClass)
-    {
-        return;
-    }
-
-    UGameplayStatics::SetSoundMixClassOverride(
-        this,
-        SettingsSoundMix,
-        BGMSoundClass,
-        FMath::Clamp(Value, 0.0f, 1.0f),
-        1.0f,
-        0.1f,
-        true
-    );
 }
 
 void UGTWPauseMenuWidget::OnSFXVolumeChanged(float Value)
 {
-    if (!SettingsSoundMix)
+    if (UGTWGameInstance* GameInst =
+        Cast<UGTWGameInstance>(GetGameInstance()))
     {
-        return;
+        GameInst->SetSFXVolume(Value);
     }
-
-    if (!SFXSoundClass)
-    {
-        return;
-    }
-
-    UGameplayStatics::SetSoundMixClassOverride(
-        this,
-        SettingsSoundMix,
-        SFXSoundClass,
-        FMath::Clamp(Value, 0.0f, 1.0f),
-        1.0f,
-        0.1f,
-        true
-    );
 }
