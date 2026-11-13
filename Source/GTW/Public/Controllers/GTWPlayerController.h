@@ -6,6 +6,8 @@
 #include "GameFramework/PlayerController.h"
 #include "GTWPlayerController.generated.h"
 
+class UUserWidget;
+
 /**
  *
  */
@@ -20,8 +22,28 @@ public:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
 
+public:
+	UFUNCTION(BlueprintCallable, Category="UI|Input")
+	void SetResumeInputWidget(UUserWidget* InWidget);
+
+	UFUNCTION(BlueprintCallable, Category = "UI|Input")
+	void ClearResumeInputWidget(UUserWidget* InWidget);
+
+	UFUNCTION(BlueprintPure, Category = "UI|Input")
+	bool IsPauseMenuOpen();
+
+	void RestoreInputMode();
+
+public:
+	UPROPERTY(BlueprintReadWrite, Category = "UI")
+	bool bBlockPauseMenu = false;
+
+private:
+	void HandlePauseInput();
 
 protected:
+
+#pragma region [Widget]
 	// 속도 위젯 클래스 정보.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = HUD)
 	TSubclassOf<class UGTWSpeedWidget> GTWSpeedWidgetClass;
@@ -46,18 +68,15 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = HUD)
 	TObjectPtr<UGTWPauseMenuWidget> GTWPauseMenuWidget;
 
+	// 메뉴 종료 후 입력 다시 받을 기존 위젯
+	UPROPERTY(Transient)
+	TWeakObjectPtr<class UUserWidget> ResumeInputWidget;
+
+#pragma endregion
+
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<class UInputMappingContext> PlayerMappingContext;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Input")
 	TObjectPtr<class UInputAction> PauseAction;
-
-public:
-	UPROPERTY(BlueprintReadWrite, Category = "UI")
-	bool bBlockPauseMenu = false;
-	
-
-
-private:
-	void HandlePauseInput();
 };

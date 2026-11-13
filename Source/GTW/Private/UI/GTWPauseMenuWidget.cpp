@@ -4,11 +4,10 @@
 #include "UI/GTWPauseMenuWidget.h"
 #include <Interfaces/GTWWidgetInterface.h>
 #include <GTWGameInstance.h>
+#include <Controllers/GTWPlayerController.h>
 
 #include "GameFramework/PlayerController.h"
-#include <GTWGameInstance.h>
 #include "Framework/Application/SlateApplication.h"
-#include <Controllers/GTWPlayerController.h>
 #include <Components/CanvasPanel.h>
 #include <Components/Button.h>
 #include "Components/Slider.h"
@@ -28,17 +27,21 @@ UGTWPauseMenuWidget::UGTWPauseMenuWidget(const FObjectInitializer& ObjectInitial
 void UGTWPauseMenuWidget::UnfocusMenu(bool bIsActive)
 {
     AGTWPlayerController* PlayerController = Cast<AGTWPlayerController>(GetOwningPlayer());
+    if (!IsValid(PlayerController))
+    {
+        return;
+    }
 
-    if (!bIsVisiblePauseMenu && !PlayerController->bBlockPauseMenu)
+    // 비활성화 시 메뉴 자동 닫기
+    if (!bIsActive && !bIsVisiblePauseMenu && !PlayerController->bBlockPauseMenu)
     {
         ToggleMenu();
     }
-
 }
 
 bool UGTWPauseMenuWidget::ToggleMenu()
 {
-    APlayerController* PlayerController = GetOwningPlayer();
+    AGTWPlayerController* PlayerController = Cast<AGTWPlayerController>(GetOwningPlayer());
 
     if (!IsValid(PlayerController))
     {
@@ -53,6 +56,10 @@ bool UGTWPauseMenuWidget::ToggleMenu()
     // 메뉴 창이 켜져 있을 때
     if (bIsVisiblePauseMenu)
     {
+        // 닫기 확정
+        bIsVisiblePauseMenu = false;
+
+        // Pause/Settig 메뉴 숨기기
         PauseMenu.Get()->SetVisibility(ESlateVisibility::Collapsed);
         if (IsValid(SettingMenu))
         {
@@ -63,44 +70,42 @@ bool UGTWPauseMenuWidget::ToggleMenu()
         // 게임 재개
         PlayerController->SetPause(false);
         
-        // TODO: 게임 인스턴스가 관리하는 시간 측정 다시 시작하는 곳
+        // 시간 측정 재개
         UGTWGameInstance* GTWGameInst = GetGameInstance<UGTWGameInstance>();
         GTWGameInst->bIsTickable = true;
-        // 마우스 커서 숨기기
-        PlayerController->bShowMouseCursor = false;
 
-        // 게임 입력으로 복구
-        FInputModeGameOnly   InputMode;
-        PlayerController->SetInputMode(InputMode);
+        PlayerController->bShowMouseCursor = false;
+        PlayerController->RestoreInputMode();
     }
     // 메뉴 창이 꺼져 있을 때
     else
     {
+        // 열기 확정
+        bIsVisiblePauseMenu = true;
 
-
+        // Pause 메뉴 표시
         PauseMenu.Get()->SetVisibility(ESlateVisibility::SelfHitTestInvisible);
 
         // 게임 일시정지
         PlayerController->SetPause(true);
 
-        // TODO: 게임 인스턴스가 관리하는 시간 측정 멈추는 곳
+        // 시간 측정 재개
         UGTWGameInstance* GTWGameInst = GetGameInstance<UGTWGameInstance>();
         GTWGameInst->bIsTickable = false;
-        // 마우스 커서 표시
+
         PlayerController->bShowMouseCursor = true;
 
-        // UI 조작 허용
         FInputModeGameAndUI InputMode;
+        InputMode.SetWidgetToFocus(TakeWidget());
         InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
         InputMode.SetHideCursorDuringCapture(false);
+
         PlayerController->SetInputMode(InputMode);
+        SetUserFocus(PlayerController);
     }
-    bIsVisiblePauseMenu = !bIsVisiblePauseMenu;
 
     return bIsVisiblePauseMenu;
-
 }
-
 
 void UGTWPauseMenuWidget::GoToTitle()
 {
@@ -108,8 +113,6 @@ void UGTWPauseMenuWidget::GoToTitle()
     UGTWGameInstance* GTWGameInst = GetGameInstance<UGTWGameInstance>();
     GTWGameInst->OpenGameLevel("Title");
 }
-
-
 
 void UGTWPauseMenuWidget::NativeOnInitialized()
 {
