@@ -112,6 +112,57 @@ void AGTWPlayerController::SetupInputComponent()
 	}
 }
 
+void AGTWPlayerController::SetResumeInputWidget(UUserWidget* InWidget)
+{
+	if (!IsValid(InWidget))
+	{
+		return;
+	}
+
+	ResumeInputWidget = InWidget;
+	RestoreInputMode();
+}
+
+void AGTWPlayerController::ClearResumeInputWidget(UUserWidget* InWidget)
+{
+	if (!IsValid(InWidget) || ResumeInputWidget.Get() != InWidget)
+	{
+		return;
+	}
+
+	ResumeInputWidget.Reset();
+	RestoreInputMode();
+}
+
+bool AGTWPlayerController::IsPauseMenuOpen()
+{
+	return IsValid(GTWPauseMenuWidget) && GTWPauseMenuWidget->IsPauseMenuVisible();
+}
+
+void AGTWPlayerController::RestoreInputMode()
+{
+	if (IsPauseMenuOpen())
+	{
+		return;
+	}
+
+	if (UUserWidget* Widget = ResumeInputWidget.Get())
+	{
+		FInputModeGameAndUI InputMode;
+		InputMode.SetWidgetToFocus(Widget->TakeWidget());
+		InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		InputMode.SetHideCursorDuringCapture(false);
+
+		SetInputMode(InputMode);	// 입력 모드 및 포커스 대상 설정
+		Widget->SetUserFocus(this);	// 컨트롤러 포커스를 위젯에 명시
+	}
+	else
+	{
+		FInputModeGameOnly InputMode;
+		SetInputMode(InputMode);
+	}
+}
+
 void AGTWPlayerController::HandlePauseInput()
 {
 	if (bBlockPauseMenu || !IsValid(GTWPauseMenuWidget))

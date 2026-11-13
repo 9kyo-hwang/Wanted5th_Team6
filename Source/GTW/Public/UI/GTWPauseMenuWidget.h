@@ -17,6 +17,7 @@
 public:
 	UGTWPauseMenuWidget(const FObjectInitializer& ObjectInitializer);
 
+	FORCEINLINE bool IsPauseMenuVisible() const { return bIsVisiblePauseMenu; }
 
 public:
 	// 창이 포커스를 잃었을 때 메뉴 열기 
